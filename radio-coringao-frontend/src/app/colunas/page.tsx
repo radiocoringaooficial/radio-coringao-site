@@ -9,12 +9,54 @@ export const metadata: Metadata = {
 };
 
 export default async function ColunasPage() {
-  let columnists: any[] = [];
+  let columnists: { name: string; role: string; description: string }[] = [];
   try {
     columnists = await container.getColumnists.execute();
   } catch (e) {
     console.error("Failed to load columnists:", e);
   }
+
+  return (
+    <div className="mx-auto w-full max-w-7xl px-margin-mobile py-stack-lg md:px-margin-desktop">
+      <div className="mb-stack-lg flex items-center gap-2">
+        <div className="h-6 w-1 bg-secondary" />
+        <h1 className="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary md:text-headline-lg">
+          Colunas
+        </h1>
+      </div>
+
+      <div className="grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-4">
+        {columnists.map((col) => (
+          <div
+            key={col.name}
+            className="border border-outline-variant bg-surface-container-lowest p-6 transition-colors hover:border-secondary"
+          >
+            <div className="mb-4 flex h-16 w-16 items-center justify-center bg-primary">
+              <span className="font-headline-md text-headline-md text-on-primary">
+                {col.name
+                  .split(" ")
+                  .map((n: string) => n[0])
+                  .join("")}
+              </span>
+            </div>
+            <h3 className="font-headline-md text-headline-md text-primary">
+              {col.name}
+            </h3>
+            <span className="mt-1 block font-label-sm text-label-sm text-secondary">
+              {col.role}
+            </span>
+            <p className="mt-3 font-body-md text-body-md text-on-surface-variant">
+              {col.description}
+            </p>
+            <button className="mt-4 w-full border-2 border-primary bg-transparent py-2 font-label-sm text-label-sm text-primary transition-colors hover:bg-primary hover:text-on-primary">
+              Ler colunas
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
   return (
     <div className="mx-auto w-full max-w-7xl px-margin-mobile py-stack-lg md:px-margin-desktop">
