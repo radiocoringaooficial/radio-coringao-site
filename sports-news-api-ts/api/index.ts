@@ -1,36 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import Fastify from 'fastify';
-import cors from '@fastify/cors';
-import helmet from '@fastify/helmet';
-import compress from '@fastify/compress';
-import rateLimit from '@fastify/rate-limit';
+import { buildApp } from '../src/app';
 
-let app: any = null;
+let app: Awaited<ReturnType<typeof buildApp>> | null = null;
 
 async function getApp() {
-  if (app) return app;
-
-  app = Fastify({ logger: false });
-
-  await app.register(helmet, { global: true });
-  await app.register(compress, { global: true, threshold: 1024 });
-  await app.register(cors, {
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || true,
-    credentials: true,
-  });
-  await app.register(rateLimit, {
-    global: true,
-    max: 100,
-    timeWindow: '15 minutes',
-  });
-
-  // Health check
-  app.get('/api/health', async () => ({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-  }));
-
+  if (!app) {
+    app = await buildApp();
+  }
   return app;
 }
 
