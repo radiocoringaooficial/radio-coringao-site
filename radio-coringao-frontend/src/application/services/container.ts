@@ -41,23 +41,12 @@ class Container {
   private _newsletterRepo: INewsletterRepository;
 
   constructor() {
-    const useApi = process.env.NEXT_PUBLIC_USE_API === "true";
-
-    if (useApi) {
-      this._newsRepo = new ApiNewsRepository();
-      this._matchRepo = new ApiMatchRepository();
-      this._tableRepo = new ApiTableRepository();
-      this._columnistRepo = new ApiColumnistRepository();
-      this._commentRepo = new ApiCommentRepository();
-      this._newsletterRepo = new ApiNewsletterRepository();
-    } else {
-      this._newsRepo = new MockNewsRepository();
-      this._matchRepo = new MockMatchRepository();
-      this._tableRepo = new MockTableRepository();
-      this._columnistRepo = new MockColumnistRepository();
-      this._commentRepo = new MockCommentRepository();
-      this._newsletterRepo = new MockNewsletterRepository();
-    }
+    this._newsRepo = new ApiNewsRepository();
+    this._matchRepo = new ApiMatchRepository();
+    this._tableRepo = new ApiTableRepository();
+    this._columnistRepo = new ApiColumnistRepository();
+    this._commentRepo = new ApiCommentRepository();
+    this._newsletterRepo = new ApiNewsletterRepository();
   }
 
   // Repositórios
