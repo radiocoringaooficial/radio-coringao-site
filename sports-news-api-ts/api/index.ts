@@ -1,169 +1,105 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import Fastify from 'fastify';
-import cors from '@fastify/cors';
-import helmet from '@fastify/helmet';
-import compress from '@fastify/compress';
-import rateLimit from '@fastify/rate-limit';
 
-let app: any = null;
+let prisma: any = null;
 
-async function getApp() {
-  if (app) return app;
+async function getPrisma() {
+  if (prisma) return prisma;
+  const { PrismaClient } = await import('@prisma/client');
+  prisma = new PrismaClient();
+  return prisma;
+}
 
-  app = Fastify({ logger: false });
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const url = req.url || '/';
+  const method = req.method || 'GET';
 
-  await app.register(helmet, { global: true });
-  await app.register(compress, { global: true, threshold: 1024 });
-  await app.register(cors, {
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || true,
-    credentials: true,
-  });
-  await app.register(rateLimit, { global: true, max: 100, timeWindow: '15 minutes' });
+  try {
+    const db = await getPrisma();
 
-  // Health
-  app.get('/api/health', async () => {
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-    const count = await prisma.article.count();
-    await prisma.$disconnect();
-    return { status: 'ok', timestamp: new Date().toISOString(), articleCount: count };
-  });
+    // Health
+    if (url === '/api/health') {
+      const count = await db.article.count();
+      return res.status(200).json({ status: 'ok', timestamp: new Date().toISOString(), articleCount: count });
+    }
 
-  // Notícias públicas
-  app.get('/api/noticias', async (req, reply) => {
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-    try {
-      const articles = await prisma.article.findMany({
+    // Notícias
+    if (url === '/api/noticias' || url.startsWith('/api/noticias?')) {
+      const articles = await db.article.findMany({
         where: { status: 'PUBLISHED' },
         take: 20,
         orderBy: { publishedAt: 'desc' },
         include: { category: true, author: true },
       });
-      return articles || [];
-    } catch (err: any) {
-      console.error('DB error:', err.message);
-      return { error: err.message };
-    } finally {
-      await prisma.$disconnect();
-    }
-  });
-
-  app.get('/api/noticias/editorial', async (req, reply) => {
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-    const articles = await prisma.article.findMany({
-      where: { status: 'PUBLISHED', isFeatured: true },
-      take: 10,
-      orderBy: { publishedAt: 'desc' },
-      include: { category: true, author: true },
-    });
-    await prisma.$disconnect();
-    return reply.send(articles);
-  });
-
-  app.get('/api/noticias/:slug', async (req, reply) => {
-    const { slug } = req.params as { slug: string };
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-    const article = await prisma.article.findFirst({
-      where: { slug, status: 'PUBLISHED' },
-      include: { category: true, author: true },
-    });
-    await prisma.$disconnect();
-    if (!article) return reply.code(404).send({ error: 'Not found' });
-    return reply.send(article);
-  });
-
-  app.get('/api/categorias', async (req, reply) => {
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-    try {
-      const categories = await prisma.category.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
-      console.log('Categories found:', categories.length);
-      return reply.send(categories || []);
-    } catch (err: any) {
-      console.error('Categories error:', err.message);
-      return reply.code(500).send({ error: err.message });
-    } finally {
-      await prisma.$disconnect();
-    }
-  });
-
-  app.get('/api/banners', async (req, reply) => {
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-    const banners = await prisma.banner.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
-    await prisma.$disconnect();
-    return reply.send(banners);
-  });
-
-  app.get('/api/navbar', async (req, reply) => {
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-    const items = await prisma.menuItem.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
-    await prisma.$disconnect();
-    return reply.send(items);
-  });
-
-  app.get('/api/eventos', async (req, reply) => {
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-    const events = await prisma.event.findMany({ where: { isActive: true }, orderBy: { startsAt: 'desc' } });
-    await prisma.$disconnect();
-    return reply.send(events);
-  });
-
-  app.get('/api/patrocinadores', async (req, reply) => {
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-    const sponsors = await prisma.sponsor.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
-    await prisma.$disconnect();
-    return reply.send(sponsors);
-  });
-
-  app.get('/api/links-rodape', async (req, reply) => {
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-    const links = await prisma.footerLink.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
-    await prisma.$disconnect();
-    return reply.send(links);
-  });
-
-  app.get('/api/cronistas', async (req, reply) => {
-    return reply.send([]);
-  });
-
-  return app;
-}
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  try {
-    // Test hardcoded response first
-    if (req.url === '/api/test3') {
-      return res.status(200).json({ test: 'ok', time: new Date().toISOString() });
+      return res.status(200).json(articles);
     }
 
-    const fastify = await getApp();
+    // Notícias por slug
+    const slugMatch = url.match(/^\/api\/noticias\/([^?]+)/);
+    if (slugMatch) {
+      const article = await db.article.findFirst({
+        where: { slug: slugMatch[1], status: 'PUBLISHED' },
+        include: { category: true, author: true },
+      });
+      if (!article) return res.status(404).json({ error: 'Not found' });
+      return res.status(200).json(article);
+    }
 
-    const result = await fastify.inject({
-      method: req.method as any,
-      url: req.url || '/',
-      headers: req.headers as Record<string, string>,
-      body: req.body,
-      query: req.query as Record<string, string>,
-    });
+    // Categorias
+    if (url === '/api/categorias' || url.startsWith('/api/categorias?')) {
+      const categories = await db.category.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
+      return res.status(200).json(categories);
+    }
 
-    console.log('Result:', result.statusCode, 'Payload length:', result.payload?.length);
+    // Banners
+    if (url === '/api/banners' || url.startsWith('/api/banners?')) {
+      const banners = await db.banner.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
+      return res.status(200).json(banners);
+    }
 
-    res.status(result.statusCode);
-    Object.entries(result.headers).forEach(([key, value]) => {
-      if (value) res.setHeader(key, value);
-    });
-    res.send(result.payload || '');
+    // Menu
+    if (url === '/api/navbar' || url.startsWith('/api/navbar?')) {
+      const items = await db.menuItem.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
+      return res.status(200).json(items);
+    }
+
+    // Eventos
+    if (url === '/api/eventos' || url.startsWith('/api/eventos?')) {
+      const events = await db.event.findMany({ where: { isActive: true }, orderBy: { startsAt: 'desc' } });
+      return res.status(200).json(events);
+    }
+
+    // Patrocinadores
+    if (url === '/api/patrocinadores' || url.startsWith('/api/patrocinadores?')) {
+      const sponsors = await db.sponsor.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
+      return res.status(200).json(sponsors);
+    }
+
+    // Footer links
+    if (url === '/api/links-rodape' || url.startsWith('/api/links-rodape?')) {
+      const links = await db.footerLink.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
+      return res.status(200).json(links);
+    }
+
+    // Tags
+    if (url === '/api/tags' || url.startsWith('/api/tags?')) {
+      const tags = await db.tag.findMany();
+      return res.status(200).json(tags);
+    }
+
+    // Columnists
+    if (url === '/api/cronistas' || url.startsWith('/api/cronistas?')) {
+      return res.status(200).json([]);
+    }
+
+    // Test
+    if (url === '/api/test') {
+      return res.status(200).json({ test: 'ok' });
+    }
+
+    // Default
+    return res.status(404).json({ error: 'Route not found' });
   } catch (err: any) {
-    console.error('Handler error:', err?.stack || err?.message || err);
-    res.status(500).json({ error: 'Server error', message: err?.message || 'Unknown' });
+    console.error('Handler error:', err?.message);
+    return res.status(500).json({ error: 'Server error', message: err?.message });
   }
-}
 }
