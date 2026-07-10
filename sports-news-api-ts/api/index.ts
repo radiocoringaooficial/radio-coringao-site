@@ -42,18 +42,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json(articles);
     }
 
-    // Notícias por slug
-    const slugMatch = url.match(/^\/api\/noticias\/([^?]+)/);
-    if (slugMatch) {
-      const article = await db.article.findFirst({
-        where: { slug: slugMatch[1], status: 'PUBLISHED' },
+    // Editoriais
+    if (url === '/api/noticias/editorial' || url.startsWith('/api/noticias/editorial?')) {
+      const articles = await db.article.findMany({
+        where: { status: 'PUBLISHED', isFeatured: true },
+        orderBy: { order: 'asc' },
+        take: 12,
         include: { category: true, author: { select: { id: true, name: true, email: true, role: true, avatar: true, bio: true, position: true } } },
       });
-      if (!article) return res.status(404).json({ error: 'Not found' });
-      return res.status(200).json(article);
+      return res.status(200).json(articles);
     }
 
-    // Destaques da semana
+    // Destaques da semana (must be BEFORE slug match)
     if (url === '/api/noticias/highlights/week' || url.startsWith('/api/noticias/highlights/week?')) {
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
       const articles = await db.article.findMany({
@@ -86,6 +86,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         include: { category: true, author: { select: { id: true, name: true, email: true, role: true, avatar: true, bio: true, position: true } } },
       });
       return res.status(200).json(articles);
+    }
+
+    // Notícias por slug (AFTER specific routes like /latest, /highlights, /search)
+    const slugMatch = url.match(/^\/api\/noticias\/([^?/]+)/);
+    if (slugMatch && !['search', 'latest', 'editorial', 'highlights'].includes(slugMatch[1])) {
+      const article = await db.article.findFirst({
+        where: { slug: slugMatch[1], status: 'PUBLISHED' },
+        include: { category: true, author: { select: { id: true, name: true, email: true, role: true, avatar: true, bio: true, position: true } } },
+      });
+      if (!article) return res.status(404).json({ error: 'Not found' });
+      return res.status(200).json(article);
     }
 
     // Busca
