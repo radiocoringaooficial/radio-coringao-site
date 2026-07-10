@@ -29,6 +29,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.send(result.payload);
   } catch (err: any) {
     console.error('Handler error:', err?.stack || err?.message || err);
-    res.status(500).json({ error: 'Server error', message: err?.message || 'Unknown', stack: err?.stack?.split('\n').slice(0, 5) });
+    res.status(500).json({ error: 'Server error', message: err?.message || 'Unknown' });
   }
 }
