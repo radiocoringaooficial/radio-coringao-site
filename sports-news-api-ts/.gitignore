@@ -113,3 +113,4 @@ tsconfig.tsbuildinfo
 *.pem
 *.key
 *.cert
+.vercel

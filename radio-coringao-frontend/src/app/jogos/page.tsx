@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { container } from "@/application/services/container";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Jogos - Rádio Coringão",
   description: "Próximos jogos e resultados do Corinthians",

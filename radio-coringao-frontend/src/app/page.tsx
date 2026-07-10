@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { container } from "@/application/services/container";
+
+export const dynamic = "force-dynamic";
 import { EditorialGrid } from "@/presentation/components/news/EditorialGrid";
 import { MatchCarousel } from "@/presentation/components/news/MatchCarousel";
 import { LatestNews } from "@/presentation/components/news/LatestNews";
