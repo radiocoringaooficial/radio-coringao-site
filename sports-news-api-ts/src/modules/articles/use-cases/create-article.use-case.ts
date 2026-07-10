@@ -22,6 +22,7 @@ export interface CreateArticleInput {
   isFeatured?: boolean;
   isBreaking?: boolean;
   isPinned?: boolean;
+  order?: number;
   coverImageAlt?: string;
   coverImageCredit?: string;
   quotes?: { author: string; text: string }[];
@@ -177,7 +178,7 @@ export class CreateArticleUseCase {
         excerpt: sanitizedExcerpt ?? undefined,
         type: input.type || 'NEWS',
         status: finalStatus,
-        isFeatured: canPublish ? input.isFeatured === true || input.isFeatured === 'true' : false,
+        isFeatured: canPublish ? Boolean(input.isFeatured) : false,
         isBreaking: canPublish ? Boolean(input.isBreaking) : false,
         isPinned: canPublish ? Boolean(input.isPinned) : false,
         order: input.order != null ? Number(input.order) : 0,

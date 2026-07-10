@@ -58,6 +58,7 @@ export interface Category {
   icon?: string | null;
   isActive: boolean;
   order: number;
+  parentId?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -81,6 +82,7 @@ export interface Article {
   isFeatured: boolean;
   isBreaking: boolean;
   isPinned: boolean;
+  order: number;
   coverImage?: string | null;
   coverImageAlt?: string | null;
   coverImageCredit?: string | null;

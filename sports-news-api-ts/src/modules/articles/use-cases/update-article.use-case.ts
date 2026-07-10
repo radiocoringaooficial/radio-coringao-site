@@ -23,6 +23,7 @@ export interface UpdateArticleInput {
   isFeatured?: boolean;
   isBreaking?: boolean;
   isPinned?: boolean;
+  order?: number;
   viewCount?: number;
   coverImageAlt?: string;
   coverImageCredit?: string;
@@ -220,7 +221,7 @@ export class UpdateArticleUseCase {
     }
 
     if (canPublish) {
-      if (input.isFeatured !== undefined) updateData.isFeatured = input.isFeatured === true || input.isFeatured === 'true';
+      if (input.isFeatured !== undefined) updateData.isFeatured = Boolean(input.isFeatured);
       if (input.isBreaking !== undefined) updateData.isBreaking = Boolean(input.isBreaking);
       if (input.isPinned !== undefined) updateData.isPinned = Boolean(input.isPinned);
       if (input.order !== undefined) updateData.order = Number(input.order);

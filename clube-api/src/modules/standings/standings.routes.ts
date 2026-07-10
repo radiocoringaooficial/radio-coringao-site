@@ -208,15 +208,18 @@ export async function standingsAdminRoutes(app: FastifyInstance): Promise<void> 
       zone: body.zone ?? 'NONE',
     };
 
+    const groupName = body.groupName ?? null;
+
     const entry = await prisma.standingEntry.upsert({
       where: {
-        competitionId_position: {
+        competitionId_position_groupName: {
           competitionId: body.competitionId,
           position: Number(body.position),
+          groupName,
         },
       },
       update: data,
-      create: { competitionId: body.competitionId, position: Number(body.position), ...data },
+      create: { competitionId: body.competitionId, position: Number(body.position), groupName, ...data },
     });
     return reply.code(201).send(withGoalDifference(entry));
   });

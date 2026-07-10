@@ -2,6 +2,13 @@ const BASE_URL = process.env.CLUBE_API_URL || 'http://localhost:3010';
 
 export type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
+export function buildQueryString(params?: Record<string, unknown> | object): string {
+  if (!params) return '';
+  const entries = Object.entries(params).filter(([, v]) => v !== undefined && v !== null);
+  if (entries.length === 0) return '';
+  return '?' + entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`).join('&');
+}
+
 export interface RequestOptions<TBody = unknown> {
   method?: HttpMethod;
   body?: TBody;
