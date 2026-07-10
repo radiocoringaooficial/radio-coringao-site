@@ -35,7 +35,7 @@ export async function movementsPublicRoutes(app: FastifyInstance): Promise<void>
         .throw();
     }
 
-    const take = limit ? Math.min(Math.max(Number(limit) || 10, 1), 50) : 10;
+    const take = limit ? Math.min(Math.max(Number(limit) || 10, 1), 500) : 10;
 
     const where: any = {};
     if (type) where.type = type;

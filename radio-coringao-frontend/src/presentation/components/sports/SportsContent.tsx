@@ -3,8 +3,8 @@
 import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { NewsCard } from "@/presentation/components/ui/NewsCard";
 import { formatDate } from "@/shared/utils/date";
 
@@ -21,7 +21,75 @@ function RecentResultsCarousel({ results }: { results: MatchResultData[] }) {
   return null;
 }
 
-function TransferSection({ title, color, transfers, typeLabel }: { title: string; color: string; transfers: any[]; typeLabel: (t: any) => string }) {
+function TransferenciasPorTemporada({ transfers }: { transfers: any[] }) {
+  const initialSeason = transfers.length > 0
+    ? Object.keys(transfers.reduce<Record<string, boolean>>((acc, t) => { acc[t.season || new Date(t.date).getFullYear().toString()] = true; return acc; }, {})).sort().reverse()[0]
+    : null;
+  const [expandedSeason, setExpandedSeason] = useState<string | null>(initialSeason);
+
+  const bySeason = transfers.reduce<Record<string, any[]>>((acc, t) => {
+    const season = t.season || new Date(t.date).getFullYear().toString();
+    if (!acc[season]) acc[season] = [];
+    acc[season].push(t);
+    return acc;
+  }, {});
+
+  const seasons = Object.keys(bySeason).sort().reverse();
+
+  if (seasons.length === 0) return null;
+
+  const CORINTHIANS_LOGO = 'https://res.cloudinary.com/def661xyl/image/upload/v1782685173/club-corinthians/logos/ulkyawaln1damxiqbpep.png';
+  const TYPE_LABEL: Record<string, string> = { ARRIVAL: 'Contratação', DEPARTURE: 'Venda', LOAN_IN: 'Empréstimo Entrada', LOAN_OUT: 'Empréstimo Saída', RETURN: 'Retorno' };
+
+  return (
+    <div className="space-y-3">
+      {seasons.map((season) => {
+        const isOpen = expandedSeason === season;
+        const items = bySeason[season];
+        const arrivals = items.filter((t: any) => ['ARRIVAL', 'LOAN_IN', 'RETURN'].includes(t.type));
+        const departures = items.filter((t: any) => ['DEPARTURE', 'LOAN_OUT'].includes(t.type));
+
+        return (
+          <div key={season} className="rounded-xl border border-outline-variant bg-surface-container-lowest overflow-hidden">
+            <button
+              onClick={() => setExpandedSeason(isOpen ? null : season)}
+              className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container-low transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <ChevronDown size={16} className={`text-on-surface-variant transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                <div>
+                  <h3 className="font-headline text-sm font-bold text-on-surface">Temporada {season}</h3>
+                  <p className="text-[10px] text-on-surface-variant">{items.length} movimentações</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                {arrivals.length > 0 && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">{arrivals.length} chegadas</span>}
+                {departures.length > 0 && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-600">{departures.length} saídas</span>}
+              </div>
+            </button>
+
+            <AnimatePresence>
+              {isOpen && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
+                  <div className="px-5 pb-5 space-y-4">
+                    {arrivals.length > 0 && (
+                      <TransferSection title="Chegadas" color="blue" transfers={arrivals} typeLabel={(t: any) => TYPE_LABEL[t.type] || t.type} logo={CORINTHIANS_LOGO} />
+                    )}
+                    {departures.length > 0 && (
+                      <TransferSection title="Saídas" color="red" transfers={departures} typeLabel={(t: any) => TYPE_LABEL[t.type] || t.type} logo={CORINTHIANS_LOGO} />
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function TransferSection({ title, color, transfers, typeLabel, logo }: { title: string; color: string; transfers: any[]; typeLabel: (t: any) => string; logo: string }) {
   const [page, setPage] = useState(0);
   const perPage = 6;
   const totalPages = Math.ceil(transfers.length / perPage);
@@ -29,24 +97,22 @@ function TransferSection({ title, color, transfers, typeLabel }: { title: string
 
   if (transfers.length === 0) return null;
 
-  const CORINTHIANS_LOGO = 'https://res.cloudinary.com/def661xyl/image/upload/v1782685173/club-corinthians/logos/ulkyawaln1damxiqbpep.png';
-
   const bgColor = color === 'blue' ? 'bg-blue-50/50 border-blue-100' : 'bg-red-50/50 border-red-100';
   const badgeBg = color === 'blue' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700';
   const headerColor = color === 'blue' ? 'text-blue-600' : 'text-red-600';
   const dotColor = color === 'blue' ? 'bg-blue-500' : 'bg-red-500';
 
   return (
-    <div className="rounded-lg border border-outline-variant bg-surface-container-lowest p-6">
-      <h3 className={`mb-4 font-headline-md text-headline-md ${headerColor} flex items-center gap-2`}>
+    <div className="rounded-lg border border-outline-variant bg-surface-container-lowest p-4">
+      <h3 className={`mb-3 font-headline text-xs font-bold ${headerColor} flex items-center gap-2`}>
         <span className={`w-2 h-2 rounded-full ${dotColor}`} />
         {title} ({transfers.length})
       </h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {paged.map((t) => {
           const isArrival = t.type === 'ARRIVAL' || t.type === 'LOAN_IN' || t.type === 'RETURN';
-          const leftLogo = isArrival ? (t.clubLogo || CORINTHIANS_LOGO) : CORINTHIANS_LOGO;
-          const rightLogo = isArrival ? CORINTHIANS_LOGO : (t.clubLogo || null);
+          const leftLogo = isArrival ? (t.clubLogo || logo) : logo;
+          const rightLogo = isArrival ? logo : (t.clubLogo || null);
           const leftName = isArrival ? (t.clubName || 'Clube de Origem') : 'Corinthians';
           const rightName = isArrival ? 'Corinthians' : (t.clubName || 'Clube de Destino');
 
@@ -718,20 +784,7 @@ export function SportsContent({
         )}
 
         {currentTab === "transferencias" && (
-          <>
-            <TransferSection
-              title="Chegadas"
-              color="blue"
-              transfers={filteredTransfers.filter(t => t.type === 'ARRIVAL' || t.type === 'LOAN_IN' || t.type === 'RETURN')}
-              typeLabel={(t) => t.type === 'ARRIVAL' ? 'Contratação' : t.type === 'LOAN_IN' ? 'Empréstimo Entrada' : 'Retorno'}
-            />
-            <TransferSection
-              title="Vendas / Saídas"
-              color="red"
-              transfers={filteredTransfers.filter(t => t.type === 'DEPARTURE' || t.type === 'LOAN_OUT')}
-              typeLabel={(t) => t.type === 'DEPARTURE' ? 'Venda' : 'Empréstimo Saída'}
-            />
-          </>
+          <TransferenciasPorTemporada transfers={filteredTransfers} />
         )}
 
         {currentTab === "elenco" && squad.length > 0 && (

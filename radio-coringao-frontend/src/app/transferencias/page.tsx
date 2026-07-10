@@ -181,7 +181,7 @@ export default function TransferenciasPage() {
   const [departurePages, setDeparturePages] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    fetch(`${CLUBE_API}/movimentacoes/recent?limit=50`)
+    fetch(`${CLUBE_API}/movimentacoes/recent?limit=500`)
       .then((r) => r.json())
       .then((d) => setMovements(Array.isArray(d) ? d : d?.data || []))
       .catch(() => {})
