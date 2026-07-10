@@ -39,8 +39,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json(data);
     }
 
+    if (url === '/api/partidas/next' || url.startsWith('/api/partidas/next?')) {
+      const data = await db.match.findFirst({ where: { status: 'SCHEDULED' }, orderBy: { date: 'asc' } });
+      return res.status(200).json(data || {});
+    }
+
+    if (url === '/api/partidas/recent' || url.startsWith('/api/partidas/recent?')) {
+      const data = await db.match.findMany({ where: { status: 'FINISHED' }, orderBy: { date: 'desc' }, take: 10 });
+      return res.status(200).json(data);
+    }
+
     if (url === '/api/classificacoes' || url.startsWith('/api/classificacoes?')) {
       const data = await db.standingEntry.findMany({ orderBy: { position: 'asc' } });
+      return res.status(200).json(data);
+    }
+
+    const classifMatch = url.match(/^\/api\/classificacoes\/([^?]+)$/);
+    if (classifMatch) {
+      const data = await db.standingEntry.findMany({ where: { competitionId: classifMatch[1] }, orderBy: { position: 'asc' } });
       return res.status(200).json(data);
     }
 
