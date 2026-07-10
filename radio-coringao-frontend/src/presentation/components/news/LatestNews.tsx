@@ -12,6 +12,8 @@ export function LatestNews({ articles }: LatestNewsProps) {
   const heroArticle = articles[0];
   const remainingArticles = articles.slice(1);
 
+  if (!heroArticle) return null;
+
   return (
     <section className="mt-4">
       <div className="mb-stack-lg flex items-center gap-2">

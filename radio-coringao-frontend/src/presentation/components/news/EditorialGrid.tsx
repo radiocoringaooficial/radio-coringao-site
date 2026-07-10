@@ -10,6 +10,7 @@ interface EditorialGridProps {
 }
 
 export function EditorialGrid({ heroArticle, sideArticles }: EditorialGridProps) {
+  if (!heroArticle) return null;
   const rightArticles = sideArticles.slice(0, 2);
 
   return (
