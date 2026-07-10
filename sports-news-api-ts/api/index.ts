@@ -5,8 +5,10 @@ let app: any = null;
 async function getApp() {
   if (app) return app;
 
+  console.log('Building Fastify app...');
   const { buildApp } = await import('../src/app');
   app = await buildApp();
+  console.log('Fastify app built successfully');
   return app;
 }
 
@@ -28,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
     res.send(result.payload);
   } catch (err: any) {
-    console.error('Handler error:', err?.message || err);
+    console.error('Handler error:', err?.stack || err?.message || err);
     res.status(500).json({ error: 'Server error', message: err?.message || 'Unknown' });
   }
 }
