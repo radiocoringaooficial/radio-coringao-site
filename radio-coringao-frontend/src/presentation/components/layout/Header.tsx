@@ -211,7 +211,7 @@ export function Header() {
           const r = await fetch(url);
           if (!r.ok) return [];
           const body = await r.json();
-          return body?.tables || [];
+          return Array.isArray(body) ? body : body?.tables || [];
         };
         const [principalTables, sub20Tables] = await Promise.all([
           fetchTables(`${CLUBE_API}/classificacoes/category/principal`),
