@@ -25,8 +25,8 @@ interface NavItem {
   subItems?: SubItem[];
 }
 
-const CLUBE_API = "http://localhost:3010/api";
-const NEWS_API = "http://localhost:3007/api";
+const CLUBE_API = "https://radio-coringao-clube-api.vercel.app/api";
+const NEWS_API = "https://radio-coringao-news-api.vercel.app/api";
 const CORINTHIANS_LOGO = "https://res.cloudinary.com/def661xyl/image/upload/v1782685173/club-corinthians/logos/ulkyawaln1damxiqbpep.png";
 
 const SPORT_CATEGORIES: Record<string, string> = {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { SponsorsContent } from "@/presentation/components/pages/SponsorsContent";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3007/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radio-coringao-news-api.vercel.app/api";
 
 export const metadata: Metadata = {
   title: "Patrocinadores - Rádio Coringão",

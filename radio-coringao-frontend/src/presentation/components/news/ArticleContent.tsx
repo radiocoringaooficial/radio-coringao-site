@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { NewsArticle, NextMatch } from "@/domain/entities";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3007/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radio-coringao-news-api.vercel.app/api";
 
 interface ArticleContentProps {
   article: NewsArticle;

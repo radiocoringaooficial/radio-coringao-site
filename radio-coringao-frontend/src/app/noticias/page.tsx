@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { NewsMainContent } from "@/presentation/components/news/NewsMainContent";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3007/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radio-coringao-news-api.vercel.app/api";
 
 export const metadata: Metadata = {
   title: "Notícias - Rádio Coringão",

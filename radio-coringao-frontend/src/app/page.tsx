@@ -8,7 +8,7 @@ import { LatestNews } from "@/presentation/components/news/LatestNews";
 import { ClassificationCarousel } from "@/presentation/components/classification/ClassificationCarousel";
 import { HighlightsSection } from "@/presentation/components/news/HighlightsSection";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3007/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radio-coringao-news-api.vercel.app/api";
 
 function mapArticle(article: any) {
   return {

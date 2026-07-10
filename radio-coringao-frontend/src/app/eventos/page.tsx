@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { EventData } from "@/infrastructure/data/events";
 import { EventArticlesGrid } from "@/presentation/components/events/EventArticlesGrid";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3007/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radio-coringao-news-api.vercel.app/api";
 
 export const metadata: Metadata = {
   title: "Eventos - Rádio Coringão",

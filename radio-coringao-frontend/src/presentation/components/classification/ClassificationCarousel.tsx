@@ -41,7 +41,7 @@ export function ClassificationCarousel() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_CLUBE_API_URL || 'http://localhost:3010/api'}/classificacoes/6033dfa0-3034-4b73-ad9e-af16359894b4`)
+    fetch(`${process.env.NEXT_PUBLIC_CLUBE_API_URL || 'https://radio-coringao-clube-api.vercel.app/api'}/classificacoes/6033dfa0-3034-4b73-ad9e-af16359894b4`)
       .then(res => res.json())
       .then(data => {
         const all = Array.isArray(data) ? data : data?.data || [];

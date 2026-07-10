@@ -1,8 +1,8 @@
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3007/api";
+  process.env.NEXT_PUBLIC_API_URL || "https://radio-coringao-news-api.vercel.app/api";
 
 const CLUBE_API_URL =
-  process.env.NEXT_PUBLIC_CLUBE_API_URL || "http://localhost:3010/api";
+  process.env.NEXT_PUBLIC_CLUBE_API_URL || "https://radio-coringao-clube-api.vercel.app/api";
 
 interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
@@ -67,9 +67,6 @@ class HttpClient {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        ...(process.env.NEXT_PUBLIC_API_KEY && {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_KEY}`,
-        }),
       },
       next: options.revalidate
         ? { revalidate: options.revalidate }
@@ -84,9 +81,6 @@ class HttpClient {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(process.env.NEXT_PUBLIC_API_KEY && {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_KEY}`,
-        }),
       },
       body: JSON.stringify(options.body),
     }, options.retries);
@@ -99,9 +93,6 @@ class HttpClient {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        ...(process.env.NEXT_PUBLIC_API_KEY && {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_KEY}`,
-        }),
       },
       body: JSON.stringify(options.body),
     }, options.retries);
@@ -114,9 +105,6 @@ class HttpClient {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        ...(process.env.NEXT_PUBLIC_API_KEY && {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_KEY}`,
-        }),
       },
     }, options.retries);
   }

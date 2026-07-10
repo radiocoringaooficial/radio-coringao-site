@@ -7,7 +7,7 @@ import { NewsArticle } from "@/domain/entities";
 import { Pagination } from "@/presentation/components/ui/Pagination";
 import { NewsCard } from "@/presentation/components/ui/NewsCard";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3007/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radio-coringao-news-api.vercel.app/api";
 
 interface CategoryInfo {
   name: string;

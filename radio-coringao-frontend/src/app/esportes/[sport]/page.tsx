@@ -140,7 +140,7 @@ export default async function SportPage({ params }: Props) {
 
   let category: Category;
   try {
-    const catRes = await fetch(`${process.env.NEXT_PUBLIC_CLUBE_API_URL || "http://localhost:3010/api"}/categorias/${matchCategory}`);
+    const catRes = await fetch(`${process.env.NEXT_PUBLIC_CLUBE_API_URL || "https://radio-coringao-clube-api.vercel.app/api"}/categorias/${matchCategory}`);
     if (!catRes.ok) notFound();
     category = await catRes.json();
   } catch {

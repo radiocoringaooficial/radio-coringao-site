@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ChampionshipContent } from "@/presentation/components/standings/ChampionshipContent";
 import type { ChampionshipData } from "@/infrastructure/data/championships";
 
-const CLUBE_API = process.env.NEXT_PUBLIC_CLUBE_API_URL || "http://localhost:3010/api";
+const CLUBE_API = process.env.NEXT_PUBLIC_CLUBE_API_URL || "https://radio-coringao-clube-api.vercel.app/api";
 
 function slugify(text: string): string {
   return text
