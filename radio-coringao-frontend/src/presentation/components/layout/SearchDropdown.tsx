@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { NewsArticle } from "@/domain/entities";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radio-coringao-news-api.vercel.app/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radiocoringao-news.vercel.app/api";
 
 interface SearchDropdownProps {
   query: string;

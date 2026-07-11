@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radio-coringao-news-api.vercel.app/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radiocoringao-news.vercel.app/api";
 
 interface FooterLinkItem {
   id: string;

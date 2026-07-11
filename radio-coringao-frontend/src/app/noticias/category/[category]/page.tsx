@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { NewsCategoryContent } from "@/presentation/components/news/NewsCategoryContent";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radio-coringao-news-api.vercel.app/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radiocoringao-news.vercel.app/api";
 
 interface Props {
   params: Promise<{ category: string }>;

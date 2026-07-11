@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { EventData } from "@/infrastructure/data/events";
 import { EventContent } from "@/presentation/components/events/EventContent";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radio-coringao-news-api.vercel.app/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radiocoringao-news.vercel.app/api";
 
 interface Props {
   params: Promise<{ event: string }>;

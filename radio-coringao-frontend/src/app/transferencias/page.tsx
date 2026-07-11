@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronRight, ChevronLeft, ArrowRight, ArrowLeft, User, Calendar, Banknote, Loader2 } from "lucide-react";
 
-const CLUBE_API = process.env.NEXT_PUBLIC_CLUBE_API_URL || "https://radio-coringao-clube-api.vercel.app/api";
+const CLUBE_API = process.env.NEXT_PUBLIC_CLUBE_API_URL || "https://radiocoringao-clube.vercel.app/api";
 const CORINTHIANS_LOGO = "https://res.cloudinary.com/def661xyl/image/upload/v1782685173/club-corinthians/logos/ulkyawaln1damxiqbpep.png";
 
 const SECTION_LIMIT = 6;

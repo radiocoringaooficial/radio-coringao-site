@@ -1,5 +1,6 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron';
 import path from 'path';
+import fs from 'fs';
 
 app.commandLine.appendSwitch('in-process-gpu');
 app.commandLine.appendSwitch('disable-gpu-sandbox');
@@ -9,13 +10,22 @@ app.disableHardwareAcceleration();
 
 let mainWindow: BrowserWindow | null = null;
 
+function getIconPath(): string {
+  // In dev: __dirname = dist-electron/main, build/ is at ../../
+  // In production: electron-builder handles icon separately
+  const buildPath = path.join(__dirname, '../../build/icon.png');
+  if (fs.existsSync(buildPath)) return buildPath;
+  return path.join(__dirname, 'icon.png');
+}
+
 function createWindow() {
+  const iconPath = getIconPath();
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 1024,
     minHeight: 700,
-    icon: path.join(__dirname, 'icon.png'),
+    icon: iconPath,
     title: 'Rádio Coringão - Admin',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -61,7 +71,7 @@ ipcMain.handle('get-app-version', () => app.getVersion());
 app.whenReady().then(() => {
   // Define ícone do dock no macOS
   if (process.platform === 'darwin') {
-    app.dock?.setIcon(path.join(__dirname, 'icon.png'));
+    app.dock?.setIcon(getIconPath());
   }
   createWindow();
 });

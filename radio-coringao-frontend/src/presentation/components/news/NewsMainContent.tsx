@@ -10,7 +10,7 @@ import { NewsCard } from "@/presentation/components/ui/NewsCard";
 import { SortFilter } from "@/presentation/components/news/SortFilter";
 import { NewsSortBar } from "@/presentation/components/news/NewsSortBar";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radio-coringao-news-api.vercel.app/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radiocoringao-news.vercel.app/api";
 
 interface NewsMainContentProps {
   editorialArticles: NewsArticle[];

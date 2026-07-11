@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { StandingsTable } from "@/presentation/components/standings/StandingsTable";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radio-coringao-news-api.vercel.app/api";
-const CLUBE_URL = process.env.NEXT_PUBLIC_CLUBE_API_URL || "https://radio-coringao-clube-api.vercel.app/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radiocoringao-news.vercel.app/api";
+const CLUBE_URL = process.env.NEXT_PUBLIC_CLUBE_API_URL || "https://radiocoringao-clube.vercel.app/api";
 
 export const metadata: Metadata = {
   title: "Classificações - Rádio Coringão",
