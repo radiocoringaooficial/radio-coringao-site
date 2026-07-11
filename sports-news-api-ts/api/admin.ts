@@ -135,6 +135,69 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ ok: true });
     }
 
+    // ─── ARTICLES (alias /articles → same as /materias) ────────
+    if (url === '/articles' || url.startsWith('/articles?')) {
+      if (method === 'GET') {
+        const urlObj = new URL(url, 'http://localhost');
+        const page = parseInt(urlObj.searchParams.get('page') || '1');
+        const limit = parseInt(urlObj.searchParams.get('limit') || '20');
+        const status = urlObj.searchParams.get('status');
+        const skip = (page - 1) * limit;
+        const where: any = {};
+        if (status) where.status = status;
+        const [data, total] = await Promise.all([
+          db.article.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { category: true, author: { select: { id: true, name: true } }, tags: { include: { tag: true } } } }),
+          db.article.count({ where }),
+        ]);
+        return res.status(200).json({ data, total, page, limit, totalPages: Math.ceil(total / limit) });
+      }
+    }
+
+    const articleIdMatch = url.match(/^\/articles\/([^/]+)$/);
+    if (articleIdMatch) {
+      const id = articleIdMatch[1];
+      if (method === 'GET') {
+        const article = await db.article.findUnique({ where: { id }, include: { category: true, author: { select: { id: true, name: true, email: true, role: true } }, tags: { include: { tag: true } }, images: true } });
+        return res.status(200).json(article);
+      }
+      if (method === 'PUT' || method === 'PATCH') {
+        const body = req.body;
+        const article = await db.article.update({ where: { id }, data: { title: body.title, slug: body.slug, content: body.content, excerpt: body.excerpt, status: body.status, type: body.type, isFeatured: body.isFeatured, isBreaking: body.isBreaking, categoryId: body.categoryId, coverImage: body.coverImage, publishedAt: body.status === 'PUBLISHED' ? new Date() : undefined } });
+        return res.status(200).json(article);
+      }
+      if (method === 'DELETE') {
+        await db.article.delete({ where: { id } });
+        return res.status(204).end();
+      }
+    }
+
+    const articleStatusMatch = url.match(/^\/articles\/([^/]+)\/status$/);
+    if (articleStatusMatch && method === 'PUT') {
+      const id = articleStatusMatch[1];
+      const { status } = req.body || {};
+      await db.article.update({ where: { id }, data: { status, publishedAt: status === 'PUBLISHED' ? new Date() : undefined } });
+      return res.status(200).json({ ok: true });
+    }
+
+    // Articles archive/unarchive
+    const articleArchiveMatch = url.match(/^\/articles\/([^/]+)\/archive$/);
+    if (articleArchiveMatch && method === 'PATCH') {
+      const id = articleArchiveMatch[1];
+      await db.article.update({ where: { id }, data: { status: 'ARCHIVED' } });
+      return res.status(200).json({ ok: true });
+    }
+    const articleUnarchiveMatch = url.match(/^\/articles\/([^/]+)\/unarchive$/);
+    if (articleUnarchiveMatch && method === 'PATCH') {
+      const id = articleUnarchiveMatch[1];
+      await db.article.update({ where: { id }, data: { status: 'DRAFT' } });
+      return res.status(200).json({ ok: true });
+    }
+
+    // Content image upload (inline)
+    if (url === '/articles/content-image' && method === 'POST') {
+      return res.status(200).json({ url: '' });
+    }
+
     // ─── CATEGORIES ───────────────────────────────────────────
     if (url === '/categorias' || url === '/categorias/') {
       if (method === 'GET') {
