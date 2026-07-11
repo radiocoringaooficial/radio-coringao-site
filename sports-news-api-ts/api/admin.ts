@@ -115,7 +115,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const article = await db.article.findUnique({ where: { id }, include: { category: true, author: { select: { id: true, name: true, email: true, role: true } }, tags: { include: { tag: true } }, images: true } });
         return res.status(200).json(article);
       }
-      if (method === 'PUT') {
+      if (method === 'PUT' || method === 'PATCH') {
         const body = req.body;
         const article = await db.article.update({ where: { id }, data: { title: body.title, slug: body.slug, content: body.content, excerpt: body.excerpt, status: body.status, type: body.type, isFeatured: body.isFeatured, isBreaking: body.isBreaking, categoryId: body.categoryId, coverImage: body.coverImage, publishedAt: body.status === 'PUBLISHED' ? new Date() : undefined } });
         return res.status(200).json(article);
@@ -128,7 +128,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Article status
     const statusMatch = url.match(/^\/materias\/([^/]+)\/status$/);
-    if (statusMatch && method === 'PUT') {
+    if (statusMatch && (method === 'PUT' || method === 'PATCH')) {
       const id = statusMatch[1];
       const { status } = req.body || {};
       await db.article.update({ where: { id }, data: { status, publishedAt: status === 'PUBLISHED' ? new Date() : undefined } });
@@ -172,7 +172,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const articleStatusMatch = url.match(/^\/articles\/([^/]+)\/status$/);
-    if (articleStatusMatch && method === 'PUT') {
+    if (articleStatusMatch && (method === 'PUT' || method === 'PATCH')) {
       const id = articleStatusMatch[1];
       const { status } = req.body || {};
       await db.article.update({ where: { id }, data: { status, publishedAt: status === 'PUBLISHED' ? new Date() : undefined } });
@@ -213,7 +213,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const catMatch = url.match(/^\/categorias\/([^/]+)$/);
     if (catMatch) {
       const id = catMatch[1];
-      if (method === 'PUT') {
+      if (method === 'PUT' || method === 'PATCH') {
         const cat = await db.category.update({ where: { id }, data: req.body });
         return res.status(200).json(cat);
       }
@@ -238,7 +238,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const bannerMatch = url.match(/^\/banners\/([^/]+)$/);
     if (bannerMatch) {
       const id = bannerMatch[1];
-      if (method === 'PUT') {
+      if (method === 'PUT' || method === 'PATCH') {
         const banner = await db.banner.update({ where: { id }, data: req.body });
         return res.status(200).json(banner);
       }
@@ -298,7 +298,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const sponsorMatch = url.match(/^\/patrocinadores\/([^/]+)$/);
     if (sponsorMatch) {
       const id = sponsorMatch[1];
-      if (method === 'PUT') {
+      if (method === 'PUT' || method === 'PATCH') {
         const sponsor = await db.sponsor.update({ where: { id }, data: req.body });
         return res.status(200).json(sponsor);
       }
@@ -323,7 +323,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const eventMatch = url.match(/^\/eventos\/([^/]+)$/);
     if (eventMatch) {
       const id = eventMatch[1];
-      if (method === 'PUT') {
+      if (method === 'PUT' || method === 'PATCH') {
         const event = await db.event.update({ where: { id }, data: req.body });
         return res.status(200).json(event);
       }
@@ -350,7 +350,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const userMatch = url.match(/^\/users\/([^/]+)$/);
     if (userMatch) {
       const id = userMatch[1];
-      if (method === 'PUT') {
+      if (method === 'PUT' || method === 'PATCH') {
         const data: any = { name: req.body.name, email: req.body.email, role: req.body.role, position: req.body.position, avatar: req.body.avatar, isActive: req.body.isActive };
         if (req.body.password) {
           const bcrypt = await import('bcryptjs');
@@ -366,7 +366,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const pwMatch = url.match(/^\/users\/([^/]+)\/password$/);
-    if (pwMatch && method === 'PUT') {
+    if (pwMatch && (method === 'PUT' || method === 'PATCH')) {
       const id = pwMatch[1];
       const bcrypt = await import('bcryptjs');
       const hashed = await bcrypt.default.hash(req.body.newPassword, 12);
@@ -380,7 +380,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const settings = await db.siteSettings.findUnique({ where: { id: 'main' } });
         return res.status(200).json(settings || {});
       }
-      if (method === 'PUT') {
+      if (method === 'PUT' || method === 'PATCH') {
         const settings = await db.siteSettings.update({ where: { id: 'main' }, data: req.body });
         return res.status(200).json(settings);
       }
@@ -401,7 +401,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const linkMatch = url.match(/^\/links-rodape\/([^/]+)$/);
     if (linkMatch) {
       const id = linkMatch[1];
-      if (method === 'PUT') {
+      if (method === 'PUT' || method === 'PATCH') {
         const link = await db.footerLink.update({ where: { id }, data: req.body });
         return res.status(200).json(link);
       }
@@ -427,6 +427,50 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (tagMatch && method === 'DELETE') {
       await db.tag.delete({ where: { id: tagMatch[1] } });
       return res.status(204).end();
+    }
+
+    // ─── DASHBOARD ────────────────────────────────────────────
+    if (url.startsWith('/dashboard')) {
+      if (url === '/dashboard' || url === '/dashboard/') {
+        const [totalArticles, totalCategories, totalUsers, totalTags, totalBanners, totalSponsors, recentArticles] = await Promise.all([
+          db.article.count(),
+          db.category.count(),
+          db.user.count(),
+          db.tag.count(),
+          db.banner.count(),
+          db.sponsor.count(),
+          db.article.findMany({ take: 5, orderBy: { createdAt: 'desc' }, include: { category: true, author: { select: { name: true } } } }),
+        ]);
+        return res.status(200).json({ totalArticles, totalCategories, totalUsers, totalTags, totalBanners, totalSponsors, recentArticles });
+      }
+
+      if (url === '/dashboard/categorias' || url === '/dashboard/categorias/') {
+        const categories = await db.category.findMany({ include: { _count: { select: { articles: true } } }, orderBy: { order: 'asc' } });
+        return res.status(200).json(categories);
+      }
+
+      if (url.startsWith('/dashboard/articles-per-year')) {
+        return res.status(200).json([]);
+      }
+      if (url.startsWith('/dashboard/articles-per-month')) {
+        return res.status(200).json([]);
+      }
+      if (url.startsWith('/dashboard/views-per-year')) {
+        return res.status(200).json([]);
+      }
+      if (url.startsWith('/dashboard/views-per-month')) {
+        return res.status(200).json([]);
+      }
+    }
+
+    // ─── SETTINGS LOGO ────────────────────────────────────────
+    if (url === '/configuracoes/logo' && method === 'PUT') {
+      return res.status(200).json({ ok: true });
+    }
+
+    // ─── CONTENT IMAGE UPLOAD ─────────────────────────────────
+    if (url === '/articles/content-image' && method === 'POST') {
+      return res.status(200).json({ url: '' });
     }
 
     return res.status(404).json({ error: 'Route not found' });
