@@ -224,18 +224,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(cat);
       }
       if (method === 'DELETE') {
-        const count = await db.article.count({ where: { categoryId: id } });
-        if (count > 0) {
-          const fallback = await db.category.upsert({
-            where: { slug: 'sem-categoria' },
-            update: {},
-            create: { name: 'Sem Categoria', slug: 'sem-categoria', order: 999 },
+        try {
+          await db.$transaction(async (tx: any) => {
+            // 1) move articles
+            const fallback = await tx.category.upsert({
+              where: { slug: 'sem-categoria' },
+              update: {},
+              create: { name: 'Sem Categoria', slug: 'sem-categoria', order: 999 },
+            });
+            await tx.article.updateMany({ where: { categoryId: id }, data: { categoryId: fallback.id } });
+            // 2) unlink children
+            await tx.category.updateMany({ where: { parentId: id }, data: { parentId: null } });
+            // 3) delete
+            await tx.category.delete({ where: { id } });
           });
-          await db.article.updateMany({ where: { categoryId: id }, data: { categoryId: fallback.id } });
+          return res.status(200).json({ ok: true });
+        } catch (delErr: any) {
+          return res.status(500).json({ error: 'Falha ao deletar categoria', detail: delErr?.message });
         }
-        await db.category.updateMany({ where: { parentId: id }, data: { parentId: null } });
-        await db.category.delete({ where: { id } });
-        return res.status(204).end();
       }
     }
 
