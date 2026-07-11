@@ -53,12 +53,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (url === '/api/partidas/next' || url.startsWith('/api/partidas/next?')) {
-      const data = await db.$queryRawUnsafe('SELECT * FROM "Match" WHERE status = $1 ORDER BY date ASC LIMIT 1', 'SCHEDULED');
-      return res.status(200).json(data[0] || {});
+      const urlObj = new URL(url, 'http://localhost');
+      const category = urlObj.searchParams.get('category');
+      const limitParam = parseInt(urlObj.searchParams.get('limit') || '5');
+      const limit = Math.min(Math.max(limitParam, 1), 50);
+      const where: any = { status: 'SCHEDULED', isArchived: false, date: { gte: new Date() } };
+      if (category) {
+        const cat = await db.category.findFirst({ where: { slug: category } });
+        if (cat) {
+          const compIds = (await db.competition.findMany({ where: { categoryId: cat.id } })).map((c: any) => c.id);
+          if (compIds.length > 0) where.competitionId = { in: compIds };
+          else return res.status(200).json([]);
+        } else {
+          return res.status(200).json([]);
+        }
+      }
+      const data = await db.match.findMany({ where, orderBy: { date: 'asc' }, take: limit, include: { opponent: { select: { id: true, name: true, logoUrl: true } }, competition: { select: { id: true, name: true, category: { select: { slug: true } } } } } });
+      return res.status(200).json(data);
     }
 
     if (url === '/api/partidas/recent' || url.startsWith('/api/partidas/recent?')) {
-      const data = await db.$queryRawUnsafe('SELECT * FROM "Match" WHERE status = $1 ORDER BY date DESC LIMIT 10', 'FINISHED');
+      const urlObj = new URL(url, 'http://localhost');
+      const category = urlObj.searchParams.get('category');
+      const limitParam = parseInt(urlObj.searchParams.get('limit') || '10');
+      const limit = Math.min(Math.max(limitParam, 1), 50);
+      const where: any = { status: 'FINISHED', isArchived: false };
+      if (category) {
+        const cat = await db.category.findFirst({ where: { slug: category } });
+        if (cat) {
+          const compIds = (await db.competition.findMany({ where: { categoryId: cat.id } })).map((c: any) => c.id);
+          if (compIds.length > 0) where.competitionId = { in: compIds };
+          else return res.status(200).json([]);
+        } else {
+          return res.status(200).json([]);
+        }
+      }
+      const data = await db.match.findMany({ where, orderBy: { date: 'desc' }, take: limit, include: { opponent: { select: { id: true, name: true, logoUrl: true } }, competition: { select: { id: true, name: true, category: { select: { slug: true } } } } } });
       return res.status(200).json(data);
     }
 
@@ -69,7 +99,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const classifMatch = url.match(/^\/api\/classificacoes\/([^?]+)$/);
     if (classifMatch) {
-      const data = await db.standingEntry.findMany({ where: { competitionId: classifMatch[1] }, orderBy: { position: 'asc' } });
+      const id = classifMatch[1];
+      const comp = await db.competition.findUnique({ where: { id } });
+      if (!comp) return res.status(200).json([]);
+      const data = await db.standingEntry.findMany({ where: { competitionId: id }, orderBy: { position: 'asc' } });
       return res.status(200).json(data);
     }
 
