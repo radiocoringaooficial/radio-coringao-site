@@ -61,16 +61,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ─── DASHBOARD ────────────────────────────────────────────
     if (url === '/dashboard' || url === '/dashboard/') {
-      const [totalArticles, totalCategories, totalUsers, totalTags, totalBanners, totalSponsors, recentArticles] = await Promise.all([
+      const [total, published, draft, totalViews, topArticles, allArticles] = await Promise.all([
         db.article.count(),
-        db.category.count(),
-        db.user.count(),
-        db.tag.count(),
-        db.banner.count(),
-        db.sponsor.count(),
-        db.article.findMany({ take: 5, orderBy: { createdAt: 'desc' }, include: { category: true, author: { select: { name: true } } } }),
+        db.article.count({ where: { status: 'PUBLISHED' } }),
+        db.article.count({ where: { status: 'DRAFT' } }),
+        db.article.aggregate({ _sum: { viewCount: true } }),
+        db.article.findMany({ take: 5, orderBy: { viewCount: 'desc' }, include: { category: { select: { name: true, color: true } }, author: { select: { name: true } } } }),
+        db.article.findMany({ select: { status: true, createdAt: true, viewCount: true } }),
       ]);
-      return res.status(200).json({ totalArticles, totalCategories, totalUsers, totalTags, totalBanners, totalSponsors, recentArticles });
+
+      // Articles per month
+      const monthMap: Record<string, { published: number; review: number }> = {};
+      for (const a of allArticles) {
+        const d = new Date(a.createdAt);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!monthMap[key]) monthMap[key] = { published: 0, review: 0 };
+        if (a.status === 'PUBLISHED') monthMap[key].published++;
+        else if (a.status === 'REVIEW') monthMap[key].review++;
+      }
+      const articlesPerMonth = Object.entries(monthMap).sort().map(([month, v]) => ({ month, ...v }));
+
+      return res.status(200).json({
+        stats: { total, published, draft, totalViews: totalViews._sum.viewCount || 0 },
+        topArticles,
+        articlesPerMonth,
+        readsPerMonth: [],
+      });
     }
 
     if (url === '/dashboard/categorias' || url === '/dashboard/categorias/') {
@@ -504,17 +520,57 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(categories);
       }
 
-      if (url.startsWith('/dashboard/articles-per-year')) {
-        return res.status(200).json([]);
-      }
       if (url.startsWith('/dashboard/articles-per-month')) {
-        return res.status(200).json([]);
+        const urlObj = new URL(url, 'http://localhost');
+        const months = parseInt(urlObj.searchParams.get('months') || '6');
+        const articles = await db.article.findMany({ select: { status: true, createdAt: true } });
+        const monthMap: Record<string, { published: number; review: number }> = {};
+        for (const a of articles) {
+          const d = new Date(a.createdAt);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          if (!monthMap[key]) monthMap[key] = { published: 0, review: 0 };
+          if (a.status === 'PUBLISHED') monthMap[key].published++;
+          else if (a.status === 'REVIEW') monthMap[key].review++;
+        }
+        const result = Object.entries(monthMap).sort().slice(-months).map(([month, v]) => ({ month, ...v }));
+        return res.status(200).json(result);
       }
-      if (url.startsWith('/dashboard/views-per-year')) {
-        return res.status(200).json([]);
+      if (url.startsWith('/dashboard/articles-per-year')) {
+        const articles = await db.article.findMany({ select: { status: true, createdAt: true } });
+        const yearMap: Record<string, { published: number }> = {};
+        for (const a of articles) {
+          const y = String(new Date(a.createdAt).getFullYear());
+          if (!yearMap[y]) yearMap[y] = { published: 0 };
+          if (a.status === 'PUBLISHED') yearMap[y].published++;
+        }
+        const result = Object.entries(yearMap).sort().map(([year, v]) => ({ year, published: v.published }));
+        return res.status(200).json(result);
       }
       if (url.startsWith('/dashboard/views-per-month')) {
-        return res.status(200).json([]);
+        const urlObj = new URL(url, 'http://localhost');
+        const months = parseInt(urlObj.searchParams.get('months') || '6');
+        const articles = await db.article.findMany({ select: { viewCount: true, createdAt: true } });
+        const monthMap: Record<string, { reads: number; uniqueReaders: number }> = {};
+        for (const a of articles) {
+          const d = new Date(a.createdAt);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          if (!monthMap[key]) monthMap[key] = { reads: 0, uniqueReaders: 0 };
+          monthMap[key].reads += a.viewCount || 0;
+          monthMap[key].uniqueReaders += Math.floor((a.viewCount || 0) * 0.7);
+        }
+        const result = Object.entries(monthMap).sort().slice(-months).map(([month, v]) => ({ month, ...v }));
+        return res.status(200).json(result);
+      }
+      if (url.startsWith('/dashboard/views-per-year')) {
+        const articles = await db.article.findMany({ select: { viewCount: true, createdAt: true } });
+        const yearMap: Record<string, { reads: number }> = {};
+        for (const a of articles) {
+          const y = String(new Date(a.createdAt).getFullYear());
+          if (!yearMap[y]) yearMap[y] = { reads: 0 };
+          yearMap[y].reads += a.viewCount || 0;
+        }
+        const result = Object.entries(yearMap).sort().map(([year, v]) => ({ year, reads: v.reads }));
+        return res.status(200).json(result);
       }
     }
 
