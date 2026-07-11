@@ -5,8 +5,8 @@ import { setAuthToken, SPORTS_NEWS } from '@/infrastructure/api/client';
 import { LogIn, Loader2 } from 'lucide-react';
 
 export function LoginPage() {
-  const [email, setEmail] = useState('admin@radiocoringao.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('admin@radiocoringao.com.br');
+  const [password, setPassword] = useState('RadioCoringao@2026');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const login = useAuthStore((s) => s.login);
@@ -21,21 +21,21 @@ export function LoginPage() {
     setError('');
 
     try {
-      const res = await fetch(`${SPORTS_NEWS}/auth/login`, {
+      const res = await fetch(`${SPORTS_NEWS}/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Credenciais inválidas.');
-      login(data.accessToken, {
+      login(data.token, {
         id: data.user.id,
         name: data.user.name,
         email: data.user.email,
         role: data.user.role,
         avatar: data.user.avatar,
       });
-      setAuthToken(data.accessToken);
+      setAuthToken(data.token);
       navigate('/');
     } catch (err: any) {
       if (err.name === 'TypeError' && err.message.includes('fetch')) {
