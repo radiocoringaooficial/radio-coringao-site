@@ -233,6 +233,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
           await db.article.updateMany({ where: { categoryId: id }, data: { categoryId: fallback.id } });
         }
+        await db.category.updateMany({ where: { parentId: id }, data: { parentId: null } });
         await db.category.delete({ where: { id } });
         return res.status(204).end();
       }
