@@ -61,13 +61,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ─── DASHBOARD ────────────────────────────────────────────
     if (url === '/dashboard' || url === '/dashboard/') {
-      const [total, published, draft, totalViews, topArticles, allArticles] = await Promise.all([
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      const [total, published, draft, allArticles, recentViews, topViewed] = await Promise.all([
         db.article.count(),
         db.article.count({ where: { status: 'PUBLISHED' } }),
         db.article.count({ where: { status: 'DRAFT' } }),
-        db.article.aggregate({ _sum: { viewCount: true } }),
-        db.article.findMany({ take: 5, orderBy: { viewCount: 'desc' }, include: { category: { select: { name: true, color: true } }, author: { select: { name: true } } } }),
-        db.article.findMany({ select: { status: true, createdAt: true, viewCount: true } }),
+        db.article.findMany({ select: { status: true, createdAt: true } }),
+        db.articleView.count({ where: { viewedAt: { gte: thirtyDaysAgo } } }),
+        db.article.findMany({
+          take: 5,
+          orderBy: { viewCount: 'desc' },
+          where: { viewCount: { gt: 0 } },
+          include: { category: { select: { name: true, color: true } }, author: { select: { name: true } } },
+        }),
       ]);
 
       // Articles per month
@@ -82,8 +90,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const articlesPerMonth = Object.entries(monthMap).sort().map(([month, v]) => ({ month, ...v }));
 
       return res.status(200).json({
-        stats: { total, published, draft, totalViews: totalViews._sum.viewCount || 0 },
-        topArticles,
+        stats: { total, published, draft, totalViews: recentViews },
+        topArticles: topViewed,
         articlesPerMonth,
         readsPerMonth: [],
       });
@@ -549,25 +557,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (url.startsWith('/dashboard/views-per-month')) {
         const urlObj = new URL(url, 'http://localhost');
         const months = parseInt(urlObj.searchParams.get('months') || '6');
-        const articles = await db.article.findMany({ select: { viewCount: true, createdAt: true } });
+        const views = await db.articleView.findMany({ select: { viewedAt: true } });
         const monthMap: Record<string, { reads: number; uniqueReaders: number }> = {};
-        for (const a of articles) {
-          const d = new Date(a.createdAt);
+        for (const v of views) {
+          const d = new Date(v.viewedAt);
           const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
           if (!monthMap[key]) monthMap[key] = { reads: 0, uniqueReaders: 0 };
-          monthMap[key].reads += a.viewCount || 0;
-          monthMap[key].uniqueReaders += Math.floor((a.viewCount || 0) * 0.7);
+          monthMap[key].reads++;
+        }
+        // Unique readers = distinct ipHash per month (approximate from article_views)
+        const ipViews = await db.articleView.groupBy({ by: ['ipHash'], _count: true });
+        const uniqueTotal = ipViews.length;
+        for (const key of Object.keys(monthMap)) {
+          monthMap[key].uniqueReaders = Math.round(uniqueTotal * (monthMap[key].reads / Math.max(views.length, 1)));
         }
         const result = Object.entries(monthMap).sort().slice(-months).map(([month, v]) => ({ month, ...v }));
         return res.status(200).json(result);
       }
       if (url.startsWith('/dashboard/views-per-year')) {
-        const articles = await db.article.findMany({ select: { viewCount: true, createdAt: true } });
+        const views = await db.articleView.findMany({ select: { viewedAt: true } });
         const yearMap: Record<string, { reads: number }> = {};
-        for (const a of articles) {
-          const y = String(new Date(a.createdAt).getFullYear());
+        for (const v of views) {
+          const y = String(new Date(v.viewedAt).getFullYear());
           if (!yearMap[y]) yearMap[y] = { reads: 0 };
-          yearMap[y].reads += a.viewCount || 0;
+          yearMap[y].reads++;
         }
         const result = Object.entries(yearMap).sort().map(([year, v]) => ({ year, reads: v.reads }));
         return res.status(200).json(result);

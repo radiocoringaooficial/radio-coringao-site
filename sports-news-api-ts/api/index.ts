@@ -189,6 +189,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ test: 'ok' });
     }
 
+    // Register article view (by IP hash + day bucket)
+    // Register article view via GET /api/articles/view/:slug
+    const viewMatch = url.match(/^\/api\/articles\/view\/([^?]+)$/);
+    if (viewMatch && method === 'GET') {
+      const slug = viewMatch[1];
+      const article = await db.article.findUnique({ where: { slug }, select: { id: true } });
+      if (!article) return res.status(200).json({ ok: true, skip: true });
+      const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+      const ipHash = Buffer.from(String(ip)).toString('base64').slice(0, 16);
+      const ua = req.headers['user-agent'] || '';
+      const now = new Date();
+      const bucket = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      try {
+        await db.articleView.create({ data: { articleId: article.id, ipHash, userAgent: ua, viewBucket: bucket } });
+        await db.article.update({ where: { id: article.id }, data: { viewCount: { increment: 1 } } });
+      } catch {}
+      return res.status(200).json({ ok: true });
+    }
+      let id = articleId;
+      if (!id && slug) {
+        const article = await db.article.findUnique({ where: { slug }, select: { id: true } });
+        id = article?.id;
+      }
+      if (!id) return res.status(400).json({ error: 'articleId or slug required' });
+      const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
+      const ipHash = Buffer.from(String(ip)).toString('base64').slice(0, 16);
+      const ua = req.headers['user-agent'] || '';
+      const now = new Date();
+      const bucket = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      try {
+        await db.articleView.create({ data: { articleId: id, ipHash, userAgent: ua, viewBucket: bucket } });
+        await db.article.update({ where: { id }, data: { viewCount: { increment: 1 } } });
+        return res.status(201).json({ ok: true });
+      } catch {
+        return res.status(200).json({ ok: true, duplicate: true });
+      }
+    }
+
     // Default
     return res.status(404).json({ error: 'Route not found' });
   } catch (err: any) {
