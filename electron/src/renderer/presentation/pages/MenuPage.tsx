@@ -30,9 +30,16 @@ export function MenuPage() {
 
   useEffect(() => { load(); }, []);
 
+  const getNextOrder = (parentId?: string) => {
+    const siblings = items.filter((i) => (parentId || null) === (i.parentId || null));
+    if (siblings.length === 0) return '0';
+    const maxOrder = Math.max(...siblings.map((i) => i.order || 0));
+    return String(maxOrder + 1);
+  };
+
   const openNew = (parentId?: string) => {
     setEditing(null);
-    const newForm = { label: '', url: '', order: '0', parentId: parentId || '' };
+    const newForm = { label: '', url: '', order: getNextOrder(parentId), parentId: parentId || '' };
     setForm(newForm);
     setInitialForm(newForm);
     setModalOpen(true);

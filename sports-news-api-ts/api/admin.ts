@@ -286,6 +286,62 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(result);
       }
       if (method === 'POST') {
+        const parentId = req.body.parentId || null;
+        const requestedOrder = req.body.order ?? 0;
+        // Shift existing items to make room
+        await db.menuItem.updateMany({
+          where: { parentId, order: { gte: requestedOrder } },
+          data: { order: { increment: 1 } },
+        });
+        const item = await db.menuItem.create({ data: { label: req.body.label, url: req.body.url, target: req.body.target || '_self', order: requestedOrder, isActive: req.body.isActive ?? true, parentId } });
+        return res.status(201).json(item);
+      }
+    }
+
+    const menuMatch = url.match(/^\/menu\/([^/]+)$/);
+    if (menuMatch) {
+      const id = menuMatch[1];
+      if (method === 'PUT' || method === 'PATCH') {
+        const existing = await db.menuItem.findUnique({ where: { id } });
+        if (!existing) return res.status(404).json({ error: 'Item nao encontrado' });
+        const parentId = req.body.parentId !== undefined ? req.body.parentId : existing.parentId;
+        const newOrder = req.body.order !== undefined ? req.body.order : existing.order;
+        if (newOrder !== existing.order) {
+          // Remove from old position
+          await db.menuItem.updateMany({
+            where: { parentId: existing.parentId, order: { gt: existing.order } },
+            data: { order: { decrement: 1 } },
+          });
+          // Make room at new position
+          await db.menuItem.updateMany({
+            where: { parentId, order: { gte: newOrder } },
+            data: { order: { increment: 1 } },
+          });
+        }
+        const updateData: any = { ...req.body };
+        delete updateData.id;
+        delete updateData.createdAt;
+        const item = await db.menuItem.update({ where: { id }, data: updateData });
+        return res.status(200).json(item);
+      }
+      if (method === 'DELETE') {
+        const existing = await db.menuItem.findUnique({ where: { id } });
+        await db.menuItem.deleteMany({ where: { parentId: id } });
+        await db.menuItem.delete({ where: { id } });
+        if (existing) {
+          await db.menuItem.updateMany({
+            where: { parentId: existing.parentId, order: { gt: existing.order } },
+            data: { order: { decrement: 1 } },
+          });
+        }
+        return res.status(204).end();
+      }
+    }
+        }
+        const result = parents.map((p: any) => ({ ...p, children: childrenMap.get(p.id) || [] }));
+        return res.status(200).json(result);
+      }
+      if (method === 'POST') {
         const item = await db.menuItem.create({ data: { label: req.body.label, url: req.body.url, target: req.body.target || '_self', order: req.body.order || 0, isActive: req.body.isActive ?? true, parentId: req.body.parentId || null } });
         return res.status(201).json(item);
       }
