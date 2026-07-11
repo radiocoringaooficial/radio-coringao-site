@@ -266,16 +266,6 @@ export function CategoriesPage() {
           </div>
 
           <div>
-            <label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Descrição</label>
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="input-field h-20 resize-none"
-              placeholder="Descrição opcional da categoria"
-            />
-          </div>
-
-          <div>
             <label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Ordem</label>
             <input
               type="number"
