@@ -224,6 +224,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(cat);
       }
       if (method === 'DELETE') {
+        const count = await db.article.count({ where: { categoryId: id } });
+        if (count > 0) {
+          let fallback = await db.category.findFirst({ where: { name: 'Sem Categoria' } });
+          if (!fallback) {
+            fallback = await db.category.create({ data: { name: 'Sem Categoria', slug: 'sem-categoria', order: 999 } });
+          }
+          await db.article.updateMany({ where: { categoryId: id }, data: { categoryId: fallback.id } });
+        }
         await db.category.delete({ where: { id } });
         return res.status(204).end();
       }
