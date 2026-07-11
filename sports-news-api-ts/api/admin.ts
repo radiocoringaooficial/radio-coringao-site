@@ -337,28 +337,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(204).end();
       }
     }
-        }
-        const result = parents.map((p: any) => ({ ...p, children: childrenMap.get(p.id) || [] }));
-        return res.status(200).json(result);
-      }
-      if (method === 'POST') {
-        const item = await db.menuItem.create({ data: { label: req.body.label, url: req.body.url, target: req.body.target || '_self', order: req.body.order || 0, isActive: req.body.isActive ?? true, parentId: req.body.parentId || null } });
-        return res.status(201).json(item);
-      }
-    }
-
-    const menuMatch = url.match(/^\/menu\/([^/]+)$/);
-    if (menuMatch) {
-      const id = menuMatch[1];
-      if (method === 'PUT' || method === 'PATCH') {
-        const item = await db.menuItem.update({ where: { id }, data: req.body });
-        return res.status(200).json(item);
-      }
-      if (method === 'DELETE') {
-        await db.menuItem.delete({ where: { id } });
-        return res.status(204).end();
-      }
-    }
 
     // ─── SPONSORS ─────────────────────────────────────────────
     if (url === '/patrocinadores' || url === '/patrocinadores/') {
