@@ -173,10 +173,30 @@ export function Header() {
   const [navData, setNavData] = useState<Record<string, any>>({});
 
   useEffect(() => {
+    // Fetch menu FIRST so it shows immediately, then enrich in background
+    fetchJson(`${NEWS_API}/menu`)
+      .then((menuRaw) => {
+        const menu = menuRaw
+          .filter((m: any) => !m.parentId && m.isActive !== false)
+          .sort((a: any, b: any) => a.order - b.order)
+          .map((m: any) => ({
+            label: m.label,
+            url: m.url,
+            children: (m.children || [])
+              .filter((c: any) => c.isActive !== false)
+              .sort((a: any, b: any) => a.order - b.order)
+              .map((c: any) => ({ label: c.label, url: c.url })),
+          }));
+        setNavData((prev) => ({ ...prev, menu }));
+      })
+      .catch(() => {});
+  }, []);
+
+  // Background: fetch sport data, standings, extras (non-blocking)
+  useEffect(() => {
     (async () => {
       const d: Record<string, any> = {};
 
-      // 1) Fetch matches + articles per sport in parallel
       const sportEntries = Object.entries(SPORT_CATEGORIES);
       const sportResults = await Promise.all(
         sportEntries.map(async ([sport, matchCat]) => {
@@ -198,7 +218,6 @@ export function Header() {
         };
       }
 
-      // 2) Standings per competition
       const COMPETITION_MAP: Record<string, string> = {
         "Brasileirão Série A": "brasileirao",
         "Libertadores": "libertadores",
@@ -227,7 +246,6 @@ export function Header() {
         }
       } catch {}
 
-      // 3) Extra news categories for Notícias and Eventos submenus
       const [ultimas, politica, eventos, neoArena, fielTorcedor, transfers] = await Promise.all([
         fetchJson(`${NEWS_API}/noticias?limit=6`),
         fetchJson(`${NEWS_API}/noticias?category=politica&limit=3`),
@@ -252,21 +270,7 @@ export function Header() {
         id: m.id,
       }));
 
-      // 4) Menu structure
-      const menuRaw = await fetchJson(`${NEWS_API}/menu`);
-      d.menu = menuRaw
-        .filter((m: any) => !m.parentId && m.isActive !== false)
-        .sort((a: any, b: any) => a.order - b.order)
-        .map((m: any) => ({
-          label: m.label,
-          url: m.url,
-          children: (m.children || [])
-            .filter((c: any) => c.isActive !== false)
-            .sort((a: any, b: any) => a.order - b.order)
-            .map((c: any) => ({ label: c.label, url: c.url })),
-        }));
-
-      setNavData(d);
+      setNavData((prev) => ({ ...prev, ...d }));
     })();
   }, []);
 
