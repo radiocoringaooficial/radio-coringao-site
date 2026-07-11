@@ -111,10 +111,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json(articles);
     }
 
-    // Menu
+    // Menu (nested: parents with children array)
     if (url === '/api/menu' || url.startsWith('/api/menu?')) {
-      const items = await db.menuItem.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
-      return res.status(200).json(items);
+      const allItems = await db.menuItem.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
+      const parents = allItems.filter((i: any) => !i.parentId);
+      const childrenMap = new Map<string, any[]>();
+      for (const item of allItems) {
+        if (item.parentId) {
+          const list = childrenMap.get(item.parentId) || [];
+          list.push({ label: item.label, url: item.url });
+          childrenMap.set(item.parentId, list);
+        }
+      }
+      const result = parents.map((p: any) => ({ ...p, children: childrenMap.get(p.id) || [] }));
+      return res.status(200).json(result);
     }
 
     // Categorias
@@ -131,8 +141,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Menu
     if (url === '/api/navbar' || url.startsWith('/api/navbar?')) {
-      const items = await db.menuItem.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
-      return res.status(200).json(items);
+      const allItems = await db.menuItem.findMany({ where: { isActive: true }, orderBy: { order: 'asc' } });
+      const parents = allItems.filter((i: any) => !i.parentId);
+      const childrenMap = new Map<string, any[]>();
+      for (const item of allItems) {
+        if (item.parentId) {
+          const list = childrenMap.get(item.parentId) || [];
+          list.push({ label: item.label, url: item.url });
+          childrenMap.set(item.parentId, list);
+        }
+      }
+      const result = parents.map((p: any) => ({ ...p, children: childrenMap.get(p.id) || [] }));
+      return res.status(200).json(result);
     }
 
     // Eventos
