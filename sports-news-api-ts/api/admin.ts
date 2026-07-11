@@ -200,7 +200,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const menuMatch = url.match(/^\/menu\/([^/]+)$/);
     if (menuMatch) {
       const id = menuMatch[1];
-      if (method === 'PUT') {
+      if (method === 'PUT' || method === 'PATCH') {
         const item = await db.menuItem.update({ where: { id }, data: req.body });
         return res.status(200).json(item);
       }
