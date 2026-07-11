@@ -226,16 +226,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (method === 'DELETE') {
         try {
           await db.$transaction(async (tx: any) => {
-            // 1) move articles
+            const catToDelete = await tx.category.findUnique({ where: { id } });
+            const fallbackSlug = catToDelete?.slug === 'sem-categoria' ? 'futebol' : 'sem-categoria';
             const fallback = await tx.category.upsert({
-              where: { slug: 'sem-categoria' },
+              where: { slug: fallbackSlug },
               update: {},
               create: { name: 'Sem Categoria', slug: 'sem-categoria', order: 999 },
             });
             await tx.article.updateMany({ where: { categoryId: id }, data: { categoryId: fallback.id } });
-            // 2) unlink children
             await tx.category.updateMany({ where: { parentId: id }, data: { parentId: null } });
-            // 3) delete
             await tx.category.delete({ where: { id } });
           });
           return res.status(200).json({ ok: true });
