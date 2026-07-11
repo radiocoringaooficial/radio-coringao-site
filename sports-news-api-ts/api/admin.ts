@@ -214,7 +214,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (catMatch) {
       const id = catMatch[1];
       if (method === 'PUT' || method === 'PATCH') {
-        const cat = await db.category.update({ where: { id }, data: req.body });
+        const updateData: any = { ...req.body };
+        if (updateData.name && !updateData.slug) {
+          updateData.slug = updateData.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        }
+        delete updateData.id;
+        delete updateData.createdAt;
+        const cat = await db.category.update({ where: { id }, data: updateData });
         return res.status(200).json(cat);
       }
       if (method === 'DELETE') {
