@@ -226,10 +226,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (method === 'DELETE') {
         const count = await db.article.count({ where: { categoryId: id } });
         if (count > 0) {
-          let fallback = await db.category.findFirst({ where: { name: 'Sem Categoria' } });
-          if (!fallback) {
-            fallback = await db.category.create({ data: { name: 'Sem Categoria', slug: 'sem-categoria', order: 999 } });
-          }
+          const fallback = await db.category.upsert({
+            where: { slug: 'sem-categoria' },
+            update: {},
+            create: { name: 'Sem Categoria', slug: 'sem-categoria', order: 999 },
+          });
           await db.article.updateMany({ where: { categoryId: id }, data: { categoryId: fallback.id } });
         }
         await db.category.delete({ where: { id } });
