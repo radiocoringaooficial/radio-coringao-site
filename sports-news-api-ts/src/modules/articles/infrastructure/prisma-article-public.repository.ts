@@ -308,6 +308,11 @@ export class PrismaArticlePublicRepository implements IArticlePublicRepository {
           viewBucket: utcDayBucket(),
         },
       });
+      // Incrementa o viewCount no artigo para manter consistente
+      await prisma.article.update({
+        where: { id },
+        data: { viewCount: { increment: 1 } },
+      });
     } catch (err: any) {
       // P2002 = violação da constraint única (articleId, ipHash, viewBucket)
       // — esse IP já leu esse artigo hoje. Comportamento esperado, não é erro.
@@ -323,38 +328,15 @@ export class PrismaArticlePublicRepository implements IArticlePublicRepository {
   }
 
   async findForDashboard() {
-    const topByViews = await prisma.$queryRaw<{ id: string; uniqueReaders: bigint }[]>`
-      SELECT av."articleId" as id, COUNT(DISTINCT av."ipHash")::int as "uniqueReaders"
-      FROM article_views av
-      INNER JOIN articles a ON a.id = av."articleId"
-      WHERE a.status = 'PUBLISHED'
-      GROUP BY av."articleId"
-      ORDER BY "uniqueReaders" DESC
-      LIMIT 5
-    `;
-
-    let topArticles: any[] = [];
-    if (topByViews.length > 0) {
-      const ids = topByViews.map((r) => r.id);
-      const viewsMap = new Map(topByViews.map((r) => [r.id, Number(r.uniqueReaders)]));
-      const found = await prisma.article.findMany({
-        where: { id: { in: ids } },
-        select: { id: true, title: true, slug: true, publishedAt: true },
-      });
-      const orderMap = new Map(ids.map((id, i) => [id, i]));
-      topArticles = found
-        .sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0))
-        .map((a) => ({ ...a, viewCount: viewsMap.get(a.id) ?? 0 }));
-    } else {
-      // Sem views — artigos aleatórios com viewCount 0
-      topArticles = await prisma.article.findMany({
-        where: { status: 'PUBLISHED' },
-        orderBy: { publishedAt: 'desc' },
-        take: 5,
-        select: { id: true, title: true, slug: true, publishedAt: true },
-      });
-      topArticles = topArticles.map((a) => ({ ...a, viewCount: 0 }));
-    }
+    const topArticles = await prisma.article.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: { viewCount: 'desc' },
+      take: 5,
+      select: {
+        id: true, title: true, slug: true, publishedAt: true,
+        viewCount: true,
+      },
+    });
 
     const recentArticles = await prisma.article.findMany({
       orderBy: { updatedAt: 'desc' },
@@ -373,15 +355,15 @@ export class PrismaArticlePublicRepository implements IArticlePublicRepository {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const [total, published, draft, review, viewsResult, last30Days] = await Promise.all([
+    const [total, published, draft, review, viewsAgg, last30Days] = await Promise.all([
       prisma.article.count(),
       prisma.article.count({ where: { status: 'PUBLISHED' } }),
       prisma.article.count({ where: { status: 'DRAFT' } }),
       prisma.article.count({ where: { status: 'REVIEW' } }),
-      prisma.articleView.aggregate({ _count: true }),
+      prisma.article.aggregate({ _sum: { viewCount: true } }),
       prisma.article.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
     ]);
 
-    return { total, published, draft, review, totalViews: viewsResult._count || 0, last30Days };
+    return { total, published, draft, review, totalViews: viewsAgg._sum.viewCount || 0, last30Days };
   }
 }

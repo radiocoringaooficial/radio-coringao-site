@@ -295,48 +295,18 @@ export class PrismaArticleAdminRepository implements IArticleAdminRepository {
 
   // ─── Dashboard / Stats ───────────────────────────────────
   async findForDashboard() {
-    const topByViews = await prisma.$queryRaw<{ id: string; uniqueReaders: bigint }[]>`
-      SELECT av."articleId" as id, COUNT(DISTINCT av."ipHash")::int as "uniqueReaders"
-      FROM article_views av
-      INNER JOIN articles a ON a.id = av."articleId"
-      WHERE a.status = 'PUBLISHED'
-      GROUP BY av."articleId"
-      ORDER BY "uniqueReaders" DESC
-      LIMIT 5
-    `;
-
-    let topArticles: any[] = [];
-    if (topByViews.length > 0) {
-      const ids = topByViews.map((r) => r.id);
-      const viewsMap = new Map(topByViews.map((r) => [r.id, Number(r.uniqueReaders)]));
-      const found = await prisma.article.findMany({
-        where: { id: { in: ids } },
-        select: {
-          id: true, title: true, slug: true, publishedAt: true,
-          coverImage: true,
-          category: { select: { name: true, color: true } },
-          author: { select: { name: true } },
-        },
-      });
-      const orderMap = new Map(ids.map((id, i) => [id, i]));
-      topArticles = found
-        .sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0))
-        .map((a) => ({ ...a, viewCount: viewsMap.get(a.id) ?? 0 }));
-    } else {
-      // Sem views — artigos aleatórios com viewCount 0
-      topArticles = await prisma.article.findMany({
-        where: { status: 'PUBLISHED' },
-        orderBy: { publishedAt: 'desc' },
-        take: 5,
-        select: {
-          id: true, title: true, slug: true, publishedAt: true,
-          coverImage: true,
-          category: { select: { name: true, color: true } },
-          author: { select: { name: true } },
-        },
-      });
-      topArticles = topArticles.map((a) => ({ ...a, viewCount: 0 }));
-    }
+    const topArticles = await prisma.article.findMany({
+      where: { status: 'PUBLISHED' },
+      orderBy: { viewCount: 'desc' },
+      take: 5,
+      select: {
+        id: true, title: true, slug: true, publishedAt: true,
+        viewCount: true,
+        coverImage: true,
+        category: { select: { name: true, color: true } },
+        author: { select: { name: true } },
+      },
+    });
 
     const recentArticles = await prisma.article.findMany({
         orderBy: { updatedAt: 'desc' },
@@ -355,12 +325,12 @@ export class PrismaArticleAdminRepository implements IArticleAdminRepository {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const [total, published, draft, review, viewsResult, last30Days] = await Promise.all([
+    const [total, published, draft, review, viewsAgg, last30Days] = await Promise.all([
       prisma.article.count(),
       prisma.article.count({ where: { status: 'PUBLISHED' } }),
       prisma.article.count({ where: { status: 'DRAFT' } }),
       prisma.article.count({ where: { status: 'REVIEW' } }),
-      prisma.articleView.aggregate({ _count: true }),
+      prisma.article.aggregate({ _sum: { viewCount: true } }),
       prisma.article.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
     ]);
 
@@ -369,7 +339,7 @@ export class PrismaArticleAdminRepository implements IArticleAdminRepository {
       published,
       draft,
       review,
-      totalViews: viewsResult._count || 0,
+      totalViews: viewsAgg._sum.viewCount || 0,
       last30Days,
     };
   }

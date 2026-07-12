@@ -209,7 +209,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Corinthians goleia São Paulo 4x1 e lidera o Paulistão 2026 | Rádio Coringão',
       metaDescription: 'Timão aplicou goleada histórica no clássico e assume liderança isolada do Paulistão 2026. Confira os detalhes do jogo.',
-      viewCount: 15420,
+      viewCount: 1245,
       publishedAt: new Date('2026-07-06T14:30:00Z'),
     },
     // --- Artigo 2: ANÁLISE ---
@@ -235,7 +235,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Análise tática: Corinthians 4x1 São Paulo | Tática de Ramón Díaz | Rádio Coringão',
       metaDescription: 'Análise completa da tática usada pelo Corinthians para golear o São Paulo no Paulistão 2026.',
-      viewCount: 8930,
+      viewCount: 876,
       publishedAt: new Date('2026-07-07T09:00:00Z'),
     },
     // --- Artigo 3: ENTREVISTA ---
@@ -268,7 +268,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Memphis Depay: "O Corinthians é a maior paixão do Brasil" | Rádio Coringão',
       metaDescription: 'Entrevista exclusiva com Memphis Depay, atacante do Corinthians, sobre sua carreira e objetivos no Timão.',
-      viewCount: 23100,
+      viewCount: 1480,
       publishedAt: new Date('2026-07-05T16:00:00Z'),
     },
     // --- Artigo 4: NOTÍCIA ---
@@ -294,7 +294,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Corinthians renova com Yuri Alberto até 2029 | Rádio Coringão',
       metaDescription: 'Yuri Alberto renova contrato com o Corinthians até 2029 com cláusula de R$ 500 milhões.',
-      viewCount: 31500,
+      viewCount: 1120,
       publishedAt: new Date('2026-07-04T11:00:00Z'),
     },
     // --- Artigo 5: ANÁLISE colunista ---
@@ -322,7 +322,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Por que o Corinthians é o maior candidato ao hexa do Paulistão | Rádio Coringão',
       metaDescription: 'Colunista Ricardo Mendes analisa a campanha do Corinthians no Paulistão 2026.',
-      viewCount: 12800,
+      viewCount: 750,
       publishedAt: new Date('2026-07-03T08:00:00Z'),
     },
     // --- Artigo 6: LIVE ---
@@ -355,7 +355,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'AO VIVO: Corinthians x Palmeiras — Derby pelo Brasileirão 2026 | Rádio Coringão',
       metaDescription: 'Cobertura ao vivo do Derby Paulista entre Corinthians e Palmeiras pelo Brasileirão 2026.',
-      viewCount: 42300,
+      viewCount: 1500,
       publishedAt: new Date('2026-07-10T21:00:00Z'),
     },
     // --- Artigo 7: NOTÍCIA transferências ---
@@ -381,7 +381,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Corinthians negocia meia argentino do River Plate | Rádio Coringão',
       metaDescription: 'Time corintiano busca reforço para o meio-campo visando a segunda metade da temporada 2026.',
-      viewCount: 19200,
+      viewCount: 920,
       publishedAt: new Date('2026-07-08T15:30:00Z'),
     },
     // --- Artigo 8: NOTÍCIA ---
@@ -407,7 +407,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Ramón Díaz eleito melhor treinador do Paulistão 2026 | Rádio Coringão',
       metaDescription: 'Ramón Díaz é reconhecido como melhor técnico do Paulistão 2026.',
-      viewCount: 14700,
+      viewCount: 680,
       publishedAt: new Date('2026-07-02T18:00:00Z'),
     },
     // --- Artigo 9: ANÁLISE tática ---
@@ -435,7 +435,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'A evolução tática do Corinthians de Ramón Díaz | Rádio Coringão',
       metaDescription: 'Análise completa da evolução tática do Corinthians sob comando de Ramón Díaz.',
-      viewCount: 11400,
+      viewCount: 540,
       publishedAt: new Date('2026-07-01T10:00:00Z'),
     },
     // --- Artigo 10: NOTÍCIA Copa do Brasil ---
@@ -464,7 +464,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Corinthians goleia Flamengo e avança na Copa do Brasil 2026 | Rádio Coringão',
       metaDescription: 'Timão goleou o Flamengo no Maracanã por 3x0 e avança para semifinal da Copa do Brasil.',
-      viewCount: 38900,
+      viewCount: 1380,
       publishedAt: new Date('2026-07-09T22:00:00Z'),
     },
     // --- Artigo 11: NOTÍCIA base ---
@@ -490,7 +490,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Garoto da base do Corinthians é convocado para Seleção Sub-20 | Rádio Coringão',
       metaDescription: 'João Pedro, meia de 19 anos, é convocado para Seleção Sub-20 após destaque na base do Corinthians.',
-      viewCount: 9800,
+      viewCount: 430,
       publishedAt: new Date('2026-07-08T12:00:00Z'),
     },
     // --- Artigo 12: NOTÍCIA estádio ---
@@ -516,7 +516,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Neo Química Arena recebe reforma para Copa do Mundo 2026 | Rádio Coringão',
       metaDescription: 'Estádio do Corinthians será reformado por R$ 45 milhões para a Copa do Mundo 2026.',
-      viewCount: 16500,
+      viewCount: 890,
       publishedAt: new Date('2026-07-06T09:00:00Z'),
     },
     // --- Artigo 13: ANÁLISE Brasileirão ---
@@ -551,7 +551,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Classificação do Brasileirão 2026 — Corinthians lidera | Rádio Coringão',
       metaDescription: 'Corinthians lidera o Brasileirão 2026 com 22 pontos em 8 jogos.',
-      viewCount: 27600,
+      viewCount: 1050,
       publishedAt: new Date('2026-07-11T08:00:00Z'),
     },
     // --- Artigo 14: NOTÍCIA feminino ---
@@ -577,7 +577,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Corinthians Feminino goleia Palmeiras e vai à final | Rádio Coringão',
       metaDescription: 'Time feminino do Corinthians goleia o Palmeiras por 5x1 na semifinal do Paulistão Feminino.',
-      viewCount: 21300,
+      viewCount: 650,
       publishedAt: new Date('2026-07-07T19:00:00Z'),
     },
     // --- Artigo 15: NOTÍCIA Libertadores ---
@@ -604,7 +604,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Corinthians x Peñarol — Libertadores 2026 | Rádio Coringão',
       metaDescription: 'Corinthians enfrenta o Peñarol nas oitavas de final da Copa Libertadores 2026.',
-      viewCount: 24800,
+      viewCount: 780,
       publishedAt: new Date('2026-07-10T10:00:00Z'),
     },
     // --- Artigo 16: NOTÍCIA Copa do Mundo ---
@@ -630,7 +630,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Copa do Mundo 2026: Neo Química Arena será sede | Rádio Coringão',
       metaDescription: 'FIFA confirma Neo Química Arena como sede de seis jogos da Copa do Mundo 2026.',
-      viewCount: 33400,
+      viewCount: 1200,
       publishedAt: new Date('2026-07-05T14:00:00Z'),
     },
     // --- Artigo 17: NOTÍCIA basquete ---
@@ -656,7 +656,7 @@ async function main() {
       categoryId: categoryIds['basquete'],
       metaTitle: 'Corinthians Basquete vence Franca e se classifica para playoff | Rádio Coringão',
       metaDescription: 'Time de basquete do Corinthians garante vaga nos playoffs do NBB 2026.',
-      viewCount: 6200,
+      viewCount: 310,
       publishedAt: new Date('2026-07-09T20:00:00Z'),
     },
     // --- Artigo 18: NOTÍCIA MMA ---
@@ -682,7 +682,7 @@ async function main() {
       categoryId: categoryIds['mma'],
       metaTitle: 'Charles Oliveira vs Islam Makhachev no UFC 312 | Rádio Coringão',
       metaDescription: 'Ex-campeão Charles Oliveira enfrenta Islam Makhachev na revanche pelo cinturão dos leves.',
-      viewCount: 18500,
+      viewCount: 520,
       publishedAt: new Date('2026-07-04T16:00:00Z'),
     },
     // --- Artigo 19: NOTÍCIA automobilismo ---
@@ -708,7 +708,7 @@ async function main() {
       categoryId: categoryIds['automobilismo'],
       metaTitle: 'Thiago Camilo vence Stock Car em Interlagos | Rádio Coringão',
       metaDescription: 'Veterano piloto conquista vitória na etapa de Interlagos da Stock Car 2026.',
-      viewCount: 8700,
+      viewCount: 380,
       publishedAt: new Date('2026-07-03T20:00:00Z'),
     },
     // --- Artigo 20: NOTÍCIA tênis ---
@@ -734,7 +734,7 @@ async function main() {
       categoryId: categoryIds['tenis'],
       metaTitle: 'Thiago Monteiro na semifinal do ATP 250 de Bastad | Rádio Coringão',
       metaDescription: 'Tenista brasileiro chega à semifinal e busca primeiro título ATP da carreira.',
-      viewCount: 7100,
+      viewCount: 290,
       publishedAt: new Date('2026-07-11T12:00:00Z'),
     },
     // --- Artigo 21: NOTÍCIA natação ---
@@ -760,7 +760,7 @@ async function main() {
       categoryId: categoryIds['natacao'],
       metaTitle: 'César Cielo abre clínica de natação em São Paulo | Rádio Coringão',
       metaDescription: 'Ex-campeão olímpico abre escola de natação para crianças e adultos em São Paulo.',
-      viewCount: 5400,
+      viewCount: 220,
       publishedAt: new Date('2026-07-02T14:00:00Z'),
     },
     // --- Artigo 22: ANÁLISE Corinthians no exterior ---
@@ -787,7 +787,7 @@ async function main() {
       categoryId: categoryIds['futebol'],
       metaTitle: 'Corinthians: ranking de torcidas internacionais | Rádio Coringão',
       metaDescription: 'Pesquisa revela que o Corinthians tem mais de 15 milhões de torcedores fora do Brasil.',
-      viewCount: 13200,
+      viewCount: 470,
       publishedAt: new Date('2026-07-01T15:00:00Z'),
     },
   ];
@@ -798,7 +798,7 @@ async function main() {
     const article = articlesData[i];
     const result = await prisma.article.upsert({
       where: { slug: article.slug },
-      update: { title: article.title, excerpt: article.excerpt },
+      update: { title: article.title, excerpt: article.excerpt, viewCount: article.viewCount },
       create: article,
     });
     createdArticleIds.push(result.id);

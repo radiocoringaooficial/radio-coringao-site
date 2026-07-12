@@ -78,4 +78,10 @@ export async function articleAdminRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: [requirePermission('articles:archive')] },
     articleAdminController.unarchive,
   );
+
+  // ── Resetar viewCount de todos os artigos ────────────────
+  app.post('/articles/reset-view-counts', { preHandler: [requirePermission('articles:delete')] }, async (_request, reply) => {
+    const result = await prisma.article.updateMany({ data: { viewCount: 0 } });
+    return reply.send({ reset: true, count: result.count });
+  });
 }
