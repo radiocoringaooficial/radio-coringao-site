@@ -17,7 +17,7 @@ export class JwtService {
   private readonly refreshExpiresIn: string;
 
   constructor() {
-    this.secret = process.env.JWT_SECRET!;
+    this.secret = process.env.JWT_SECRET || 'fallback-secret-key-change-in-production';
     this.accessExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
     this.refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '30d';
   }
