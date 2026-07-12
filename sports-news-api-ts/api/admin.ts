@@ -32,7 +32,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const method = req.method || 'GET';
 
   try {
-    const db = await getPrisma();
+    let db;
+    try {
+      db = await getPrisma();
+    } catch (err: any) {
+      console.error('Prisma connection error:', err?.message, err?.stack);
+      return res.status(500).json({ error: 'Database connection failed', message: err?.message });
+    }
 
     // ─── LOGIN ────────────────────────────────────────────────
     if (url === '/login' && method === 'POST') {
@@ -64,19 +70,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const now = new Date();
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      const [total, published, draft, allArticles, recentViews, topViewed] = await Promise.all([
+      const [total, published, draft, allArticles, recentViews, topViewedRaw] = await Promise.all([
         db.article.count(),
         db.article.count({ where: { status: 'PUBLISHED' } }),
         db.article.count({ where: { status: 'DRAFT' } }),
         db.article.findMany({ select: { status: true, createdAt: true } }),
         db.articleView.count({ where: { viewedAt: { gte: thirtyDaysAgo } } }),
-        db.article.findMany({
+        db.articleView.groupBy({
+          by: ['articleId'],
+          _count: { id: true },
+          orderBy: { _count: { id: 'desc' } },
           take: 5,
-          orderBy: { viewCount: 'desc' },
-          where: { viewCount: { gt: 0 } },
-          include: { category: { select: { name: true, color: true } }, author: { select: { name: true } } },
         }),
       ]);
+
+      // Busca dados dos artigos mais vistos (IPs únicos por dia)
+      const topIds = topViewedRaw.map((r) => r.articleId);
+      const topArticles = topIds.length
+        ? await db.article.findMany({
+            where: { id: { in: topIds } },
+            include: { category: { select: { name: true, color: true } }, author: { select: { name: true } } },
+          })
+        : [];
+      const viewCountMap = new Map(topViewedRaw.map((r) => [r.articleId, r._count.id]));
+      const topViewed = topArticles
+        .map((a: any) => ({ ...a, viewCount: viewCountMap.get(a.id) || 0 }))
+        .sort((a: any, b: any) => b.viewCount - a.viewCount);
 
       // Articles per month
       const monthMap: Record<string, { published: number; review: number }> = {};
@@ -89,11 +108,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       const articlesPerMonth = Object.entries(monthMap).sort().map(([month, v]) => ({ month, ...v }));
 
+      // Reads per month from articleView (unique IPs per day bucket)
+      const allViews = await db.articleView.findMany({ select: { viewedAt: true } });
+      const readsMonthMap: Record<string, { reads: number }> = {};
+      for (const v of allViews) {
+        const d = new Date(v.viewedAt);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        if (!readsMonthMap[key]) readsMonthMap[key] = { reads: 0 };
+        readsMonthMap[key].reads++;
+      }
+      const readsPerMonth = Object.entries(readsMonthMap).sort().map(([month, v]) => ({ month, ...v }));
+
       return res.status(200).json({
         stats: { total, published, draft, totalViews: recentViews },
         topArticles: topViewed,
         articlesPerMonth,
-        readsPerMonth: [],
+        readsPerMonth,
       });
     }
 
@@ -595,6 +625,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ─── CONTENT IMAGE UPLOAD ─────────────────────────────────
     if (url === '/articles/content-image' && method === 'POST') {
       return res.status(200).json({ url: '' });
+    }
+
+    // ─── RESET VIEW COUNTS ────────────────────────────────────
+    if (url === '/reset-viewcounts' && method === 'POST') {
+      // Zera todos os viewCount e recalcula a partir de articleView (IPs únicos por dia)
+      await db.article.updateMany({ data: { viewCount: 0 } });
+      const uniqueViews = await db.articleView.groupBy({
+        by: ['articleId'],
+        _count: { id: true },
+      });
+      let updated = 0;
+      for (const row of uniqueViews) {
+        await db.article.update({
+          where: { id: row.articleId },
+          data: { viewCount: row._count.id },
+        });
+        updated++;
+      }
+      return res.status(200).json({ ok: true, reset: true, articlesRecalculated: updated });
     }
 
     return res.status(404).json({ error: 'Route not found' });

@@ -5,7 +5,7 @@ import { setAuthToken, SPORTS_NEWS } from '@/infrastructure/api/client';
 import { LogIn, Loader2 } from 'lucide-react';
 
 export function LoginPage() {
-  const [email, setEmail] = useState('admin@radiocoringao.com');
+  const [email, setEmail] = useState('admin@radiocoringao.com.br');
   const [password, setPassword] = useState('RadioCoringao@2026');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ export function LoginPage() {
     setError('');
 
     try {
-      const res = await fetch(`${SPORTS_NEWS}/auth/login`, {
+      const res = await fetch(`${SPORTS_NEWS}/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
