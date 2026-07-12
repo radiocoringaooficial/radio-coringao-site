@@ -3,11 +3,8 @@ import type { FastifyInstance } from 'fastify';
 import { authController } from '../../shared/container';
 import { loginSchema } from './auth.schema';
 import { authenticate } from '../../shared/plugins/auth.plugin';
-import { registerAuthRateLimit } from '../../shared/plugins/auth-rate-limit.plugin';
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
-  await registerAuthRateLimit(app);
-
   app.post('/login', { schema: loginSchema }, authController.login);
   app.post('/refresh', authController.refresh);
 
