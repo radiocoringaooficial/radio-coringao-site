@@ -116,11 +116,18 @@ export async function buildApp() {
   registerErrorHandler(app);
 
   // ─── Health check ─────────────────────────────────────────
-  app.get('/api/health', async () => ({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-  }));
+  app.get('/api/health', async () => {
+    const { PrismaClient } = await import('@prisma/client');
+    const p = new PrismaClient();
+    const articleCount = await p.article.count();
+    await p.$disconnect();
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      articleCount,
+    };
+  });
 
   // ─── Auth ─────────────────────────────────────────────────
   await app.register(authRoutes, { prefix: '/api/auth' });
