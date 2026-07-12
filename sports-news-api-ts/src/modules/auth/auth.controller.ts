@@ -6,9 +6,14 @@ export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
   login = async (request: FastifyRequest, reply: FastifyReply) => {
-    const { email, password } = request.body as { email: string; password: string };
-    const result = await this.authService.login(email, password);
-    return reply.code(200).send(result);
+    try {
+      const { email, password } = request.body as { email: string; password: string };
+      const result = await this.authService.login(email, password);
+      return reply.code(200).send(result);
+    } catch (err: any) {
+      console.error('LOGIN_ERROR:', err.message, err.stack);
+      throw err;
+    }
   };
 
   refresh = async (request: FastifyRequest, reply: FastifyReply) => {

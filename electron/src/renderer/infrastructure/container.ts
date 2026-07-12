@@ -4,8 +4,8 @@ import { ApiNewsRepository } from './repositories/news-repository-api';
 import { ApiClubeRepository } from './repositories/clube-repository-api';
 import { initHttpClients, getNewsClient } from './api/http-client';
 
-const NEWS_API_URL = import.meta.env.VITE_SPORTS_NEWS_API_URL || 'http://localhost:3007/api';
-const CLUBE_API_URL = import.meta.env.VITE_CLUBE_API_URL || 'http://localhost:3010/api';
+const NEWS_API_URL = 'https://radiocoringao-news.vercel.app/api';
+const CLUBE_API_URL = 'https://radiocoringao-clube.vercel.app/api';
 
 let initialized = false;
 function ensureInit() {

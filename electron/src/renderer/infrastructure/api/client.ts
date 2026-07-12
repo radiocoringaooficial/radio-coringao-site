@@ -1,5 +1,5 @@
-const SPORTS_NEWS = import.meta.env.VITE_SPORTS_NEWS_API_URL || 'http://localhost:3007/api';
-const CLUBE = import.meta.env.VITE_CLUBE_API_URL || 'http://localhost:3010/api';
+const SPORTS_NEWS = 'https://radiocoringao-news.vercel.app/api';
+const CLUBE = 'https://radiocoringao-clube.vercel.app/api';
 
 let tokenCache: string | null = null;
 

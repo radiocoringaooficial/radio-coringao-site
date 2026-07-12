@@ -1,6 +1,6 @@
 export const API_URLS = {
-  sportsNews: import.meta.env.VITE_SPORTS_NEWS_API_URL || 'http://localhost:3001/api',
-  clube: import.meta.env.VITE_CLUBE_API_URL || 'http://localhost:3010/api',
+  sportsNews: 'https://radiocoringao-news.vercel.app/api',
+  clube: 'https://radiocoringao-clube.vercel.app/api',
 };
 
 export const ARTICLE_STATUSES = ['DRAFT', 'REVIEW', 'PUBLISHED', 'ARCHIVED'] as const;
