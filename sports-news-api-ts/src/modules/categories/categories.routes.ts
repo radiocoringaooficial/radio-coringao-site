@@ -18,13 +18,13 @@ export async function categoryAdminRoutes(app: FastifyInstance): Promise<void> {
   );
 
   app.patch(
-    '/categories/:id',
+    '/categorias/:id',
     { preHandler: [requirePermission('categories:manage')], schema: updateCategorySchema },
     categoryController.update,
   );
 
   app.delete(
-    '/categories/:id',
+    '/categorias/:id',
     { preHandler: [requirePermission('categories:delete')] },
     categoryController.delete,
   );
