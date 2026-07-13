@@ -117,12 +117,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!readsMonthMap[key]) readsMonthMap[key] = { reads: 0 };
         readsMonthMap[key].reads++;
       }
-      const readsPerMonth = Object.entries(readsMonthMap).sort().map(([month, v]) => ({ month, ...v }));
+      // Fill trailing 6 months with 0 for sparkline
+      const filledReads: Record<string, { reads: number }> = {};
+      const now2 = new Date();
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now2.getFullYear(), now2.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        filledReads[key] = readsMonthMap[key] || { reads: 0 };
+      }
+      const readsPerMonth = Object.entries(filledReads).map(([month, v]) => ({ month, ...v }));
+
+      // Fill trailing 6 months for articlesPerMonth too
+      const filledArticles: Record<string, { published: number; review: number }> = {};
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now2.getFullYear(), now2.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        filledArticles[key] = monthMap[key] || { published: 0, review: 0 };
+      }
+      const articlesPerMonthFilled = Object.entries(filledArticles).map(([month, v]) => ({ month, ...v }));
 
       return res.status(200).json({
         stats: { total, published, draft, totalViews: recentViews },
         topArticles: topViewed,
-        articlesPerMonth,
+        articlesPerMonth: articlesPerMonthFilled,
         readsPerMonth,
       });
     }
@@ -570,49 +587,83 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (a.status === 'PUBLISHED') monthMap[key].published++;
           else if (a.status === 'REVIEW') monthMap[key].review++;
         }
-        const result = Object.entries(monthMap).sort().slice(-months).map(([month, v]) => ({ month, ...v }));
+        // Fill trailing months with 0 so charts always have N data points
+        const filled: Record<string, { published: number; review: number }> = {};
+        const now = new Date();
+        for (let i = months - 1; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          filled[key] = monthMap[key] || { published: 0, review: 0 };
+        }
+        const result = Object.entries(filled).map(([month, v]) => ({ month, ...v }));
         return res.status(200).json(result);
       }
       if (url.startsWith('/dashboard/articles-per-year')) {
+        const urlObj = new URL(url, 'http://localhost');
+        const years = parseInt(urlObj.searchParams.get('years') || '5');
         const articles = await db.article.findMany({ select: { status: true, createdAt: true } });
-        const yearMap: Record<string, { published: number }> = {};
+        const yearMap: Record<string, { published: number; review: number; draft: number }> = {};
         for (const a of articles) {
           const y = String(new Date(a.createdAt).getFullYear());
-          if (!yearMap[y]) yearMap[y] = { published: 0 };
+          if (!yearMap[y]) yearMap[y] = { published: 0, review: 0, draft: 0 };
           if (a.status === 'PUBLISHED') yearMap[y].published++;
+          else if (a.status === 'REVIEW') yearMap[y].review++;
+          else if (a.status === 'DRAFT') yearMap[y].draft++;
         }
-        const result = Object.entries(yearMap).sort().map(([year, v]) => ({ year, published: v.published }));
+        // Fill trailing years with 0
+        const filled: Record<string, { published: number; review: number; draft: number }> = {};
+        const currentYear = new Date().getFullYear();
+        for (let i = years - 1; i >= 0; i--) {
+          const y = String(currentYear - i);
+          filled[y] = yearMap[y] || { published: 0, review: 0, draft: 0 };
+        }
+        const result = Object.entries(filled).map(([year, v]) => ({ year, ...v }));
         return res.status(200).json(result);
       }
       if (url.startsWith('/dashboard/views-per-month')) {
         const urlObj = new URL(url, 'http://localhost');
         const months = parseInt(urlObj.searchParams.get('months') || '6');
-        const views = await db.articleView.findMany({ select: { viewedAt: true } });
-        const monthMap: Record<string, { reads: number; uniqueReaders: number }> = {};
+        const views = await db.articleView.findMany({ select: { viewedAt: true, ipHash: true } });
+        const monthMap: Record<string, { reads: number; uniqueReaders: number; ips: Set<string> }> = {};
         for (const v of views) {
           const d = new Date(v.viewedAt);
           const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-          if (!monthMap[key]) monthMap[key] = { reads: 0, uniqueReaders: 0 };
+          if (!monthMap[key]) monthMap[key] = { reads: 0, uniqueReaders: 0, ips: new Set() };
           monthMap[key].reads++;
+          monthMap[key].ips.add(v.ipHash);
         }
-        // Unique readers = distinct ipHash per month (approximate from article_views)
-        const ipViews = await db.articleView.groupBy({ by: ['ipHash'], _count: true });
-        const uniqueTotal = ipViews.length;
-        for (const key of Object.keys(monthMap)) {
-          monthMap[key].uniqueReaders = Math.round(uniqueTotal * (monthMap[key].reads / Math.max(views.length, 1)));
+        // Fill trailing months with 0
+        const filled: Record<string, { reads: number; uniqueReaders: number }> = {};
+        const now = new Date();
+        for (let i = months - 1; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          const entry = monthMap[key];
+          filled[key] = { reads: entry ? entry.reads : 0, uniqueReaders: entry ? entry.ips.size : 0 };
         }
-        const result = Object.entries(monthMap).sort().slice(-months).map(([month, v]) => ({ month, ...v }));
+        const result = Object.entries(filled).map(([month, v]) => ({ month, ...v }));
         return res.status(200).json(result);
       }
       if (url.startsWith('/dashboard/views-per-year')) {
-        const views = await db.articleView.findMany({ select: { viewedAt: true } });
-        const yearMap: Record<string, { reads: number }> = {};
+        const urlObj = new URL(url, 'http://localhost');
+        const years = parseInt(urlObj.searchParams.get('years') || '5');
+        const views = await db.articleView.findMany({ select: { viewedAt: true, ipHash: true } });
+        const yearMap: Record<string, { reads: number; ips: Set<string> }> = {};
         for (const v of views) {
           const y = String(new Date(v.viewedAt).getFullYear());
-          if (!yearMap[y]) yearMap[y] = { reads: 0 };
+          if (!yearMap[y]) yearMap[y] = { reads: 0, ips: new Set() };
           yearMap[y].reads++;
+          yearMap[y].ips.add(v.ipHash);
         }
-        const result = Object.entries(yearMap).sort().map(([year, v]) => ({ year, reads: v.reads }));
+        // Fill trailing years with 0
+        const filled: Record<string, { reads: number; uniqueReaders: number }> = {};
+        const currentYear = new Date().getFullYear();
+        for (let i = years - 1; i >= 0; i--) {
+          const y = String(currentYear - i);
+          const entry = yearMap[y];
+          filled[y] = { reads: entry ? entry.reads : 0, uniqueReaders: entry ? entry.ips.size : 0 };
+        }
+        const result = Object.entries(filled).map(([year, v]) => ({ year, ...v }));
         return res.status(200).json(result);
       }
     }
