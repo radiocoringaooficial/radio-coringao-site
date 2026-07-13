@@ -105,6 +105,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
   const competitions = await getCompetitions();
   return competitions.map((c) => ({ championship: slugify(c.name) }));
