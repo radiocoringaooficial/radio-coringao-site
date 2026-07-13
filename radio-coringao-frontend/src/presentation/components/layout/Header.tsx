@@ -219,7 +219,7 @@ export function Header() {
       }
 
       const COMPETITION_MAP: Record<string, string> = {
-        "Brasileirão Série A": "brasileirao",
+        "Brasileirão Série A": "brasileirao-serie-a",
         "Libertadores": "libertadores",
         "Copa do Brasil": "copa-do-brasil",
         "Paulistão": "paulistao",
