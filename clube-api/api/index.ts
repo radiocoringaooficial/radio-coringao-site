@@ -114,7 +114,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json(data);
     }
 
-    const classifMatch = url.match(/^\/api\/classificacoes\/([^?]+)$/);
+    const classifMatch = url.match(/^\/api\/classificacoes\/(?!category\/)([^?]+)$/);
     if (classifMatch) {
       const id = classifMatch[1];
       let comp = null;
