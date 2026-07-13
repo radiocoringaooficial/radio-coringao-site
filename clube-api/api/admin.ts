@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import jwt from 'jsonwebtoken';
 
 let prisma: any = null;
 
@@ -9,16 +10,22 @@ async function getPrisma() {
   return prisma;
 }
 
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set');
+}
+
 function setCors(res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 }
 
-// Simple API key auth (no JWT needed for clube-api)
-function verifyAuth(req: VercelRequest): boolean {
+function verifyToken(req: VercelRequest): any {
+  if (!JWT_SECRET) throw new Error('JWT_SECRET not configured');
   const auth = req.headers.authorization;
-  return !!auth && auth.length > 10;
+  if (!auth?.startsWith('Bearer ')) throw new Error('Unauthorized');
+  return jwt.verify(auth.slice(7), JWT_SECRET);
 }
 
 (BigInt.prototype as any).toJSON = function () {
@@ -36,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Auth: todas as rotas exceto POST /login
   if (!(url === '/login' && method === 'POST')) {
-    if (!verifyAuth(req)) {
+    try { verifyToken(req); } catch {
       return res.status(401).json({ error: 'Unauthorized' });
     }
   }
@@ -44,9 +51,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const db = await getPrisma();
 
-    // ─── LOGIN (simple - just verify user exists) ──────────────
+    // ─── LOGIN ────────────────────────────────────────────────
+    // clube-api não tem tabela de usuários — login é feito via sports-news.
+    // Este endpoint existe por compatibilidade mas não é chamado pelo Electron.
     if (url === '/login' && method === 'POST') {
-      return res.status(200).json({ token: 'clube-admin-token', user: { role: 'ADMIN' } });
+      return res.status(501).json({ error: 'Login via sports-news-api-ts' });
     }
 
     // ─── TEAM ──────────────────────────────────────────────────
