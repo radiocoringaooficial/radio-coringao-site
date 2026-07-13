@@ -161,6 +161,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ─── STANDINGS ─────────────────────────────────────────────
     if (url === '/classificacoes' || url === '/classificacoes/') {
+      if (method === 'GET') {
+        const standings = await db.standingEntry.findMany({
+          orderBy: [{ competitionId: 'asc' }, { position: 'asc' }],
+        });
+        return res.status(200).json(standings);
+      }
       if (method === 'POST') {
         const { competitionId, rows } = req.body;
         if (competitionId && rows) {
