@@ -2,7 +2,7 @@ export function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '';
   try {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+    return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Sao_Paulo' });
   } catch {
     return dateStr;
   }

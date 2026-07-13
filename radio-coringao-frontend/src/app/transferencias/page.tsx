@@ -122,7 +122,7 @@ function MovementCard({ m }: { m: Movement }) {
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
               <Calendar size={9} />
-              {d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+              {d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", timeZone: "America/Sao_Paulo" })}
             </span>
             {formatValue(m) && (
               <span className="text-[10px] font-semibold text-gray-600 flex items-center gap-0.5">
@@ -136,7 +136,7 @@ function MovementCard({ m }: { m: Movement }) {
           {isLoan && m.returnDate && (
             <div className="mt-1.5 flex items-center gap-1 text-[10px] text-purple-600 font-semibold bg-purple-50 rounded px-2 py-0.5 w-fit">
               <Calendar size={9} />
-              Retorno: {new Date(m.returnDate).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
+              Retorno: {new Date(m.returnDate).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric", timeZone: "America/Sao_Paulo" })}
             </div>
           )}
         </div>

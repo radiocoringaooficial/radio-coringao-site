@@ -112,7 +112,7 @@ export function ArticleContent({ article, topStories, nextMatch, slug }: Article
             </span>
             <span className="flex items-center gap-1 text-[12px] text-on-surface-variant">
               <Clock size={12} />
-              {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+              {article.publishedAt ? new Date(article.publishedAt).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Sao_Paulo' }) : ''}
             </span>
           </div>
 

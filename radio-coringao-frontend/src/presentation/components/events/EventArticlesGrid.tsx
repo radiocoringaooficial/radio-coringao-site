@@ -45,7 +45,7 @@ export function EventArticlesGrid({ articles }: EventArticlesGridProps) {
               )}
               {article.publishedAt && (
                 <span className="mt-2 block text-[10px] text-on-surface-variant">
-                  {new Date(article.publishedAt).toLocaleDateString("pt-BR")}
+                  {new Date(article.publishedAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}
                 </span>
               )}
             </div>

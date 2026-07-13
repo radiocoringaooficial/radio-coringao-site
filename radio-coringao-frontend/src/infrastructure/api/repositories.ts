@@ -38,8 +38,8 @@ function transformMatch(apiMatch: any): any {
   if (!apiMatch) return null;
   
   const matchDate = apiMatch.date ? new Date(apiMatch.date) : null;
-  const dateStr = matchDate ? matchDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' }) : '';
-  const timeStr = matchDate ? matchDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
+  const dateStr = matchDate ? matchDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' }) : '';
+  const timeStr = matchDate ? matchDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }) : '';
   
   const opponent = apiMatch.opponent || {};
   const opponentName = typeof opponent === 'string' ? opponent : opponent.name || 'TBD';

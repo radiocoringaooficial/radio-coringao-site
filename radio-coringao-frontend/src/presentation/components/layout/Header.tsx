@@ -85,8 +85,8 @@ function formatNextGame(n: any, isHome: boolean) {
   if (!n) return null;
   return {
     opponent: n.opponent?.name || "?",
-    date: new Date(n.date).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" }),
-    time: new Date(n.date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+    date: new Date(n.date).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "America/Sao_Paulo" }),
+    time: new Date(n.date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }),
     homeLogo: isHome ? CORINTHIANS_LOGO : (n.opponent?.logoUrl || undefined),
     awayLogo: isHome ? (n.opponent?.logoUrl || undefined) : CORINTHIANS_LOGO,
     round: n.round || null,
@@ -266,7 +266,7 @@ export function Header() {
         playerPhoto: m.playerPhotoUrl || "",
         opponent: m.opponent?.name || "",
         opponentLogo: m.opponent?.logoUrl || "",
-        date: m.date ? new Date(m.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "",
+        date: m.date ? new Date(m.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", timeZone: "America/Sao_Paulo" }) : "",
         id: m.id,
       }));
 
