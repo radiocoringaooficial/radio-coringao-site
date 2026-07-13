@@ -251,6 +251,146 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(204).end();
     }
 
+    // ─── FINANCE ───────────────────────────────────────────────
+    // TODO: /evolution poderia ser uma única query groupBy por mês em vez de N queries sequenciais
+    if (url.startsWith('/finance/')) {
+      const financeUrl = url.replace('/finance', '');
+      const season = urlObj.searchParams.get('season') || String(new Date().getFullYear());
+
+      // GET /finance/month?month=YYYY-MM&season=YYYY
+      if (financeUrl === '/month' && method === 'GET') {
+        const month = urlObj.searchParams.get('month');
+        if (!month) return res.status(400).json({ error: 'month param required (YYYY-MM)' });
+        const [year, mon] = month.split('-').map(Number);
+        const start = new Date(year, mon - 1, 1);
+        const end = new Date(year, mon, 0, 23, 59, 59);
+
+        const movements = await db.playerMovement.findMany({
+          where: { season, date: { gte: start, lte: end } },
+          select: { type: true, valueCents: true, loanValueCents: true, playerName: true, clubId: true },
+        });
+
+        const income = movements
+          .filter((m: any) => ['DEPARTURE', 'LOAN_OUT'].includes(m.type))
+          .reduce((sum: number, m: any) => sum + Number(m.valueCents ?? m.loanValueCents ?? 0), 0);
+        const expense = movements
+          .filter((m: any) => ['ARRIVAL', 'LOAN_IN'].includes(m.type))
+          .reduce((sum: number, m: any) => sum + Number(m.valueCents ?? m.loanValueCents ?? 0), 0);
+
+        const saleCandidates = movements.filter((m: any) => ['DEPARTURE', 'LOAN_OUT'].includes(m.type) && (m.valueCents ?? m.loanValueCents) != null);
+        const biggestSale = saleCandidates.sort((a: any, b: any) => Number(b.valueCents ?? b.loanValueCents ?? 0) - Number(a.valueCents ?? a.loanValueCents ?? 0))[0] ?? null;
+
+        const purchaseCandidates = movements.filter((m: any) => ['ARRIVAL', 'LOAN_IN'].includes(m.type) && (m.valueCents ?? m.loanValueCents) != null);
+        const biggestPurchase = purchaseCandidates.sort((a: any, b: any) => Number(b.valueCents ?? b.loanValueCents ?? 0) - Number(a.valueCents ?? a.loanValueCents ?? 0))[0] ?? null;
+
+        return res.status(200).json({
+          incomeCents: String(income),
+          expenseCents: String(expense),
+          balanceCents: String(income - expense),
+          movementsCount: movements.length,
+          biggestSale: biggestSale ? { player: biggestSale.playerName, club: biggestSale.clubId, valueCents: String(biggestSale.valueCents ?? biggestSale.loanValueCents ?? 0) } : null,
+          biggestPurchase: biggestPurchase ? { player: biggestPurchase.playerName, club: biggestPurchase.clubId, valueCents: String(biggestPurchase.valueCents ?? biggestPurchase.loanValueCents ?? 0) } : null,
+        });
+      }
+
+      // GET /finance/evolution?months=12&season=YYYY
+      if (financeUrl === '/evolution' && method === 'GET') {
+        const months = Math.min(parseInt(urlObj.searchParams.get('months') || '12'), 60);
+        const now = new Date();
+        const result = [];
+
+        for (let i = months - 1; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+          const start = new Date(d.getFullYear(), d.getMonth(), 1);
+          const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+
+          const movements = await db.playerMovement.findMany({
+            where: { season, date: { gte: start, lte: end } },
+            select: { type: true, valueCents: true, loanValueCents: true },
+          });
+
+          const income = movements
+            .filter((m: any) => ['DEPARTURE', 'LOAN_OUT'].includes(m.type))
+            .reduce((sum: number, m: any) => sum + Number(m.valueCents ?? m.loanValueCents ?? 0), 0);
+          const expense = movements
+            .filter((m: any) => ['ARRIVAL', 'LOAN_IN'].includes(m.type))
+            .reduce((sum: number, m: any) => sum + Number(m.valueCents ?? m.loanValueCents ?? 0), 0);
+
+          result.push({
+            month: monthKey,
+            incomeCents: String(income),
+            expenseCents: String(expense),
+            balanceCents: String(income - expense),
+            movementsCount: movements.length,
+          });
+        }
+        return res.status(200).json(result);
+      }
+
+      // GET /finance/club-ranking?season=YYYY
+      if (financeUrl === '/club-ranking' && method === 'GET') {
+        const movements = await db.playerMovement.findMany({
+          where: { season, clubId: { not: null } },
+          select: { clubId: true, type: true, valueCents: true, loanValueCents: true, club: { select: { name: true, logoUrl: true } } },
+        });
+
+        const clubMap = new Map<string, any>();
+        for (const m of movements) {
+          if (!m.clubId || !m.club) continue;
+          if (!clubMap.has(m.clubId)) {
+            clubMap.set(m.clubId, { clubName: m.club.name, logoUrl: m.club.logoUrl, soldToCents: 0, boughtFromCents: 0, movementsCount: 0 });
+          }
+          const entry = clubMap.get(m.clubId);
+          const value = Number(m.valueCents ?? m.loanValueCents ?? 0);
+          if (['DEPARTURE', 'LOAN_OUT'].includes(m.type)) entry.soldToCents += value;
+          if (['ARRIVAL', 'LOAN_IN'].includes(m.type)) entry.boughtFromCents += value;
+          entry.movementsCount++;
+        }
+
+        return res.status(200).json(
+          Array.from(clubMap.values())
+            .map((c: any) => ({ ...c, totalCents: String(c.soldToCents + c.boughtFromCents), soldToCents: String(c.soldToCents), boughtFromCents: String(c.boughtFromCents) }))
+            .sort((a: any, b: any) => Number(b.totalCents) - Number(a.totalCents))
+        );
+      }
+    }
+
+    // ─── MOVEMENTS FINANCE (MovementsPage) ──────────────────────
+    if (url.startsWith('/movimentacoes/finance') && method === 'GET') {
+      const season = urlObj.searchParams.get('season') || String(new Date().getFullYear());
+
+      const movements = await db.playerMovement.findMany({
+        where: { season },
+        select: { type: true, valueCents: true, loanValueCents: true, isFreeLoan: true, paysSalary: true },
+      });
+
+      const isIncome = (t: string) => ['DEPARTURE', 'LOAN_OUT'].includes(t);
+      const isExpense = (t: string) => ['ARRIVAL', 'LOAN_IN'].includes(t);
+
+      const revenue = movements.filter((m: any) => isIncome(m.type)).reduce((s: number, m: any) => s + Number(m.valueCents ?? m.loanValueCents ?? 0), 0);
+      const expenses = movements.filter((m: any) => isExpense(m.type)).reduce((s: number, m: any) => s + Number(m.valueCents ?? m.loanValueCents ?? 0), 0);
+      const loanOut = movements.filter((m: any) => m.type === 'LOAN_OUT').reduce((s: number, m: any) => s + Number(m.valueCents ?? m.loanValueCents ?? 0), 0);
+      const loanIn = movements.filter((m: any) => m.type === 'LOAN_IN').reduce((s: number, m: any) => s + Number(m.valueCents ?? m.loanValueCents ?? 0), 0);
+
+      return res.status(200).json({
+        revenue,
+        expenses,
+        netRevenue: revenue - expenses,
+        total: movements.length,
+        totalDepartures: movements.filter((m: any) => m.type === 'DEPARTURE').length,
+        totalArrivals: movements.filter((m: any) => m.type === 'ARRIVAL').length,
+        totalLoanOut: movements.filter((m: any) => m.type === 'LOAN_OUT').length,
+        totalLoanIn: movements.filter((m: any) => m.type === 'LOAN_IN').length,
+        totalReturns: movements.filter((m: any) => m.type === 'RETURN').length,
+        loanOut,
+        loanIn,
+        freeLoans: movements.filter((m: any) => ['LOAN_OUT', 'LOAN_IN'].includes(m.type) && m.isFreeLoan).length,
+        paidLoans: movements.filter((m: any) => ['LOAN_OUT', 'LOAN_IN'].includes(m.type) && !m.isFreeLoan).length,
+        salaryPayers: movements.filter((m: any) => ['LOAN_OUT', 'LOAN_IN'].includes(m.type) && m.paysSalary).length,
+      });
+    }
+
     // ─── TRANSFER CLUBS ────────────────────────────────────────
     if (url === '/transfer-clubs' || url === '/transfer-clubs/') {
       if (method === 'GET') {
