@@ -24,8 +24,13 @@ function setCors(res: VercelResponse) {
 function verifyToken(req: VercelRequest): any {
   if (!JWT_SECRET) throw new Error('JWT_SECRET not configured');
   const auth = req.headers.authorization;
-  if (!auth?.startsWith('Bearer ')) throw new Error('Unauthorized');
-  return jwt.verify(auth.slice(7), JWT_SECRET);
+  if (!auth?.startsWith('Bearer ')) throw new Error('No Bearer token');
+  const token = auth.slice(7);
+  try {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (e: any) {
+    throw new Error('JWT verify failed: ' + e.message);
+  }
 }
 
 (BigInt.prototype as any).toJSON = function () {
@@ -43,7 +48,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Auth: todas as rotas exceto POST /login
   if (!(url === '/login' && method === 'POST')) {
-    try { verifyToken(req); } catch {
+    try { verifyToken(req); } catch (e: any) {
+      console.error('[auth]', e.message);
       return res.status(401).json({ error: 'Unauthorized' });
     }
   }
