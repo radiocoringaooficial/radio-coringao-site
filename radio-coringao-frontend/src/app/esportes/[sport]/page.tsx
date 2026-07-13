@@ -151,7 +151,24 @@ export default async function SportPage({ params }: Props) {
   const [nextMatch, recentResults, standingsResponse, newsResponse, movementsResponse, squadResponse] = await Promise.all([
     clubeClient.get<Match[]>(`/partidas/next`, { params: { category: matchCategory, limit: "1" } }).catch(() => []),
     clubeClient.get<Match[]>(`/partidas/recent`, { params: { category: matchCategory, limit: "5" } }).catch(() => []),
-    clubeClient.get<StandingsResponse>(`/classificacoes/category/${matchCategory}`).catch(() => ({ category: category.name, tables: [] })),
+    clubeClient.get<any[]>(`/classificacoes/category/${matchCategory}`)
+      .then(entries => {
+        if (!Array.isArray(entries)) return entries;
+        const byComp = new Map<string, any[]>();
+        for (const e of entries) {
+          const arr = byComp.get(e.competitionId) || [];
+          arr.push(e);
+          byComp.set(e.competitionId, arr);
+        }
+        return {
+          category: category.name,
+          tables: Array.from(byComp.entries()).map(([id, standings]) => ({
+            competition: { id, name: standings[0]?.groupName || category.name, season: "" },
+            standings,
+          })),
+        };
+      })
+      .catch(() => ({ category: category.name, tables: [] })),
     httpClient.get<NewsArticle[]>(`/noticias`, { params: { category: SPORT_TO_NEWS_CATEGORY[sport] || sport, limit: "6" } }).catch(() => []),
     clubeClient.get<any>(`/movimentacoes/recent`, { params: { limit: "20", category: matchCategory } }).catch(() => []),
     clubeClient.get<any>(`/elenco`, { params: { category: matchCategory } }).catch(() => []),
