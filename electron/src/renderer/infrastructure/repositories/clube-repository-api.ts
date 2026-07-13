@@ -16,7 +16,7 @@ export class ApiClubeRepository implements ClubeRepository {
   async deleteCategory(id: string): Promise<void> { await this.http.delete(`/admin/categorias/${id}`); }
 
   // Competitions
-  async getCompetitions(categoryId?: string): Promise<Competition[]> { return this.http.get('/competitions', { params: categoryId ? { categoryId } : undefined }); }
+  async getCompetitions(categoryId?: string): Promise<Competition[]> { return this.http.get('/competicoes', { params: categoryId ? { categoryId } : undefined }); }
   async createCompetition(data: Partial<Competition>): Promise<Competition> { return this.http.post('/admin/competicoes', data); }
   async updateCompetition(id: string, data: Partial<Competition>): Promise<Competition> { return this.http.patch(`/admin/competicoes/${id}`, data); }
   async deleteCompetition(id: string): Promise<void> { await this.http.delete(`/admin/competicoes/${id}`); }
@@ -28,7 +28,7 @@ export class ApiClubeRepository implements ClubeRepository {
   async deleteOpponent(id: string): Promise<void> { await this.http.delete(`/admin/adversarios/${id}`); }
 
   // Matches
-  async getMatches(params?: { category?: string; status?: string; competitionId?: string }): Promise<Match[]> { return this.http.get('/matches', { params: params as any }); }
+  async getMatches(params?: { category?: string; status?: string; competitionId?: string }): Promise<Match[]> { return this.http.get('/partidas', { params: params as any }); }
   async createMatch(data: Partial<Match>): Promise<Match> { return this.http.post('/admin/partidas', data); }
   async updateMatch(id: string, data: Partial<Match>): Promise<Match> { return this.http.patch(`/admin/partidas/${id}`, data); }
   async deleteMatch(id: string): Promise<void> { await this.http.delete(`/admin/partidas/${id}`); }
