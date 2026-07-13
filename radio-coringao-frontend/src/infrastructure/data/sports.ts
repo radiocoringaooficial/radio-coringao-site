@@ -178,48 +178,6 @@ export const sportsData: Record<string, SportData> = {
     ],
     transfers: [],
   },
-  volei: {
-    name: "Vôlei",
-    slug: "volei",
-    icon: "🏐",
-    heroTitle: "Vôlei Masculino Profissional",
-    heroDescription: "Corinthians na Superliga de Vôlei.",
-    nextMatch: {
-      homeTeam: "Corinthians",
-      awayTeam: "Sesi",
-      date: "Qua, 25/06",
-      time: "19:30",
-      venue: "Ginásio da Cerrado",
-      competition: "Superliga",
-      hasTickets: true,
-    },
-    recentResults: [
-      { home: "Corinthians", away: "Minas", score: "3 x 1" },
-      { home: "São Paulo", away: "Corinthians", score: "2 x 3" },
-      { home: "Corinthians", away: "Osasco", score: "3 x 0" },
-    ],
-    standings: [
-      { pos: 1, time: "Corinthians", pts: 24, j: 12, v: 8, e: 0, d: 4, gp: 26, gc: 15 },
-      { pos: 2, time: "Sesi", pts: 22, j: 12, v: 7, e: 0, d: 5, gp: 24, gc: 18 },
-      { pos: 3, time: "Minas", pts: 20, j: 12, v: 6, e: 0, d: 6, gp: 22, gc: 20 },
-      { pos: 4, time: "São Paulo", pts: 18, j: 12, v: 6, e: 0, d: 6, gp: 20, gc: 22 },
-      { pos: 5, time: "Osasco", pts: 16, j: 12, v: 5, e: 0, d: 7, gp: 18, gc: 24 },
-      { pos: 6, time: "Praia", pts: 14, j: 12, v: 4, e: 0, d: 8, gp: 16, gc: 26 },
-    ],
-    latestNews: [
-      { id: "1", title: "Vôlei vence Minas na Superliga", excerpt: "Timão supera rival por 3x1.", category: "Vôlei", categorySlug: "volei", author: "Ana Fiel", authorAvatar: "", imageUrl: placeholderImg, imageAlt: "Vôlei", publishedAt: "Há 1 dia", slug: "volei-vence-minas", isBreaking: false, isLive: false, viewCount: 3800 },
-      { id: "2", title: "Vôlei supera São Paulo em comeback", excerpt: "Time vira de 0x1 para 3x2.", category: "Vôlei", categorySlug: "volei", author: "Pedro Silva", authorAvatar: "", imageUrl: placeholderImg, imageAlt: "Comeback", publishedAt: "Há 3 dias", slug: "volei-comeback", isBreaking: false, isLive: false, viewCount: 3200 },
-      { id: "3", title: "Vôlei goleia Osasco na Superliga", excerpt: "Timão vence por 3x0.", category: "Vôlei", categorySlug: "volei", author: "João Fiel", authorAvatar: "", imageUrl: placeholderImg, imageAlt: "Goleada", publishedAt: "Há 5 dias", slug: "volei-goleia-osasco", isBreaking: false, isLive: false, viewCount: 2800 },
-      { id: "4", title: "Técnico do vôlei comenta evolução", excerpt: "Time melhora a cada jogo.", category: "Vôlei", categorySlug: "volei", author: "Maria Clara", authorAvatar: "", imageUrl: placeholderImg, imageAlt: "Técnico", publishedAt: "Há 6 dias", slug: "tecnico-comenta", isBreaking: false, isLive: false, viewCount: 2400 },
-    ],
-    weekHighlights: [
-      { id: "w1", title: "Vôlei lidera Superliga", excerpt: "Timão soma 24 pontos.", category: "Vôlei", categorySlug: "volei", author: "João Fiel", authorAvatar: "", imageUrl: placeholderImg, imageAlt: "Líder", publishedAt: "Há 1 semana", slug: "volei-lider", isBreaking: false, isLive: false, viewCount: 4500 },
-      { id: "w2", title: "Vôlei vence Minas por 3x1", excerpt: "Timão supera rival.", category: "Vôlei", categorySlug: "volei", author: "Pedro Silva", authorAvatar: "", imageUrl: placeholderImg, imageAlt: "Vitória", publishedAt: "Há 1 semana", slug: "volei-vence-minas-semana", isBreaking: false, isLive: false, viewCount: 3800 },
-    ],
-    transfers: [
-      { player: "Alan Souza", image: placeholderImg, type: "entrada", from: "Sesi" },
-    ],
-  },
   "futebol-feminino": {
     name: "Futebol Feminino",
     slug: "futebol-feminino",
@@ -391,4 +349,4 @@ export const sportsData: Record<string, SportData> = {
   },
 };
 
-export const sportSlugs = ["futebol", "basquete", "futsal", "volei", "futebol-feminino", "sub-20", "sub-17"];
+export const sportSlugs = ["futebol", "basquete", "futsal", "futebol-feminino", "sub-20", "sub-17"];

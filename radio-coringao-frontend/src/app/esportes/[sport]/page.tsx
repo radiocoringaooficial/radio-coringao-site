@@ -4,7 +4,7 @@ import { SportsContent } from "@/presentation/components/sports/SportsContent";
 import { clubeClient } from "@/infrastructure/api/http-client";
 import { httpClient } from "@/infrastructure/api/http-client";
 
-const SPORT_SLABS = ["futebol", "basquete", "futsal", "volei", "futebol-feminino", "sub-20", "sub-17"];
+const SPORT_SLABS = ["futebol", "basquete", "futsal", "futebol-feminino", "sub-20", "sub-17"];
 
 // Map sport slugs to match category slugs for API queries
 const SPORT_TO_MATCH_CATEGORY: Record<string, string> = {
@@ -14,7 +14,6 @@ const SPORT_TO_MATCH_CATEGORY: Record<string, string> = {
   "futebol-feminino": "feminino",
   "sub-20": "sub-20",
   "sub-17": "sub-17",
-  "volei": "volei",
 };
 
 // Map sport slugs to news category slugs (sports-news-api categories)
@@ -25,7 +24,6 @@ const SPORT_TO_NEWS_CATEGORY: Record<string, string> = {
   "futebol-feminino": "futebol-feminino",
   "sub-20": "futebol-sub-20",
   "sub-17": "futebol-sub-20",
-  "volei": "futebol",
 };
 
 const SPORT_MODALITY: Record<string, "FOOTBALL" | "FUTSAL" | "BASKETBALL"> = {
@@ -309,7 +307,7 @@ export default async function SportPage({ params }: Props) {
   // Map sport slug to category slug for client-side filtering
   const SPORT_CATEGORY_MAP: Record<string, string> = {
     futebol: "principal", "futebol-feminino": "feminino", basquete: "basquete",
-    futsal: "futsal", "sub-20": "sub-20", "sub-17": "sub-17", volei: "volei",
+    futsal: "futsal", "sub-20": "sub-20", "sub-17": "sub-17",
   };
   const categorySlug = SPORT_CATEGORY_MAP[sport] || sport;
 
