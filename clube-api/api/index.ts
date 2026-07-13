@@ -19,6 +19,15 @@ function setCors(res: VercelResponse) {
   return this.toString();
 };
 
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -35,6 +44,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (url === '/api/categorias' || url.startsWith('/api/categorias?')) {
       const data = await db.category.findMany({ orderBy: { order: 'asc' } });
       return res.status(200).json(data);
+    }
+
+    const catSlugMatch = url.match(/^\/api\/categorias\/([^?]+)$/);
+    if (catSlugMatch) {
+      const slug = catSlugMatch[1];
+      const cat = await db.category.findFirst({ where: { slug } });
+      if (!cat) return res.status(404).json({ error: 'Category not found' });
+      return res.status(200).json(cat);
     }
 
     if (url === '/api/competicoes' || url.startsWith('/api/competicoes?')) {
@@ -100,9 +117,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const classifMatch = url.match(/^\/api\/classificacoes\/([^?]+)$/);
     if (classifMatch) {
       const id = classifMatch[1];
-      const comp = await db.competition.findUnique({ where: { id } });
+      let comp = null;
+      try {
+        comp = await db.competition.findUnique({ where: { id } });
+      } catch {}
+      if (!comp) {
+        const all = await db.competition.findMany();
+        comp = all.find((c: any) => slugify(c.name) === id);
+      }
       if (!comp) return res.status(200).json([]);
-      const data = await db.standingEntry.findMany({ where: { competitionId: id }, orderBy: { position: 'asc' } });
+      const data = await db.standingEntry.findMany({ where: { competitionId: comp.id }, orderBy: { position: 'asc' } });
       return res.status(200).json(data);
     }
 
