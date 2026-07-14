@@ -57,10 +57,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (url === '/api/noticias/editorial' || url.startsWith('/api/noticias/editorial?')) {
       const articles = await db.article.findMany({
         where: { status: 'PUBLISHED', isFeatured: true },
-        orderBy: { order: 'asc' },
+        orderBy: [{ order: 'asc' }, { publishedAt: 'desc' }],
         take: 12,
         include: { category: true, author: { select: { id: true, name: true, email: true, role: true, avatar: true, bio: true, position: true } } },
       });
+      // Log conflitos de order pra debugging
+      const orderCounts: Record<number, string[]> = {};
+      for (const a of articles) {
+        const o = a.order ?? 0;
+        orderCounts[o] = orderCounts[o] || [];
+        orderCounts[o].push(a.id);
+      }
+      for (const [o, ids] of Object.entries(orderCounts)) {
+        if (ids.length > 1 && Number(o) > 0) {
+          console.warn(`[EDITORIAL] Conflito de order=${o}: artigos ${ids.join(', ')}`);
+        }
+      }
       return res.status(200).json(articles);
     }
 
