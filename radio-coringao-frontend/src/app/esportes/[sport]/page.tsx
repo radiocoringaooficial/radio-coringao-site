@@ -22,8 +22,8 @@ const SPORT_TO_NEWS_CATEGORY: Record<string, string> = {
   "basquete": "basquete",
   "futsal": "futsal",
   "futebol-feminino": "futebol-feminino",
-  "sub-20": "futebol-sub-20",
-  "sub-17": "futebol-sub-20",
+  "sub-20": "futebol",
+  "sub-17": "futebol",
 };
 
 const SPORT_MODALITY: Record<string, "FOOTBALL" | "FUTSAL" | "BASKETBALL"> = {
