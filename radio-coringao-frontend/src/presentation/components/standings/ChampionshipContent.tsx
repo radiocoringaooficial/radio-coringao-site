@@ -175,12 +175,13 @@ export function ChampionshipContent({ data, modality = "FOOTBALL" }: Championshi
                   </thead>
                   <tbody>
                     {group.entries.map((row, index) => {
-                      const posColor =
-                        row.pos <= 4 ? "#1565C0" :
-                        row.pos === 5 ? "#F57F17" :
-                        row.pos <= 11 ? "#E65100" :
-                        row.pos >= 17 ? "#C62828" :
-                        "transparent";
+                      const posColor = isBasketball
+                        ? "#1565C0"
+                        : row.pos <= 4 ? "#1565C0" :
+                          row.pos === 5 ? "#F57F17" :
+                          row.pos <= 11 ? "#E65100" :
+                          row.pos >= 17 ? "#C62828" :
+                          "transparent";
                       const sld = row.sld;
                       return (
                         <tr
