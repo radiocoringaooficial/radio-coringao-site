@@ -226,7 +226,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           coverImageUrl = await uploadToCloudinary(file.buffer, 'articles', file.mimetype);
         }
         const orderVal = parseInt(fields.order || '0', 10);
-        if (orderVal > 0 && fields.isFeatured === 'true') {
+        if (orderVal > 0) {
           const conflicting = await db.article.findFirst({ where: { order: orderVal, isFeatured: true, status: 'PUBLISHED', id: { not: '' } }, select: { id: true, title: true } });
           if (conflicting) {
             await db.article.update({ where: { id: conflicting.id }, data: { order: 0 } });
