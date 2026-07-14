@@ -55,9 +55,14 @@ function formatValue(m: Movement): string {
   return "";
 }
 
+const CATEGORY_DISPLAY_LABEL: Record<string, string> = {
+  principal: "Futebol Masculino",
+  feminino: "Futebol Feminino",
+};
+
 function getCategoryLabel(cat?: Movement["category"]): string {
   if (!cat) return "Sem Categoria";
-  return cat.name;
+  return CATEGORY_DISPLAY_LABEL[cat.slug] || cat.name;
 }
 
 function getCategoryOrder(cat?: Movement["category"]): number {
