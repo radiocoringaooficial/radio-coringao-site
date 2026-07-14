@@ -571,7 +571,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (file && file.buffer.length > 0) {
           avatarUrl = await uploadToCloudinary(file.buffer, 'avatars', file.mimetype);
         }
-        const data: any = { name: fields.name, email: fields.email, role: fields.role, position: fields.position, avatar: avatarUrl, isActive: fields.isActive === 'true' };
+        const data: any = { name: fields.name, email: fields.email, role: fields.role, position: fields.position, avatar: avatarUrl };
+        if (fields.isActive !== undefined) data.isActive = fields.isActive === 'true';
         if (fields.password) {
           const bcrypt = await import('bcryptjs');
           data.password = await bcrypt.default.hash(fields.password, 12);
@@ -601,7 +602,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(settings || {});
       }
       if (method === 'PUT' || method === 'PATCH') {
-        const settings = await db.siteSettings.update({ where: { id: 'main' }, data: req.body });
+        const updateData: any = {};
+        for (const [key, val] of Object.entries(req.body)) {
+          if (val !== undefined) updateData[key] = val;
+        }
+        const settings = await db.siteSettings.update({ where: { id: 'main' }, data: updateData });
         return res.status(200).json(settings);
       }
     }

@@ -329,14 +329,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ data, total, page, limit, totalPages: Math.ceil(total / limit) });
       }
       if (method === 'POST') {
-        const movement = await db.playerMovement.create({ data: { squadMemberId: req.body.squadMemberId, type: req.body.type, date: req.body.date, playerName: req.body.playerName, clubId: req.body.clubId, categoryId: req.body.categoryId, notes: req.body.notes, season: req.body.season || '2026' } });
+        const movement = await db.playerMovement.create({ data: {
+          squadMemberId: req.body.squadMemberId, type: req.body.type,
+          date: new Date(req.body.date), playerName: req.body.playerName,
+          clubId: req.body.clubId, categoryId: req.body.categoryId,
+          notes: req.body.notes, season: req.body.season || '2026',
+          opponentId: req.body.opponentId || null,
+          valueCents: req.body.valueCents != null ? BigInt(req.body.valueCents) : null,
+          loanValueCents: req.body.loanValueCents != null ? BigInt(req.body.loanValueCents) : null,
+          isFreeLoan: req.body.isFreeLoan === true || req.body.isFreeLoan === 'true',
+          paysSalary: req.body.paysSalary === true || req.body.paysSalary === 'true',
+          corinthiansPercentage: req.body.corinthiansPercentage != null ? Number(req.body.corinthiansPercentage) : null,
+          soldPercentage: req.body.soldPercentage != null ? Number(req.body.soldPercentage) : null,
+          playerPercentage: req.body.playerPercentage != null ? Number(req.body.playerPercentage) : null,
+          returnDate: req.body.returnDate ? new Date(req.body.returnDate) : null,
+        } });
         return res.status(201).json(movement);
       }
     }
 
     const movMatch = url.match(/^\/movimentacoes\/([^/]+)$/);
     if (movMatch && method === 'PATCH') {
-      const movement = await db.playerMovement.update({ where: { id: movMatch[1] }, data: req.body });
+      const data: any = { ...req.body };
+      if (data.date) data.date = new Date(data.date);
+      if (data.valueCents != null) data.valueCents = BigInt(data.valueCents);
+      if (data.loanValueCents != null) data.loanValueCents = BigInt(data.loanValueCents);
+      if (data.isFreeLoan !== undefined) data.isFreeLoan = data.isFreeLoan === true || data.isFreeLoan === 'true';
+      if (data.paysSalary !== undefined) data.paysSalary = data.paysSalary === true || data.paysSalary === 'true';
+      if (data.corinthiansPercentage != null) data.corinthiansPercentage = Number(data.corinthiansPercentage);
+      if (data.soldPercentage != null) data.soldPercentage = Number(data.soldPercentage);
+      if (data.playerPercentage != null) data.playerPercentage = Number(data.playerPercentage);
+      if (data.returnDate) data.returnDate = new Date(data.returnDate);
+      const movement = await db.playerMovement.update({ where: { id: movMatch[1] }, data });
       return res.status(200).json(movement);
     }
     if (movMatch && method === 'DELETE') {
