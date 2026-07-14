@@ -226,22 +226,24 @@ export function Header() {
         "Copinha": "copinha",
       };
       try {
-        const fetchTables = async (url: string) => {
-          const r = await fetch(url);
-          if (!r.ok) return [];
-          const body = await r.json();
-          return Array.isArray(body) ? body : body?.tables || [];
-        };
-        const [principalTables, sub20Tables] = await Promise.all([
-          fetchTables(`${CLUBE_API}/classificacoes/category/principal`),
-          fetchTables(`${CLUBE_API}/classificacoes/category/sub-20`),
-        ]);
-        for (const table of [...principalTables, ...sub20Tables]) {
-          const compName = table.competition?.name || "";
-          const key = COMPETITION_MAP[compName];
-          if (key) {
-            const corinthians = (table.standings || []).find((s: any) => s.teamName?.includes("Corinthians"));
-            if (corinthians) d[key] = { position: corinthians.position, points: corinthians.points, played: corinthians.played };
+        const slugs = Object.values(COMPETITION_MAP);
+        const results = await Promise.all(
+          slugs.map(async (slug) => {
+            try {
+              const r = await fetch(`${CLUBE_API}/classificacoes/${slug}`);
+              if (!r.ok) return { slug, entry: null };
+              const data = await r.json();
+              const entries = Array.isArray(data) ? data : [];
+              const entry = entries.find((e: any) => e.isOwnTeam === true);
+              return { slug, entry };
+            } catch {
+              return { slug, entry: null };
+            }
+          })
+        );
+        for (const { slug, entry } of results) {
+          if (entry) {
+            d[slug] = { position: entry.position, points: entry.points, played: entry.played };
           }
         }
       } catch {}
