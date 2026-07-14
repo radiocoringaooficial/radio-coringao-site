@@ -82,6 +82,10 @@ export default async function Home() {
     title: m.competition?.name || `Partida ${i + 1}`,
     competition: m.competition?.name || "",
     category: CATEGORY_LABELS[m.competition?.category?.slug] || m.competition?.category?.slug || "",
+    homeTeam: m.isHome ? "Corinthians" : m.opponent?.name || "TBD",
+    awayTeam: m.isHome ? m.opponent?.name || "TBD" : "Corinthians",
+    homeTeamLogo: m.isHome ? "https://res.cloudinary.com/def661xyl/image/upload/v1782685173/club-corinthians/logos/ulkyawaln1damxiqbpep.png" : m.opponent?.logoUrl || null,
+    awayTeamLogo: m.isHome ? m.opponent?.logoUrl || null : "https://res.cloudinary.com/def661xyl/image/upload/v1782685173/club-corinthians/logos/ulkyawaln1damxiqbpep.png",
   }));
 
   const topRead = weekHighlights.length > 0 ? weekHighlights.slice(0, 5) : latestNews.slice(0, 5);
