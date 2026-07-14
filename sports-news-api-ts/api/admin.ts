@@ -572,7 +572,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           avatarUrl = await uploadToCloudinary(file.buffer, 'avatars', file.mimetype);
         }
         const data: any = { name: fields.name, email: fields.email, role: fields.role, position: fields.position, avatar: avatarUrl };
-        if (fields.isActive !== undefined) data.isActive = fields.isActive === 'true';
+        if (fields.isActive !== undefined) data.isActive = fields.isActive === true || fields.isActive === 'true';
         if (fields.password) {
           const bcrypt = await import('bcryptjs');
           data.password = await bcrypt.default.hash(fields.password, 12);
