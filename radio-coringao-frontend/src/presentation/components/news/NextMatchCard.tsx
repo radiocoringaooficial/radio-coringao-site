@@ -29,7 +29,7 @@ function TeamLogo({ name, logo }: { name: string; logo?: string | null }) {
 }
 
 export function NextMatchCard(props: NextMatchCardProps) {
-  const { homeTeam, awayTeam, date, time, venue, hasTickets, competition, title, dots, activeDot, cardIndex = 0, homeTeamLogo, awayTeamLogo, round } =
+  const { homeTeam, awayTeam, date, time, venue, hasTickets, competition, category, title, dots, activeDot, cardIndex = 0, homeTeamLogo, awayTeamLogo, round } =
     props;
 
   const competitionColors = [
@@ -55,6 +55,11 @@ export function NextMatchCard(props: NextMatchCardProps) {
             <span className={`shrink-0 whitespace-nowrap rounded-full border ${color.border} ${color.bg} px-3 py-1 font-label-sm text-label-sm font-bold uppercase tracking-wider ${color.text}`}>
               {competition}
             </span>
+            {category && (
+              <span className="shrink-0 whitespace-nowrap rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/50">
+                {category}
+              </span>
+            )}
             <div className="h-px flex-1 bg-gradient-to-l from-white/20 to-transparent" />
           </div>
         </div>
