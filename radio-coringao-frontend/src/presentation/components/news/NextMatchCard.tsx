@@ -5,6 +5,7 @@ import { NextMatch } from "@/domain/entities";
 
 interface NextMatchCardProps extends NextMatch {
   title?: string;
+  category?: string;
   dots?: number;
   activeDot?: number;
   cardIndex?: number;
