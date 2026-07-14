@@ -316,7 +316,7 @@ export function ArticleEditPage() {
                 }}
                 className="input-field text-sm"
               />
-              {form.scheduledAt && (
+              {form.scheduledAt && new Date(form.scheduledAt) > new Date() && form.status !== 'PUBLISHED' && (
                 <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 p-2">
                   <CalendarClock size={12} className="text-amber-600 shrink-0" />
                   <div>
