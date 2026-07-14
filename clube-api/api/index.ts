@@ -65,7 +65,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (url === '/api/partidas' || url.startsWith('/api/partidas?')) {
-      const data = await db.match.findMany({ orderBy: { date: 'desc' }, take: 50 });
+      const urlObj = new URL(url, 'http://localhost');
+      const status = urlObj.searchParams.get('status');
+      const limitParam = parseInt(urlObj.searchParams.get('limit') || '50');
+      const where: any = {};
+      if (status) where.status = status;
+      const data = await db.match.findMany({ where, orderBy: { date: 'desc' }, take: limitParam, include: { opponent: true, competition: { include: { category: true } } } });
       return res.status(200).json(data);
     }
 
