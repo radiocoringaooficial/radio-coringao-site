@@ -260,7 +260,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(409).json({ error: `Posição #${orderVal} já ocupada por "${conflicting.title}". Remova a posição desse artigo primeiro.` });
           }
         }
-        const article = await db.article.update({ where: { id }, data: { title: fields.title, subtitle: fields.subtitle !== undefined ? (fields.subtitle ? sanitizePlainText(fields.subtitle) : null) : undefined, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: coverImageUrl, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit, order: orderVal } });
+        const updateData: Record<string, any> = {};
+        if (fields.title !== undefined) updateData.title = fields.title;
+        if (fields.subtitle !== undefined) updateData.subtitle = fields.subtitle ? sanitizePlainText(fields.subtitle) : null;
+        if (fields.slug !== undefined) updateData.slug = fields.slug;
+        if (fields.content !== undefined) updateData.content = fields.content;
+        if (fields.excerpt !== undefined) updateData.excerpt = fields.excerpt;
+        if (fields.status !== undefined) updateData.status = fields.status;
+        if (fields.type !== undefined) updateData.type = fields.type;
+        if (fields.isFeatured !== undefined) updateData.isFeatured = fields.isFeatured === 'true';
+        if (fields.isBreaking !== undefined) updateData.isBreaking = fields.isBreaking === 'true';
+        if (fields.categoryId !== undefined) updateData.categoryId = fields.categoryId;
+        if (coverImageUrl !== undefined) updateData.coverImage = coverImageUrl;
+        if (fields.status === 'PUBLISHED') updateData.publishedAt = new Date();
+        if (fields.scheduledAt !== undefined) updateData.scheduledAt = fields.scheduledAt || null;
+        if (fields.coverImageAlt !== undefined) updateData.coverImageAlt = fields.coverImageAlt;
+        if (fields.coverImageCredit !== undefined) updateData.coverImageCredit = fields.coverImageCredit;
+        if (fields.order !== undefined) updateData.order = parseInt(fields.order, 10);
+        const article = await db.article.update({ where: { id }, data: updateData });
         return res.status(200).json(article);
       }
       if (method === 'DELETE') {
@@ -317,7 +334,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(409).json({ error: `Posição #${orderVal} já ocupada por "${conflicting.title}". Remova a posição desse artigo primeiro.` });
           }
         }
-        const article = await db.article.update({ where: { id }, data: { title: fields.title, subtitle: fields.subtitle !== undefined ? (fields.subtitle ? sanitizePlainText(fields.subtitle) : null) : undefined, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: coverImageUrl, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit, order: orderVal } });
+        const updateData: Record<string, any> = {};
+        if (fields.title !== undefined) updateData.title = fields.title;
+        if (fields.subtitle !== undefined) updateData.subtitle = fields.subtitle ? sanitizePlainText(fields.subtitle) : null;
+        if (fields.slug !== undefined) updateData.slug = fields.slug;
+        if (fields.content !== undefined) updateData.content = fields.content;
+        if (fields.excerpt !== undefined) updateData.excerpt = fields.excerpt;
+        if (fields.status !== undefined) updateData.status = fields.status;
+        if (fields.type !== undefined) updateData.type = fields.type;
+        if (fields.isFeatured !== undefined) updateData.isFeatured = fields.isFeatured === 'true';
+        if (fields.isBreaking !== undefined) updateData.isBreaking = fields.isBreaking === 'true';
+        if (fields.categoryId !== undefined) updateData.categoryId = fields.categoryId;
+        if (coverImageUrl !== undefined) updateData.coverImage = coverImageUrl;
+        if (fields.status === 'PUBLISHED') updateData.publishedAt = new Date();
+        if (fields.scheduledAt !== undefined) updateData.scheduledAt = fields.scheduledAt || null;
+        if (fields.coverImageAlt !== undefined) updateData.coverImageAlt = fields.coverImageAlt;
+        if (fields.coverImageCredit !== undefined) updateData.coverImageCredit = fields.coverImageCredit;
+        if (fields.order !== undefined) updateData.order = parseInt(fields.order, 10);
+        const article = await db.article.update({ where: { id }, data: updateData });
         return res.status(200).json(article);
       }
       if (method === 'DELETE') {
