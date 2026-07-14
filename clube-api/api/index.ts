@@ -171,7 +171,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       const data = await db.playerMovement.findMany({
         where,
-        include: { squadMember: { select: { id: true, name: true, photoUrl: true, shirtNumber: true, category: { select: { id: true, name: true, slug: true, gender: true } } } }, club: { select: { id: true, name: true, logoUrl: true } }, opponent: { select: { id: true, name: true, logoUrl: true } } },
+        include: { category: { select: { id: true, name: true, slug: true, gender: true } }, squadMember: { select: { id: true, name: true, photoUrl: true, shirtNumber: true, category: { select: { id: true, name: true, slug: true, gender: true } } } }, club: { select: { id: true, name: true, logoUrl: true } }, opponent: { select: { id: true, name: true, logoUrl: true } } },
         orderBy: { date: 'desc' },
         take: limit,
       });
