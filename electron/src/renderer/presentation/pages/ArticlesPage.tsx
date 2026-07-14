@@ -120,7 +120,7 @@ export function ArticlesPage() {
                   <td className="py-3 px-4">
                     <div className="flex flex-col gap-0.5">
                       <span className={`badge ${STATUS_COLORS[a.status] || ''}`}>{STATUS_LABELS[a.status] || a.status}</span>
-                      {a.scheduledAt && a.status !== 'PUBLISHED' && (
+                      {a.scheduledAt && new Date(a.scheduledAt) > new Date() && (
                         <span className="text-[9px] text-amber-600 flex items-center gap-1">
                           📅 {new Date(a.scheduledAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} às {new Date(a.scheduledAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </span>
