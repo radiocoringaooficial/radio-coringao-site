@@ -224,7 +224,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (file && file.buffer.length > 0) {
           coverImageUrl = await uploadToCloudinary(file.buffer, 'articles', file.mimetype);
         }
-        const article = await db.article.create({ data: { title: fields.title, slug: fields.slug || fields.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-'), content: fields.content || '', excerpt: fields.excerpt, status: fields.status || 'DRAFT', type: fields.type || 'NEWS', isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', authorId: user.id, categoryId: fields.categoryId, coverImage: coverImageUrl, scheduledAt: fields.scheduledAt || null, publishedAt: fields.status === 'PUBLISHED' ? new Date() : null } });
+        const article = await db.article.create({ data: { title: fields.title, slug: fields.slug || fields.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-'), content: fields.content || '', excerpt: fields.excerpt, status: fields.status || 'DRAFT', type: fields.type || 'NEWS', isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', authorId: user.id, categoryId: fields.categoryId, coverImage: coverImageUrl, scheduledAt: fields.scheduledAt || null, publishedAt: fields.status === 'PUBLISHED' ? new Date() : null, order: parseInt(fields.order || '0', 10) } });
         return res.status(201).json(article);
       }
     }
@@ -243,7 +243,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (file && file.buffer.length > 0) {
           coverImageUrl = await uploadToCloudinary(file.buffer, 'articles', file.mimetype);
         }
-        const article = await db.article.update({ where: { id }, data: { title: fields.title, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: coverImageUrl, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit } });
+        const article = await db.article.update({ where: { id }, data: { title: fields.title, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: coverImageUrl, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit, order: parseInt(fields.order || '0', 10) } });
         return res.status(200).json(article);
       }
       if (method === 'DELETE') {
@@ -292,7 +292,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (file && file.buffer.length > 0) {
           coverImageUrl = await uploadToCloudinary(file.buffer, 'articles', file.mimetype);
         }
-        const article = await db.article.update({ where: { id }, data: { title: fields.title, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: coverImageUrl, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit } });
+        const article = await db.article.update({ where: { id }, data: { title: fields.title, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: coverImageUrl, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit, order: parseInt(fields.order || '0', 10) } });
         return res.status(200).json(article);
       }
       if (method === 'DELETE') {
