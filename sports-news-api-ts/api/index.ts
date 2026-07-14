@@ -82,7 +82,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
 
-      return res.status(200).json(slots.filter(Boolean));
+      return res.status(200).json(slots);
     }
 
     // Destaques da semana (must be BEFORE slug match)
