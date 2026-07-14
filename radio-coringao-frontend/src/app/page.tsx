@@ -73,11 +73,15 @@ export default async function Home() {
   const sideArticles = editorialNews.slice(1, 3);
 
   // Partidas agendadas do banco de dados
+  const CATEGORY_LABELS: Record<string, string> = {
+    principal: "Futebol", feminino: "Feminino", basquete: "Basquete",
+    futsal: "Futsal", "sub-20": "Sub-20", "sub-17": "Sub-17",
+  };
   const matches = scheduledMatches.map((m: any, i) => ({
     ...m,
     title: m.competition?.name || `Partida ${i + 1}`,
     competition: m.competition?.name || "",
-    category: m.competition?.category?.slug || "",
+    category: CATEGORY_LABELS[m.competition?.category?.slug] || m.competition?.category?.slug || "",
   }));
 
   const topRead = weekHighlights.length > 0 ? weekHighlights.slice(0, 5) : latestNews.slice(0, 5);
