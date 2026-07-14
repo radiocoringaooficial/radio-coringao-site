@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
 import Busboy from 'busboy';
+import { sanitizePlainText } from '../src/shared/services/sanitize';
 
 // Cloudinary config
 const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME;
@@ -231,7 +232,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(409).json({ error: `Posição #${orderVal} já ocupada por "${conflicting.title}". Remova a posição desse artigo primeiro.` });
           }
         }
-        const article = await db.article.create({ data: { title: fields.title, slug: fields.slug || fields.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-'), content: fields.content || '', excerpt: fields.excerpt, status: fields.status || 'DRAFT', type: fields.type || 'NEWS', isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', authorId: user.id, categoryId: fields.categoryId, coverImage: coverImageUrl, scheduledAt: fields.scheduledAt || null, publishedAt: fields.status === 'PUBLISHED' ? new Date() : null, order: orderVal } });
+        const article = await db.article.create({ data: { title: fields.title, subtitle: fields.subtitle ? sanitizePlainText(fields.subtitle) : null, slug: fields.slug || fields.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-'), content: fields.content || '', excerpt: fields.excerpt, status: fields.status || 'DRAFT', type: fields.type || 'NEWS', isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', authorId: user.id, categoryId: fields.categoryId, coverImage: coverImageUrl, scheduledAt: fields.scheduledAt || null, publishedAt: fields.status === 'PUBLISHED' ? new Date() : null, order: orderVal } });
         return res.status(201).json(article);
       }
     }
@@ -257,7 +258,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(409).json({ error: `Posição #${orderVal} já ocupada por "${conflicting.title}". Remova a posição desse artigo primeiro.` });
           }
         }
-        const article = await db.article.update({ where: { id }, data: { title: fields.title, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: coverImageUrl, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit, order: orderVal } });
+        const article = await db.article.update({ where: { id }, data: { title: fields.title, subtitle: fields.subtitle !== undefined ? (fields.subtitle ? sanitizePlainText(fields.subtitle) : null) : undefined, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: coverImageUrl, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit, order: orderVal } });
         return res.status(200).json(article);
       }
       if (method === 'DELETE') {
@@ -313,7 +314,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(409).json({ error: `Posição #${orderVal} já ocupada por "${conflicting.title}". Remova a posição desse artigo primeiro.` });
           }
         }
-        const article = await db.article.update({ where: { id }, data: { title: fields.title, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: coverImageUrl, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit, order: orderVal } });
+        const article = await db.article.update({ where: { id }, data: { title: fields.title, subtitle: fields.subtitle !== undefined ? (fields.subtitle ? sanitizePlainText(fields.subtitle) : null) : undefined, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: coverImageUrl, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit, order: orderVal } });
         return res.status(200).json(article);
       }
       if (method === 'DELETE') {
