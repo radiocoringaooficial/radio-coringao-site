@@ -67,7 +67,7 @@ export class ApiNewsRepository implements INewsRepository {
   async getEditorialNews(): Promise<NewsArticle[]> {
     const res = await httpClient.get<any>("/noticias/editorial");
     const articles = Array.isArray(res) ? res : res?.data || [];
-    return articles.map(transformArticle);
+    return articles.filter(Boolean).map(transformArticle);
   }
 
   async getLatestNews(): Promise<NewsArticle[]> {
