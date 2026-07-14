@@ -65,12 +65,14 @@ export default async function Home() {
   const weekHighlights = weekArticles.map(mapArticle);
   const monthHighlights = monthArticles.map(mapArticle);
 
-  // Position [0]: Card Hero (lado esquerdo, ~55% largura)
-  const heroArticle = editorialNews[0];
+  // Mapa posição → artigo (usa order como chave, sem compactação)
+  const byPosition = new Map<number, any>(editorialNews.filter(Boolean).map((a: any) => [a.order, a]));
 
-  // Position [1]: Card lateral superior (lado direito)
-  // Position [2]: Card lateral inferior (lado direito)
-  const sideArticles = editorialNews.slice(1, 3);
+  // Position 1: Hero Principal
+  const heroArticle = byPosition.get(1) || null;
+
+  // Positions 2-3: Laterais
+  const sideArticles = [2, 3].map(p => byPosition.get(p)).filter(Boolean);
 
   // Partidas agendadas do banco de dados
   const CATEGORY_LABELS: Record<string, string> = {
@@ -86,10 +88,8 @@ export default async function Home() {
 
   const topRead = weekHighlights.length > 0 ? weekHighlights.slice(0, 5) : latestNews.slice(0, 5);
 
-  // Position [3] a [11]: cards adicionais vindos do editorial (order 4-12)
-  // Fallback para latestNews se não houver artigos editoriais suficientes
-  const editorialMore = editorialNews.slice(3, 12);
-  const moreNews = editorialMore.filter(Boolean);
+  // Positions 4-12: cards adicionais (cada um no slot exato do seu order)
+  const moreNews = Array.from({ length: 9 }, (_, i) => byPosition.get(i + 4)).filter(Boolean);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-margin-mobile py-stack-lg md:px-margin-desktop">
