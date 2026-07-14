@@ -23,6 +23,7 @@
     "@fastify/multipart": "^8.3.0",
     "@fastify/rate-limit": "^9.1.0",
     "@prisma/client": "^5.10.0",
+    "busboy": "^1.6.0",
     "cloudinary": "^2.0.0",
     "dotenv": "^17.4.2",
     "fastify": "^4.26.2",

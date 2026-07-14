@@ -75,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const url = req.url?.replace('/api/admin', '') || '/';
+  const url = (req.url?.replace('/api/admin', '') || '/').split('?')[0];
   const method = req.method || 'GET';
 
   try {

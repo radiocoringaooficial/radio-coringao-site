@@ -208,6 +208,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json(links);
     }
 
+    // Configurações
+    if (url === '/api/configuracoes' || url.startsWith('/api/configuracoes?')) {
+      const settings = await db.siteSettings.findUnique({ where: { id: 'main' } });
+      return res.status(200).json(settings || {});
+    }
+
     // Tags
     if (url === '/api/tags' || url.startsWith('/api/tags?')) {
       const tags = await db.tag.findMany();

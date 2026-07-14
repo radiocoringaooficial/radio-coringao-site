@@ -1,5 +1,47 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
+import Busboy from 'busboy';
+
+const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_SECRET = process.env.CLOUDINARY_API_SECRET;
+
+async function uploadToCloudinary(buffer: Buffer, folder: string, mimeType: string): Promise<string> {
+  const { v2: cloudinary } = await import('cloudinary');
+  cloudinary.config({ cloud_name: CLOUDINARY_CLOUD, api_key: CLOUDINARY_KEY, api_secret: CLOUDINARY_SECRET });
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: `radio-coringao/${folder}`, resource_type: 'image', allowed_formats: ['jpg', 'jpeg', 'png', 'webp'], transformation: [{ width: 400, height: 400, crop: 'fill', quality: 'auto', fetch_format: 'auto' }] },
+      (error: any, result: any) => { if (error || !result) reject(error || new Error('Upload failed')); else resolve(result.secure_url); },
+    );
+    const { Readable } = require('stream');
+    const readable = new Readable();
+    readable.push(buffer);
+    readable.push(null);
+    readable.pipe(stream);
+  });
+}
+
+function parseMultipart(req: VercelRequest): Promise<{ fields: Record<string, any>; file?: { buffer: Buffer; filename: string; mimetype: string } }> {
+  return new Promise((resolve, reject) => {
+    const contentType = req.headers['content-type'] || '';
+    if (!contentType.includes('multipart')) return resolve({ fields: req.body || {} });
+    const busboy = Busboy({ headers: { 'content-type': contentType } });
+    const fields: Record<string, any> = {};
+    let fileData: { buffer: Buffer; filename: string; mimetype: string } | undefined;
+    busboy.on('field', (name: string, value: string) => { fields[name] = value; });
+    busboy.on('file', (name: string, file: any, info: any) => {
+      const chunks: Buffer[] = [];
+      file.on('data', (chunk: Buffer) => chunks.push(chunk));
+      file.on('end', () => { fileData = { buffer: Buffer.concat(chunks), filename: info.filename, mimetype: info.mimeType }; });
+    });
+    busboy.on('finish', () => resolve({ fields, file: fileData }));
+    busboy.on('error', reject);
+    const reqChunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => reqChunks.push(chunk));
+    req.on('end', () => busboy.end(Buffer.concat(reqChunks)));
+  });
+}
 
 let prisma: any = null;
 
@@ -65,8 +107,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── TEAM ──────────────────────────────────────────────────
+    if (url === '/team' && method === 'GET') {
+      const team = await db.team.findUnique({ where: { id: 'main' } });
+      return res.status(200).json(team || {});
+    }
     if (url === '/team' && method === 'PATCH') {
-      const team = await db.team.update({ where: { id: 'main' }, data: req.body });
+      const { fields, file } = await parseMultipart(req);
+      let logoUrl = fields.logoUrl || undefined;
+      if (file && file.buffer.length > 0) {
+        logoUrl = await uploadToCloudinary(file.buffer, 'club', file.mimetype);
+      }
+      const updateData: any = { ...fields };
+      if (logoUrl) updateData.logoUrl = logoUrl;
+      delete updateData.logo;
+      const team = await db.team.update({ where: { id: 'main' }, data: updateData });
       return res.status(200).json(team);
     }
 
@@ -128,14 +182,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ data, total });
       }
       if (method === 'POST') {
-        const opp = await db.opponent.create({ data: { name: req.body.name, shortName: req.body.shortName, logoUrl: req.body.logoUrl, stadium: req.body.stadium, city: req.body.city, color: req.body.color } });
+        const { fields, file } = await parseMultipart(req);
+        let logoUrl = fields.logoUrl || undefined;
+        if (file && file.buffer.length > 0) {
+          logoUrl = await uploadToCloudinary(file.buffer, 'opponents', file.mimetype);
+        }
+        const opp = await db.opponent.create({ data: { name: fields.name, shortName: fields.shortName, logoUrl, stadium: fields.stadium, city: fields.city, color: fields.color } });
         return res.status(201).json(opp);
       }
     }
 
     const oppMatch = url.match(/^\/adversarios\/([^/]+)$/);
     if (oppMatch && method === 'PATCH') {
-      const opp = await db.opponent.update({ where: { id: oppMatch[1] }, data: req.body });
+      const { fields, file } = await parseMultipart(req);
+      let logoUrl = fields.logoUrl || undefined;
+      if (file && file.buffer.length > 0) {
+        logoUrl = await uploadToCloudinary(file.buffer, 'opponents', file.mimetype);
+      }
+      const updateData: any = { ...fields };
+      if (logoUrl) updateData.logoUrl = logoUrl;
+      delete updateData.logo;
+      const opp = await db.opponent.update({ where: { id: oppMatch[1] }, data: updateData });
       return res.status(200).json(opp);
     }
     if (oppMatch && method === 'DELETE') {
@@ -174,6 +241,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(204).end();
     }
 
+    // ─── STANDINGS LOGO ────────────────────────────────────────
+    if (url === '/classificacoes/logo' && method === 'POST') {
+      const { file } = await parseMultipart(req);
+      if (!file || file.buffer.length === 0) {
+        return res.status(400).json({ error: 'Nenhuma imagem enviada.' });
+      }
+      const logoUrl = await uploadToCloudinary(file.buffer, 'club', file.mimetype);
+      return res.status(200).json({ logoUrl });
+    }
+
     // ─── STANDINGS ─────────────────────────────────────────────
     if (url === '/classificacoes' || url === '/classificacoes/') {
       if (method === 'GET') {
@@ -201,14 +278,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(squad);
       }
       if (method === 'POST') {
-        const member = await db.squadMember.create({ data: { categoryId: req.body.categoryId, name: req.body.name, position: req.body.position, shirtNumber: req.body.shirtNumber, photoUrl: req.body.photoUrl } });
+        const { fields, file } = await parseMultipart(req);
+        let photoUrl = fields.photoUrl || undefined;
+        if (file && file.buffer.length > 0) {
+          photoUrl = await uploadToCloudinary(file.buffer, 'squad', file.mimetype);
+        }
+        const member = await db.squadMember.create({ data: { categoryId: fields.categoryId, name: fields.name, position: fields.position, shirtNumber: fields.shirtNumber, photoUrl } });
         return res.status(201).json(member);
       }
     }
 
     const squadMatch = url.match(/^\/elenco\/([^/]+)$/);
     if (squadMatch && method === 'PATCH') {
-      const member = await db.squadMember.update({ where: { id: squadMatch[1] }, data: req.body });
+      const { fields, file } = await parseMultipart(req);
+      let photoUrl = fields.photoUrl || undefined;
+      if (file && file.buffer.length > 0) {
+        photoUrl = await uploadToCloudinary(file.buffer, 'squad', file.mimetype);
+      }
+      const updateData: any = { ...fields };
+      if (photoUrl) updateData.photoUrl = photoUrl;
+      delete updateData.photo;
+      const member = await db.squadMember.update({ where: { id: squadMatch[1] }, data: updateData });
       return res.status(200).json(member);
     }
     if (squadMatch && method === 'DELETE') {

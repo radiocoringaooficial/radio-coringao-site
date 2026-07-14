@@ -4,8 +4,7 @@
   "mac": {
     "target": ["dmg", "zip"],
     "category": "public.app-category.news",
-    "icon": "build/icon.png",
-    "iconSize": 512
+    "icon": "build/icon.png"
   },
   "win": {
     "target": ["nsis", "portable"],
