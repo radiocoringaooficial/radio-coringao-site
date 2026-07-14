@@ -283,7 +283,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (file && file.buffer.length > 0) {
           photoUrl = await uploadToCloudinary(file.buffer, 'squad', file.mimetype);
         }
-        const member = await db.squadMember.create({ data: { categoryId: fields.categoryId, name: fields.name, position: fields.position, shirtNumber: fields.shirtNumber, photoUrl } });
+        const shirtNum = fields.shirtNumber ? parseInt(fields.shirtNumber, 10) : null;
+        const member = await db.squadMember.create({ data: { categoryId: fields.categoryId, name: fields.name, position: fields.position, shirtNumber: isNaN(shirtNum) ? null : shirtNum, photoUrl } });
         return res.status(201).json(member);
       }
     }
@@ -298,6 +299,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const updateData: any = { ...fields };
       if (photoUrl) updateData.photoUrl = photoUrl;
       delete updateData.photo;
+      if (updateData.shirtNumber) updateData.shirtNumber = parseInt(updateData.shirtNumber, 10);
+      if (isNaN(updateData.shirtNumber)) updateData.shirtNumber = null;
       const member = await db.squadMember.update({ where: { id: squadMatch[1] }, data: updateData });
       return res.status(200).json(member);
     }
