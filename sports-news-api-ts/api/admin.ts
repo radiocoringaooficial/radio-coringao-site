@@ -187,8 +187,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(article);
       }
       if (method === 'PUT' || method === 'PATCH') {
-        const body = req.body;
-        const article = await db.article.update({ where: { id }, data: { title: body.title, slug: body.slug, content: body.content, excerpt: body.excerpt, status: body.status, type: body.type, isFeatured: body.isFeatured, isBreaking: body.isBreaking, categoryId: body.categoryId, coverImage: body.coverImage, publishedAt: body.status === 'PUBLISHED' ? new Date() : undefined } });
+        let body: Record<string, any> = {};
+        const contentType = req.headers['content-type'] || '';
+        if (contentType.includes('multipart')) {
+          const chunks: Buffer[] = [];
+          for await (const chunk of req) chunks.push(chunk);
+          const raw = Buffer.concat(chunks).toString('utf-8');
+          const boundary = contentType.match(/boundary=(.+)/)?.[1];
+          if (boundary) {
+            const parts = raw.split('--' + boundary);
+            for (const part of parts) {
+              const nameMatch = part.match(/name="([^"]+)"/);
+              if (!nameMatch) continue;
+              const name = nameMatch[1];
+              const valueMatch = part.match(/\r\n\r\n([\s\S]*?)\r\n$/);
+              if (valueMatch) body[name] = valueMatch[1].trim();
+            }
+          }
+        } else {
+          body = req.body || {};
+        }
+        const article = await db.article.update({ where: { id }, data: { title: body.title, slug: body.slug, content: body.content, excerpt: body.excerpt, status: body.status, type: body.type, isFeatured: body.isFeatured === 'true', isBreaking: body.isBreaking === 'true', categoryId: body.categoryId, coverImage: body.coverImage, publishedAt: body.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: body.scheduledAt || null, coverImageAlt: body.coverImageAlt, coverImageCredit: body.coverImageCredit } });
         return res.status(200).json(article);
       }
       if (method === 'DELETE') {
@@ -232,8 +251,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(article);
       }
       if (method === 'PUT' || method === 'PATCH') {
-        const body = req.body;
-        const article = await db.article.update({ where: { id }, data: { title: body.title, slug: body.slug, content: body.content, excerpt: body.excerpt, status: body.status, type: body.type, isFeatured: body.isFeatured, isBreaking: body.isBreaking, categoryId: body.categoryId, coverImage: body.coverImage, publishedAt: body.status === 'PUBLISHED' ? new Date() : undefined } });
+        let body: Record<string, any> = {};
+        const contentType = req.headers['content-type'] || '';
+        if (contentType.includes('multipart')) {
+          // Parse multipart FormData manually
+          const chunks: Buffer[] = [];
+          for await (const chunk of req) chunks.push(chunk);
+          const raw = Buffer.concat(chunks).toString('utf-8');
+          const boundary = contentType.match(/boundary=(.+)/)?.[1];
+          if (boundary) {
+            const parts = raw.split('--' + boundary);
+            for (const part of parts) {
+              const nameMatch = part.match(/name="([^"]+)"/);
+              if (!nameMatch) continue;
+              const name = nameMatch[1];
+              const valueMatch = part.match(/\r\n\r\n([\s\S]*?)\r\n$/);
+              if (valueMatch) body[name] = valueMatch[1].trim();
+            }
+          }
+        } else {
+          body = req.body || {};
+        }
+        const article = await db.article.update({ where: { id }, data: { title: body.title, slug: body.slug, content: body.content, excerpt: body.excerpt, status: body.status, type: body.type, isFeatured: body.isFeatured === 'true', isBreaking: body.isBreaking === 'true', categoryId: body.categoryId, coverImage: body.coverImage, publishedAt: body.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: body.scheduledAt || null, coverImageAlt: body.coverImageAlt, coverImageCredit: body.coverImageCredit } });
         return res.status(200).json(article);
       }
       if (method === 'DELETE') {
