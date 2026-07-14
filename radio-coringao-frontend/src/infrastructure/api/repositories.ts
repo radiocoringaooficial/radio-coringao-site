@@ -161,10 +161,7 @@ export class ApiMatchRepository implements IMatchRepository {
       params: { status: "SCHEDULED", limit: "10" },
     });
     const matches = Array.isArray(res) ? res : res?.data || [];
-    console.log("[DEBUG] getScheduledMatches raw:", JSON.stringify(matches[0]));
-    const transformed = matches.map(transformMatch);
-    console.log("[DEBUG] transformMatch result:", JSON.stringify(transformed[0]));
-    return transformed;
+    return matches.map(transformMatch);
   }
 }
 
