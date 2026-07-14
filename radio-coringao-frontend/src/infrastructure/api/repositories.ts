@@ -54,6 +54,7 @@ function transformMatch(apiMatch: any): any {
     time: timeStr,
     venue: apiMatch.venue || '',
     competition: apiMatch.competition?.name || apiMatch.competition || '',
+    category: apiMatch.competition?.category?.slug || '',
     hasTickets: false,
     status: apiMatch.status,
     homeScore: apiMatch.homeScore,
