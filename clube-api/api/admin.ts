@@ -414,32 +414,53 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (financeUrl === '/evolution' && method === 'GET') {
         const months = Math.min(parseInt(urlObj.searchParams.get('months') || '12'), 60);
         const now = new Date();
-        const result = [];
+        const start = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
+        // Uma única query com groupBy por mês em vez de N queries sequenciais
+        const grouped = await db.playerMovement.groupBy({
+          by: ['type'],
+          where: { season, date: { gte: start, lte: end } },
+          _sum: { valueCents: true, loanValueCents: true },
+          _count: { id: true },
+        });
+
+        // Agregar por mês via query raw (groupBy não suporta groupBy por data diretamente)
+        const monthlyData = await db.$queryRaw<{ month: string; type: string; total_value: bigint; total_count: bigint }[]>`
+          SELECT
+            TO_CHAR(date, 'YYYY-MM') as month,
+            type,
+            COALESCE(SUM(COALESCE("valueCents", "loanValueCents")), 0) as total_value,
+            COUNT(*)::int as total_count
+          FROM player_movements
+          WHERE "season" = ${season} AND date >= ${start} AND date <= ${end}
+          GROUP BY TO_CHAR(date, 'YYYY-MM'), type
+          ORDER BY month ASC
+        `;
+
+        // Montar resultado por mês
+        const monthMap = new Map<string, { income: number; expense: number; count: number }>();
+        for (const row of monthlyData) {
+          if (!monthMap.has(row.month)) monthMap.set(row.month, { income: 0, expense: 0, count: 0 });
+          const entry = monthMap.get(row.month)!;
+          const value = Number(row.total_value);
+          if (['DEPARTURE', 'LOAN_OUT'].includes(row.type)) entry.income += value;
+          if (['ARRIVAL', 'LOAN_IN'].includes(row.type)) entry.expense += value;
+          entry.count += Number(row.total_count);
+        }
+
+        // Preencher meses sem dados
+        const result = [];
         for (let i = months - 1; i >= 0; i--) {
           const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
           const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-          const start = new Date(d.getFullYear(), d.getMonth(), 1);
-          const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
-
-          const movements = await db.playerMovement.findMany({
-            where: { season, date: { gte: start, lte: end } },
-            select: { type: true, valueCents: true, loanValueCents: true },
-          });
-
-          const income = movements
-            .filter((m: any) => ['DEPARTURE', 'LOAN_OUT'].includes(m.type))
-            .reduce((sum: number, m: any) => sum + Number(m.valueCents ?? m.loanValueCents ?? 0), 0);
-          const expense = movements
-            .filter((m: any) => ['ARRIVAL', 'LOAN_IN'].includes(m.type))
-            .reduce((sum: number, m: any) => sum + Number(m.valueCents ?? m.loanValueCents ?? 0), 0);
-
+          const data = monthMap.get(monthKey) || { income: 0, expense: 0, count: 0 };
           result.push({
             month: monthKey,
-            incomeCents: String(income),
-            expenseCents: String(expense),
-            balanceCents: String(income - expense),
-            movementsCount: movements.length,
+            incomeCents: String(data.income),
+            expenseCents: String(data.expense),
+            balanceCents: String(data.income - data.expense),
+            movementsCount: data.count,
           });
         }
         return res.status(200).json(result);
