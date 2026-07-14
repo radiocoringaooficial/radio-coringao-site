@@ -44,11 +44,5 @@
       "src": "/(.*)",
       "dest": "api/index.ts"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron/publish-scheduled",
-      "schedule": "0 0 * * *"
-    }
   ]
 }
