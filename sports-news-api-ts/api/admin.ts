@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
+import Busboy from 'busboy';
 
 let prisma: any = null;
 
@@ -22,6 +23,31 @@ function verifyToken(req: VercelRequest): any {
   const auth = req.headers.authorization;
   if (!auth?.startsWith('Bearer ')) throw new Error('Unauthorized');
   return jwt.verify(auth.slice(7), JWT_SECRET);
+}
+
+function parseMultipart(req: VercelRequest): Promise<{ fields: Record<string, any>; file?: { buffer: Buffer; filename: string; mimetype: string } }> {
+  return new Promise((resolve, reject) => {
+    const contentType = req.headers['content-type'] || '';
+    if (!contentType.includes('multipart')) {
+      return resolve({ fields: req.body || {} });
+    }
+    const busboy = Busboy({ headers: { 'content-type': contentType } });
+    const fields: Record<string, any> = {};
+    let fileData: { buffer: Buffer; filename: string; mimetype: string } | undefined;
+
+    busboy.on('field', (name: string, value: string) => { fields[name] = value; });
+    busboy.on('file', (name: string, file: any, info: any) => {
+      const chunks: Buffer[] = [];
+      file.on('data', (chunk: Buffer) => chunks.push(chunk));
+      file.on('end', () => { fileData = { buffer: Buffer.concat(chunks), filename: info.filename, mimetype: info.mimeType }; });
+    });
+    busboy.on('finish', () => resolve({ fields, file: fileData }));
+    busboy.on('error', reject);
+
+    const reqChunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => reqChunks.push(chunk));
+    req.on('end', () => busboy.end(Buffer.concat(reqChunks)));
+  });
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -187,27 +213,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(article);
       }
       if (method === 'PUT' || method === 'PATCH') {
-        let body: Record<string, any> = {};
-        const contentType = req.headers['content-type'] || '';
-        if (contentType.includes('multipart')) {
-          const chunks: Buffer[] = [];
-          for await (const chunk of req) chunks.push(chunk);
-          const raw = Buffer.concat(chunks).toString('utf-8');
-          const boundary = contentType.match(/boundary=(.+)/)?.[1];
-          if (boundary) {
-            const parts = raw.split('--' + boundary);
-            for (const part of parts) {
-              const nameMatch = part.match(/name="([^"]+)"/);
-              if (!nameMatch) continue;
-              const name = nameMatch[1];
-              const valueMatch = part.match(/\r\n\r\n([\s\S]*?)\r\n$/);
-              if (valueMatch) body[name] = valueMatch[1].trim();
-            }
-          }
-        } else {
-          body = req.body || {};
-        }
-        const article = await db.article.update({ where: { id }, data: { title: body.title, slug: body.slug, content: body.content, excerpt: body.excerpt, status: body.status, type: body.type, isFeatured: body.isFeatured === 'true', isBreaking: body.isBreaking === 'true', categoryId: body.categoryId, coverImage: body.coverImage, publishedAt: body.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: body.scheduledAt || null, coverImageAlt: body.coverImageAlt, coverImageCredit: body.coverImageCredit } });
+        const { fields } = await parseMultipart(req);
+        const article = await db.article.update({ where: { id }, data: { title: fields.title, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: fields.coverImage, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit } });
         return res.status(200).json(article);
       }
       if (method === 'DELETE') {
@@ -251,28 +258,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(article);
       }
       if (method === 'PUT' || method === 'PATCH') {
-        let body: Record<string, any> = {};
-        const contentType = req.headers['content-type'] || '';
-        if (contentType.includes('multipart')) {
-          // Parse multipart FormData manually
-          const chunks: Buffer[] = [];
-          for await (const chunk of req) chunks.push(chunk);
-          const raw = Buffer.concat(chunks).toString('utf-8');
-          const boundary = contentType.match(/boundary=(.+)/)?.[1];
-          if (boundary) {
-            const parts = raw.split('--' + boundary);
-            for (const part of parts) {
-              const nameMatch = part.match(/name="([^"]+)"/);
-              if (!nameMatch) continue;
-              const name = nameMatch[1];
-              const valueMatch = part.match(/\r\n\r\n([\s\S]*?)\r\n$/);
-              if (valueMatch) body[name] = valueMatch[1].trim();
-            }
-          }
-        } else {
-          body = req.body || {};
-        }
-        const article = await db.article.update({ where: { id }, data: { title: body.title, slug: body.slug, content: body.content, excerpt: body.excerpt, status: body.status, type: body.type, isFeatured: body.isFeatured === 'true', isBreaking: body.isBreaking === 'true', categoryId: body.categoryId, coverImage: body.coverImage, publishedAt: body.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: body.scheduledAt || null, coverImageAlt: body.coverImageAlt, coverImageCredit: body.coverImageCredit } });
+        const { fields } = await parseMultipart(req);
+        const article = await db.article.update({ where: { id }, data: { title: fields.title, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: fields.coverImage, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit } });
         return res.status(200).json(article);
       }
       if (method === 'DELETE') {
