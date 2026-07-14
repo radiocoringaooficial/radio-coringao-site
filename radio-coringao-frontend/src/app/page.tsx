@@ -81,7 +81,7 @@ export default async function Home() {
     ...m,
     title: m.competition?.name || `Partida ${i + 1}`,
     competition: m.competition?.name || "",
-    category: CATEGORY_LABELS[m.competition?.category?.slug] || m.competition?.category?.slug || "",
+    category: CATEGORY_LABELS[m.category] || m.category || "",
     homeTeam: m.isHome ? "Corinthians" : m.opponent?.name || "TBD",
     awayTeam: m.isHome ? m.opponent?.name || "TBD" : "Corinthians",
     homeTeamLogo: m.isHome ? "https://res.cloudinary.com/def661xyl/image/upload/v1782685173/club-corinthians/logos/ulkyawaln1damxiqbpep.png" : m.opponent?.logoUrl || null,
