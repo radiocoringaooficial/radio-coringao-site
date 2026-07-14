@@ -544,12 +544,13 @@ export function SportsContent({
                   </thead>
                   <tbody>
                     {standings.map((row, index) => {
-                      const posColor =
-                        row.pos <= 4 ? "#1565C0" :
-                        row.pos === 5 ? "#E65100" :
-                        row.pos <= 11 ? "#6A1B9A" :
-                        row.pos >= 18 ? "#b71c1c" :
-                        "transparent";
+                      const posColor = isBasketball
+                        ? "#1565C0"
+                        : row.pos <= 4 ? "#1565C0" :
+                          row.pos === 5 ? "#E65100" :
+                          row.pos <= 11 ? "#6A1B9A" :
+                          row.pos >= 18 ? "#b71c1c" :
+                          "transparent";
                       const sg = row.sg || ((row.gm || 0) - (row.gc || 0));
                       return (
                         <tr
@@ -682,12 +683,13 @@ export function SportsContent({
                     </thead>
                     <tbody>
                       {table.standings.map((row, index) => {
-                        const posColor =
-                          row.pos <= 4 ? "#1565C0" :
-                          row.pos === 5 ? "#E65100" :
-                          row.pos <= 11 ? "#6A1B9A" :
-                          row.pos >= 18 ? "#b71c1c" :
-                          "transparent";
+                        const posColor = isBasketball
+                          ? "#1565C0"
+                          : row.pos <= 4 ? "#1565C0" :
+                            row.pos === 5 ? "#E65100" :
+                            row.pos <= 11 ? "#6A1B9A" :
+                            row.pos >= 18 ? "#b71c1c" :
+                            "transparent";
                         const sg = row.sg || ((row.gm || 0) - (row.gc || 0));
                         return (
                           <tr
