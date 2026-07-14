@@ -29,6 +29,10 @@
       "dest": "api/admin.ts"
     },
     {
+      "src": "/api/cron/(.*)",
+      "dest": "api/cron/publish-scheduled.ts"
+    },
+    {
       "src": "/api/test2",
       "dest": "api/test2.ts"
     },
@@ -44,7 +48,7 @@
   "crons": [
     {
       "path": "/api/cron/publish-scheduled",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
