@@ -22,6 +22,8 @@ interface ApiCompetition {
   isParticipating?: boolean;
   eliminationMessage?: string | null;
   slug?: string | null;
+  tableFormat?: string | null;
+  groupNames?: string | null;
 }
 
 interface ApiStandingEntry {
@@ -36,6 +38,7 @@ interface ApiStandingEntry {
   goalsFor: number;
   goalsAgainst: number;
   goalDifference: number;
+  groupName?: string | null;
 }
 
 async function getCompetitions(): Promise<ApiCompetition[]> {
@@ -69,24 +72,55 @@ function buildDescription(comp: ApiCompetition): string {
   return `Classificação do ${comp.name}${category ? " " + category : ""}.`;
 }
 
-function transformData(comp: ApiCompetition, standings: ApiStandingEntry[]): ChampionshipData {
+function mapStanding(s: ApiStandingEntry) {
   return {
+    pos: s.position,
+    time: s.teamName,
+    j: s.played,
+    v: s.won,
+    d: s.lost,
+    ppro: s.goalsFor,
+    pcon: s.goalsAgainst,
+    sld: s.goalDifference,
+    logoUrl: s.logoUrl,
+  };
+}
+
+function transformData(comp: ApiCompetition, standings: ApiStandingEntry[]): ChampionshipData {
+  const tableFormat = comp.tableFormat || "single";
+  const base = {
     name: comp.name,
     slug: slugify(comp.name),
     description: buildDescription(comp),
     status: comp.status || "Em andamento",
     elimination: comp.eliminationMessage || undefined,
-    standings: standings.map((s) => ({
-      pos: s.position,
-      time: s.teamName,
-      j: s.played,
-      v: s.won,
-      d: s.lost,
-      ppro: s.goalsFor,
-      pcon: s.goalsAgainst,
-      sld: s.goalDifference,
-      logoUrl: s.logoUrl,
-    })),
+  };
+
+  if (tableFormat === "friendly" || tableFormat === "none" || tableFormat === "phases") {
+    return { ...base, groups: [], hasTable: false };
+  }
+
+  if (tableFormat === "grouped") {
+    const grouped = new Map<string, ApiStandingEntry[]>();
+    for (const entry of standings) {
+      const group = entry.groupName || "Grupo";
+      if (!grouped.has(group)) grouped.set(group, []);
+      grouped.get(group)!.push(entry);
+    }
+    return {
+      ...base,
+      hasTable: true,
+      groups: Array.from(grouped.entries()).map(([groupName, entries]) => ({
+        groupName,
+        entries: entries.map(mapStanding),
+      })),
+    };
+  }
+
+  return {
+    ...base,
+    hasTable: true,
+    groups: [{ groupName: null, entries: standings.map(mapStanding) }],
   };
 }
 
