@@ -10,7 +10,7 @@ let _running = false;
 let _consecutiveErrors = 0;
 const MAX_CONSECUTIVE_ERRORS = 5;
 
-async function publishScheduledArticles(): Promise<void> {
+export async function publishScheduledArticles(): Promise<void> {
   if (_running) return; 
   _running = true;
 
