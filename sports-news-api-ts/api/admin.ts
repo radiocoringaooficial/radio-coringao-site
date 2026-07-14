@@ -219,8 +219,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ data, total, page, limit, totalPages: Math.ceil(total / limit) });
       }
       if (method === 'POST') {
-        const body = req.body;
-        const article = await db.article.create({ data: { title: body.title, slug: body.slug || body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'), content: body.content || '', excerpt: body.excerpt, status: body.status || 'DRAFT', type: body.type || 'NEWS', isFeatured: body.isFeatured || false, isBreaking: body.isBreaking || false, authorId: body.authorId || user.id, categoryId: body.categoryId, coverImage: body.coverImage, publishedAt: body.status === 'PUBLISHED' ? new Date() : null } });
+        const { fields, file } = await parseMultipart(req);
+        let coverImageUrl = fields.coverImage || undefined;
+        if (file && file.buffer.length > 0) {
+          coverImageUrl = await uploadToCloudinary(file.buffer, 'articles', file.mimetype);
+        }
+        const article = await db.article.create({ data: { title: fields.title, slug: fields.slug || fields.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-'), content: fields.content || '', excerpt: fields.excerpt, status: fields.status || 'DRAFT', type: fields.type || 'NEWS', isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', authorId: user.id, categoryId: fields.categoryId, coverImage: coverImageUrl, scheduledAt: fields.scheduledAt || null, publishedAt: fields.status === 'PUBLISHED' ? new Date() : null } });
         return res.status(201).json(article);
       }
     }
