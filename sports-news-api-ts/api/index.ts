@@ -39,9 +39,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Notícias
     if (url === '/api/noticias' || url.startsWith('/api/noticias?')) {
+      const urlObj = new URL(url, 'http://localhost');
+      const categoryParam = urlObj.searchParams.get('category');
+      const limitParam = parseInt(urlObj.searchParams.get('limit') || '20');
+      const where: any = { status: 'PUBLISHED' };
+      if (categoryParam) where.category = { slug: categoryParam };
       const articles = await db.article.findMany({
-        where: { status: 'PUBLISHED' },
-        take: 20,
+        where,
+        take: limitParam,
         orderBy: { publishedAt: 'desc' },
         include: { category: true, author: { select: { id: true, name: true, email: true, role: true, avatar: true, bio: true, position: true } } },
       });
