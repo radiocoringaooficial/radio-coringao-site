@@ -521,9 +521,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(users);
       }
       if (method === 'POST') {
+        const { fields, file } = await parseMultipart(req);
+        let avatarUrl = fields.avatar || undefined;
+        if (file && file.buffer.length > 0) {
+          avatarUrl = await uploadToCloudinary(file.buffer, 'avatars', file.mimetype);
+        }
         const bcrypt = await import('bcryptjs');
-        const hashed = await bcrypt.default.hash(req.body.password, 12);
-        const newUser = await db.user.create({ data: { name: req.body.name, email: req.body.email, password: hashed, role: req.body.role || 'JORNALISTA', position: req.body.position, avatar: req.body.avatar } });
+        const hashed = await bcrypt.default.hash(fields.password, 12);
+        const newUser = await db.user.create({ data: { name: fields.name, email: fields.email, password: hashed, role: fields.role || 'JORNALISTA', position: fields.position, avatar: avatarUrl } });
         return res.status(201).json({ id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role });
       }
     }
@@ -532,10 +537,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (userMatch) {
       const id = userMatch[1];
       if (method === 'PUT' || method === 'PATCH') {
-        const data: any = { name: req.body.name, email: req.body.email, role: req.body.role, position: req.body.position, avatar: req.body.avatar, isActive: req.body.isActive };
-        if (req.body.password) {
+        const { fields, file } = await parseMultipart(req);
+        let avatarUrl = fields.avatar || undefined;
+        if (file && file.buffer.length > 0) {
+          avatarUrl = await uploadToCloudinary(file.buffer, 'avatars', file.mimetype);
+        }
+        const data: any = { name: fields.name, email: fields.email, role: fields.role, position: fields.position, avatar: avatarUrl, isActive: fields.isActive === 'true' };
+        if (fields.password) {
           const bcrypt = await import('bcryptjs');
-          data.password = await bcrypt.default.hash(req.body.password, 12);
+          data.password = await bcrypt.default.hash(fields.password, 12);
         }
         const updated = await db.user.update({ where: { id }, data });
         return res.status(200).json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role });
@@ -725,7 +735,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ─── SETTINGS LOGO ────────────────────────────────────────
     if (url === '/configuracoes/logo' && method === 'PUT') {
-      return res.status(200).json({ ok: true });
+      const { file } = await parseMultipart(req);
+      if (!file || file.buffer.length === 0) {
+        return res.status(400).json({ error: 'Nenhuma imagem enviada.' });
+      }
+      const logoUrl = await uploadToCloudinary(file.buffer, 'settings', file.mimetype);
+      await db.siteSettings.update({ where: { id: 'main' }, data: { logoUrl } });
+      return res.status(200).json({ logoUrl });
     }
 
     // ─── CONTENT IMAGE UPLOAD ─────────────────────────────────
