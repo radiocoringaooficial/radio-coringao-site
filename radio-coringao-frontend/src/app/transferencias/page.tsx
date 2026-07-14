@@ -57,9 +57,7 @@ function formatValue(m: Movement): string {
 
 function getCategoryLabel(cat?: Movement["category"]): string {
   if (!cat) return "Sem Categoria";
-  const modality = MODALITY_LABEL[cat.modality || ""] || cat.modality || "";
-  const gender = GENDER_LABEL[cat.gender || ""] || "";
-  return [modality, gender].filter(Boolean).join(" ") || cat.name;
+  return cat.name;
 }
 
 function getCategoryOrder(cat?: Movement["category"]): number {
