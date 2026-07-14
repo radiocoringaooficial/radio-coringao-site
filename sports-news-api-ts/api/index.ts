@@ -58,22 +58,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const articles = await db.article.findMany({
         where: { status: 'PUBLISHED', isFeatured: true, order: { gt: 0 } },
         orderBy: [{ order: 'asc' }, { publishedAt: 'desc' }],
-        take: 12,
+        take: 50,
         include: { category: true, author: { select: { id: true, name: true, email: true, role: true, avatar: true, bio: true, position: true } } },
       });
-      // Log conflitos de order pra debugging
-      const orderCounts: Record<number, string[]> = {};
+
+      // Monta array de 12 slots fixos — cada artigo vai pro slot[order-1]
+      const slots: (typeof articles[number] | null)[] = Array(12).fill(null);
+      const unpositioned: typeof articles = [];
+
       for (const a of articles) {
-        const o = a.order ?? 0;
-        orderCounts[o] = orderCounts[o] || [];
-        orderCounts[o].push(a.id);
-      }
-      for (const [o, ids] of Object.entries(orderCounts)) {
-        if (ids.length > 1 && Number(o) > 0) {
-          console.warn(`[EDITORIAL] Conflito de order=${o}: artigos ${ids.join(', ')}`);
+        const pos = (a as any).order ?? 0;
+        if (pos >= 1 && pos <= 12 && slots[pos - 1] === null) {
+          slots[pos - 1] = a;
+        } else {
+          unpositioned.push(a);
         }
       }
-      return res.status(200).json(articles);
+
+      // Preenche slots vazios com artigos sem posição
+      for (let i = 0; i < slots.length; i++) {
+        if (slots[i] === null && unpositioned.length > 0) {
+          slots[i] = unpositioned.shift()!;
+        }
+      }
+
+      return res.status(200).json(slots.filter(Boolean));
     }
 
     // Destaques da semana (must be BEFORE slug match)
