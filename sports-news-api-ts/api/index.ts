@@ -56,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Editoriais
     if (url === '/api/noticias/editorial' || url.startsWith('/api/noticias/editorial?')) {
       const articles = await db.article.findMany({
-        where: { status: 'PUBLISHED', isFeatured: true },
+        where: { status: 'PUBLISHED', isFeatured: true, order: { gt: 0 } },
         orderBy: [{ order: 'asc' }, { publishedAt: 'desc' }],
         take: 12,
         include: { category: true, author: { select: { id: true, name: true, email: true, role: true, avatar: true, bio: true, position: true } } },
