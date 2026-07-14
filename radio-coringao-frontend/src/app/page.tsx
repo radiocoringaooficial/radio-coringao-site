@@ -75,7 +75,9 @@ export default async function Home() {
   // Partidas agendadas do banco de dados
   const matches = scheduledMatches.map((m: any, i) => ({
     ...m,
-    title: m.competition || `Partida ${i + 1}`,
+    title: m.competition?.name || `Partida ${i + 1}`,
+    competition: m.competition?.name || "",
+    category: m.competition?.category?.slug || "",
   }));
 
   const topRead = weekHighlights.length > 0 ? weekHighlights.slice(0, 5) : latestNews.slice(0, 5);
