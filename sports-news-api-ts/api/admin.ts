@@ -2,6 +2,27 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
 import Busboy from 'busboy';
 
+// Cloudinary config
+const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_SECRET = process.env.CLOUDINARY_API_SECRET;
+
+async function uploadToCloudinary(buffer: Buffer, folder: string, mimeType: string): Promise<string> {
+  const { v2: cloudinary } = await import('cloudinary');
+  cloudinary.config({ cloud_name: CLOUDINARY_CLOUD, api_key: CLOUDINARY_KEY, api_secret: CLOUDINARY_SECRET });
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: `radio-coringao/${folder}`, resource_type: 'image', allowed_formats: ['jpg', 'jpeg', 'png', 'webp'], transformation: [{ width: 1200, height: 675, crop: 'fill', quality: 'auto', fetch_format: 'auto' }] },
+      (error: any, result: any) => { if (error || !result) reject(error || new Error('Upload failed')); else resolve(result.secure_url); },
+    );
+    const { Readable } = require('stream');
+    const readable = new Readable();
+    readable.push(buffer);
+    readable.push(null);
+    readable.pipe(stream);
+  });
+}
+
 let prisma: any = null;
 
 async function getPrisma() {
@@ -213,8 +234,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(article);
       }
       if (method === 'PUT' || method === 'PATCH') {
-        const { fields } = await parseMultipart(req);
-        const article = await db.article.update({ where: { id }, data: { title: fields.title, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: fields.coverImage, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit } });
+        const { fields, file } = await parseMultipart(req);
+        let coverImageUrl = fields.coverImage || undefined;
+        if (file && file.buffer.length > 0) {
+          coverImageUrl = await uploadToCloudinary(file.buffer, 'articles', file.mimetype);
+        }
+        const article = await db.article.update({ where: { id }, data: { title: fields.title, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: coverImageUrl, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit } });
         return res.status(200).json(article);
       }
       if (method === 'DELETE') {
@@ -258,8 +283,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(article);
       }
       if (method === 'PUT' || method === 'PATCH') {
-        const { fields } = await parseMultipart(req);
-        const article = await db.article.update({ where: { id }, data: { title: fields.title, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: fields.coverImage, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit } });
+        const { fields, file } = await parseMultipart(req);
+        let coverImageUrl = fields.coverImage || undefined;
+        if (file && file.buffer.length > 0) {
+          coverImageUrl = await uploadToCloudinary(file.buffer, 'articles', file.mimetype);
+        }
+        const article = await db.article.update({ where: { id }, data: { title: fields.title, slug: fields.slug, content: fields.content, excerpt: fields.excerpt, status: fields.status, type: fields.type, isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', categoryId: fields.categoryId, coverImage: coverImageUrl, publishedAt: fields.status === 'PUBLISHED' ? new Date() : undefined, scheduledAt: fields.scheduledAt || null, coverImageAlt: fields.coverImageAlt, coverImageCredit: fields.coverImageCredit } });
         return res.status(200).json(article);
       }
       if (method === 'DELETE') {
