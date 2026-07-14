@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
 import Busboy from 'busboy';
 import { sanitizePlainText } from '../src/shared/services/sanitize';
+import { uploadImage } from '../src/shared/services/cloudinary';
 
 // Cloudinary config
 const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME;
@@ -384,7 +385,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Content image upload (inline)
     if (url === '/articles/content-image' && method === 'POST') {
-      return res.status(200).json({ url: '' });
+      try {
+        const { image } = req.body as any;
+        if (!image || !image.startsWith('data:image/')) {
+          return res.status(400).json({ error: 'Envie uma imagem base64 válida.' });
+        }
+        const match = image.match(/^data:image\/(\w+);base64,(.+)$/);
+        if (!match) {
+          return res.status(400).json({ error: 'Formato base64 inválido.' });
+        }
+        const ext = match[1] === 'jpeg' ? 'jpg' : match[1];
+        const buffer = Buffer.from(match[2], 'base64');
+        const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+        const url = await uploadImage(buffer, 'articles', mimeType);
+        return res.status(200).json({ url });
+      } catch (err: any) {
+        console.error('[CONTENT_IMAGE] Error:', err.message);
+        return res.status(500).json({ error: 'Falha ao fazer upload da imagem.' });
+      }
     }
 
     // ─── CATEGORIES ───────────────────────────────────────────
@@ -839,7 +857,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // ─── CONTENT IMAGE UPLOAD ─────────────────────────────────
     if (url === '/articles/content-image' && method === 'POST') {
-      return res.status(200).json({ url: '' });
+      try {
+        const { image } = req.body as any;
+        if (!image || !image.startsWith('data:image/')) {
+          return res.status(400).json({ error: 'Envie uma imagem base64 válida.' });
+        }
+        const match = image.match(/^data:image\/(\w+);base64,(.+)$/);
+        if (!match) {
+          return res.status(400).json({ error: 'Formato base64 inválido.' });
+        }
+        const ext = match[1] === 'jpeg' ? 'jpg' : match[1];
+        const buffer = Buffer.from(match[2], 'base64');
+        const mimeType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+        const url = await uploadImage(buffer, 'articles', mimeType);
+        return res.status(200).json({ url });
+      } catch (err: any) {
+        console.error('[CONTENT_IMAGE] Error:', err.message);
+        return res.status(500).json({ error: 'Falha ao fazer upload da imagem.' });
+      }
     }
 
     // ─── RESET VIEW COUNTS ────────────────────────────────────
