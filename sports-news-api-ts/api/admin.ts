@@ -471,7 +471,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(sponsors);
       }
       if (method === 'POST') {
-        const sponsor = await db.sponsor.create({ data: { name: req.body.name, logoUrl: req.body.logoUrl, websiteUrl: req.body.websiteUrl, description: req.body.description, order: req.body.order || 0 } });
+        const { fields, file } = await parseMultipart(req);
+        let logoUrl = fields.logoUrl || undefined;
+        if (file && file.buffer.length > 0) {
+          logoUrl = await uploadToCloudinary(file.buffer, 'sponsors', file.mimetype);
+        }
+        const sponsor = await db.sponsor.create({ data: { name: fields.name, logoUrl, websiteUrl: fields.websiteUrl, description: fields.description, order: parseInt(fields.order || '0', 10) } });
         return res.status(201).json(sponsor);
       }
     }
@@ -480,7 +485,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (sponsorMatch) {
       const id = sponsorMatch[1];
       if (method === 'PUT' || method === 'PATCH') {
-        const sponsor = await db.sponsor.update({ where: { id }, data: req.body });
+        const { fields, file } = await parseMultipart(req);
+        let logoUrl = fields.logoUrl || undefined;
+        if (file && file.buffer.length > 0) {
+          logoUrl = await uploadToCloudinary(file.buffer, 'sponsors', file.mimetype);
+        }
+        const updateData: any = { ...fields };
+        if (logoUrl) updateData.logoUrl = logoUrl;
+        delete updateData.logo;
+        const sponsor = await db.sponsor.update({ where: { id }, data: updateData });
         return res.status(200).json(sponsor);
       }
       if (method === 'DELETE') {
@@ -584,7 +597,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(links);
       }
       if (method === 'POST') {
-        const link = await db.footerLink.create({ data: { label: req.body.label, href: req.body.href, imageUrl: req.body.imageUrl, description: req.body.description, type: req.body.type || 'link', order: req.body.order || 0 } });
+        const { fields, file } = await parseMultipart(req);
+        let imageUrl = fields.imageUrl || undefined;
+        if (file && file.buffer.length > 0) {
+          imageUrl = await uploadToCloudinary(file.buffer, 'footer', file.mimetype);
+        }
+        const link = await db.footerLink.create({ data: { label: fields.label, href: fields.href, imageUrl, description: fields.description, type: fields.type || 'link', order: parseInt(fields.order || '0', 10) } });
         return res.status(201).json(link);
       }
     }
@@ -593,7 +611,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (linkMatch) {
       const id = linkMatch[1];
       if (method === 'PUT' || method === 'PATCH') {
-        const link = await db.footerLink.update({ where: { id }, data: req.body });
+        const { fields, file } = await parseMultipart(req);
+        let imageUrl = fields.imageUrl || undefined;
+        if (file && file.buffer.length > 0) {
+          imageUrl = await uploadToCloudinary(file.buffer, 'footer', file.mimetype);
+        }
+        const updateData: any = { ...fields };
+        if (imageUrl) updateData.imageUrl = imageUrl;
+        const link = await db.footerLink.update({ where: { id }, data: updateData });
         return res.status(200).json(link);
       }
       if (method === 'DELETE') {
