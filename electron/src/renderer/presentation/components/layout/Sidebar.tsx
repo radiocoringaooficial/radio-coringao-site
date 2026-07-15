@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/presentation/stores/auth-store';
 import { useUIStore } from '@/presentation/stores/ui-store';
 import {
-  LayoutDashboard, FileText, Tag, Image, Menu, Trophy, Calendar, Users, Settings, Link,
+  LayoutDashboard, FileText, Tag, Menu, Trophy, Calendar, Users, Settings, Link,
   Shield, FolderOpen, Swords, Target, Gamepad2, BarChart3, UserCheck, ArrowLeftRight, Banknote,
   LogOut, ChevronLeft, ChevronRight,
 } from 'lucide-react';
@@ -24,7 +24,6 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Artigos', path: '/materias', icon: <FileText size={18} /> },
       { label: 'Categorias', path: '/categorias', icon: <FolderOpen size={18} /> },
-      { label: 'Banners', path: '/banners', icon: <Image size={18} /> },
       { label: 'Menu', path: '/menu', icon: <Menu size={18} /> },
       { label: 'Patrocinadores', path: '/patrocinadores', icon: <Trophy size={18} /> },
       { label: 'Links do Rodapé', path: '/links-rodape', icon: <Link size={18} /> },

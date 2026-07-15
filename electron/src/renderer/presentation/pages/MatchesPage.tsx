@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { clubeApi } from '@/infrastructure/api/client';
 import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, ChevronLeft, Save, MapPin, Trophy, Clock, X, Shield, Loader2, Archive, ArchiveRestore } from 'lucide-react';
@@ -233,7 +233,21 @@ export function MatchesPage() {
   const totalPages = Math.ceil(total / LIMIT);
   const upcoming = matches.filter((m) => ['SCHEDULED', 'IN_PLAY', 'POSTPONED'].includes(m.status));
   const past = matches.filter((m) => ['FINISHED', 'CANCELLED'].includes(m.status));
-  const filteredCompetitions = form.categoryId ? competitions.filter((c) => c.categoryId === form.categoryId) : competitions;
+  const filteredCompetitions = useMemo(() => {
+    console.log('[COMP DEBUG] form.categoryId:', form.categoryId, '| competitions total:', competitions.length);
+    if (!form.categoryId) return competitions;
+    const selected = categories.find((c: any) => c.id === form.categoryId);
+    if (!selected) return competitions;
+    if (!selected.parentId) {
+      // Root category: show competitions from root + all children
+      const relatedIds = categories
+        .filter((c: any) => c.id === form.categoryId || c.parentId === form.categoryId)
+        .map((c: any) => c.id);
+      return competitions.filter((c) => relatedIds.includes(c.categoryId));
+    }
+    // Child category: strict exact match only
+    return competitions.filter((c) => c.categoryId === form.categoryId);
+  }, [competitions, form.categoryId, categories]);
   const selectedComp = competitions.find((c) => c.id === form.competitionId);
   const isFriendly = selectedComp?.tableFormat === 'friendly';
 
@@ -499,27 +513,13 @@ export function MatchesPage() {
                 Todas as categorias
               </button>
               {categories.map((parent) => (
-                <div key={parent.id}>
-                  <div className="flex items-center gap-1.5 mb-1 px-1 mt-2">
+                <div key={parent.id} className="mt-1">
+                  <button type="button" onClick={() => setForm({ ...form, categoryId: parent.id, competitionId: '' })}
+                    className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[10px] font-body text-left transition-all ${form.categoryId === parent.id ? 'bg-primary text-white font-bold shadow-sm' : 'bg-surface hover:bg-surface-container-low text-on-surface'}`}>
                     <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                    <span className="font-headline text-[10px] font-bold text-on-surface uppercase tracking-wide">{parent.name}</span>
-                    {parent.gender && <span className={`text-[8px] px-1 py-0.5 rounded ${GENDER_BADGE[parent.gender] || 'bg-gray-100 text-gray-500'}`}>{GENDER_LABEL[parent.gender] || parent.gender}</span>}
-                  </div>
-                  {parent.children && parent.children.length > 0 && (
-                    <div className="grid grid-cols-2 gap-1 ml-3">
-                      {parent.children.map((child: any) => (
-                        <button key={child.id} type="button" onClick={() => setForm({ ...form, categoryId: child.id, competitionId: '' })}
-                          className={`px-2 py-1.5 rounded text-[10px] font-body text-left transition-all ${form.categoryId === child.id ? 'bg-primary text-white font-bold shadow-sm' : 'bg-surface hover:bg-surface-container-low text-on-surface'}`}>
-                          <span>{child.name}</span>
-                          {child.gender && <span className={`ml-1 inline-block text-[7px] px-0.5 py-0.5 rounded ${form.categoryId === child.id ? 'bg-white/20 text-white' : (GENDER_BADGE[child.gender] || 'bg-gray-100 text-gray-500')}`}>{GENDER_LABEL[child.gender] || child.gender}</span>}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {!parent.children?.length && (
-                    <button type="button" onClick={() => setForm({ ...form, categoryId: parent.id, competitionId: '' })}
-                      className={`ml-3 px-2 py-1.5 rounded text-[10px] font-body text-left transition-all ${form.categoryId === parent.id ? 'bg-primary text-white font-bold shadow-sm' : 'bg-surface hover:bg-surface-container-low text-on-surface'}`}>{parent.name}</button>
-                  )}
+                    <span>{parent.name}</span>
+                    {parent.gender && <span className={`text-[8px] px-1 py-0.5 rounded ${form.categoryId === parent.id ? 'bg-white/20 text-white' : (GENDER_BADGE[parent.gender] || 'bg-gray-100 text-gray-500')}`}>{GENDER_LABEL[parent.gender] || parent.gender}</span>}
+                  </button>
                 </div>
               ))}
             </div>
