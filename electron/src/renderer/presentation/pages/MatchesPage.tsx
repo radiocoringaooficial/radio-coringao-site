@@ -196,6 +196,18 @@ export function MatchesPage() {
   const SECTION_LIMIT = 6;
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [archivedMatches, setArchivedMatches] = useState<any[]>([]);
+  const [archivedExpanded, setArchivedExpanded] = useState(false);
+  const [archivedLoading, setArchivedLoading] = useState(false);
+
+  const loadArchived = async () => {
+    try {
+      setArchivedLoading(true);
+      const m = await clubeApi.get('/admin/partidas?limit=200&archived=true').catch(() => ({ data: [] }));
+      const mData = Array.isArray(m) ? m : m?.data || [];
+      setArchivedMatches(mData);
+    } catch {} finally { setArchivedLoading(false); }
+  };
 
   const load = async () => {
     try {
@@ -216,7 +228,7 @@ export function MatchesPage() {
     } catch (e: any) { console.error('load error:', e); toast(e.message, 'error'); }
     finally { setLoading(false); }
   };
-  useEffect(() => { load(); }, [page]);
+  useEffect(() => { load(); loadArchived(); }, [page]);
 
   const totalPages = Math.ceil(total / LIMIT);
   const upcoming = matches.filter((m) => ['SCHEDULED', 'IN_PLAY', 'POSTPONED'].includes(m.status));
@@ -272,13 +284,20 @@ export function MatchesPage() {
   };
 
   const handleArchive = async (id: string) => {
-    try { await clubeApi.patch(`/admin/partidas/${id}/archive`, {}); toast('Arquivada.', 'success'); load(); }
+    try { await clubeApi.patch(`/admin/partidas/${id}/archive`, {}); toast('Arquivada.', 'success'); load(); loadArchived(); }
     catch (e: any) { toast(e.message, 'error'); }
   };
 
   const handleUnarchive = async (id: string) => {
-    try { await clubeApi.patch(`/admin/partidas/${id}/unarchive`, {}); toast('Desarquivada.', 'success'); load(); }
+    try { await clubeApi.patch(`/admin/partidas/${id}/unarchive`, {}); toast('Desarquivada.', 'success'); load(); loadArchived(); }
     catch (e: any) { toast(e.message, 'error'); }
+  };
+
+  const handleDeleteArchived = async (id: string) => {
+    confirm('Excluir esta partida permanentemente?', async () => {
+      try { await clubeApi.delete(`/admin/partidas/${id}`); toast('Excluída.', 'success'); loadArchived(); }
+      catch (e: any) { toast(e.message, 'error'); }
+    });
   };
 
   return (
@@ -430,6 +449,35 @@ export function MatchesPage() {
           })()}
         </div>
       )}
+
+      {/* Partidas Arquivadas */}
+      <div className="mt-8 rounded-xl border border-outline-variant bg-surface-container-lowest overflow-hidden">
+        <button onClick={() => { setArchivedExpanded(!archivedExpanded); if (!archivedExpanded) loadArchived(); }}
+          className="w-full flex items-center justify-between p-4 hover:bg-surface-container-low transition-colors">
+          <div className="flex items-center gap-3">
+            <ChevronRight size={16} className={`text-on-surface-variant transition-transform ${archivedExpanded ? 'rotate-90' : ''}`} />
+            <Archive size={14} className="text-on-surface-variant" />
+            <span className="font-headline text-sm font-bold text-on-surface">Partidas Arquivadas</span>
+            <span className="text-[10px] text-on-surface-variant">({archivedMatches.length})</span>
+          </div>
+        </button>
+        {archivedExpanded && (
+          <div className="px-4 pb-4 space-y-2 fade-in">
+            {archivedLoading ? (
+              <div className="space-y-2">{Array.from({ length: 2 }).map((_, i) => <MatchCardSkeleton key={i} />)}</div>
+            ) : archivedMatches.length === 0 ? (
+              <p className="text-[10px] text-on-surface-variant text-center py-4">Nenhuma partida arquivada.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {archivedMatches.map((m: any) => (
+                  <MatchCard key={m.id} match={m} team={team} opponents={opponents} competitions={competitions}
+                    onEdit={openEdit} onDelete={handleDeleteArchived} onArchive={handleArchive} onUnarchive={handleUnarchive} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar Partida' : 'Nova Partida'}>
         <div className="space-y-4">

@@ -99,6 +99,68 @@ function TeamSelectDropdown({ idx, s, team, filteredOpponents, allOpponents, sta
         const teamUsedBy = team ? (usedByKey[teamKeyById] ?? usedByName[team.name?.trim().toLowerCase()] ?? null) : null;
         return createPortal(
           <div data-team-select className="fixed z-[9999] w-60 bg-white rounded-lg shadow-xl border border-outline-variant" style={{ top: dropdownPos.top, left: dropdownPos.left }}>
+            {/* Pinned top: Cadastrar novo time */}
+            {showCreateForm ? (
+              <div className="px-3 py-3 space-y-2 border-b border-outline-variant/30">
+                <p className="text-[10px] font-headline font-bold text-on-surface uppercase tracking-wide">Novo Adversário</p>
+                <input type="text" value={createFormName} onChange={(e) => setCreateFormName(e.target.value)}
+                  placeholder="Nome do time" autoFocus
+                  className="w-full px-2.5 py-1.5 rounded border border-outline-variant/40 text-[11px] text-on-surface bg-white focus:border-primary focus:outline-none transition-colors" />
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-[10px] text-on-surface-variant">Logo:</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => setCreateFormLogoFile(e.target.files?.[0] || null)} />
+                  <span className="text-[10px] text-primary hover:underline">{createFormLogoFile ? createFormLogoFile.name : 'Selecionar arquivo'}</span>
+                </label>
+                <div className="flex gap-2 pt-0.5">
+                  <button type="button" disabled={!createFormName.trim() || creating}
+                    onClick={async () => {
+                      const name = createFormName.trim();
+                      if (!name) return;
+                      const lowerName = name.toLowerCase();
+                      const allNames = [...allOpponents.map((o: any) => o.name?.trim().toLowerCase()), ...standings.map((r: any) => r.teamName?.trim().toLowerCase())];
+                      if (allNames.includes(lowerName)) {
+                        toast(`Já existe um time com o nome "${name}".`, 'error');
+                        return;
+                      }
+                      setCreating(true);
+                      try {
+                        const fd = new FormData();
+                        fd.append('name', name);
+                        if (currentCategoryId) fd.append('categoryIds', currentCategoryId);
+                        if (createFormLogoFile) fd.append('logo', createFormLogoFile);
+                        const newOpp = await clubeApi.post('/admin/adversarios', fd);
+                        toast('Time cadastrado com sucesso!', 'success');
+                        onOpponentCreated(newOpp);
+                        const copy = [...standings];
+                        copy[idx] = { ...copy[idx], opponentId: newOpp.id, teamName: newOpp.name, logoUrl: newOpp.logoUrl || copy[idx].logoUrl, teamId: null, isOwnTeam: false };
+                        setStandings(copy);
+                        setShowCreateForm(false);
+                        setCreateFormName('');
+                        setCreateFormLogoFile(null);
+                        setOpenDropdown(null);
+                      } catch (err: any) {
+                        toast('Erro: ' + err.message, 'error');
+                      } finally {
+                        setCreating(false);
+                      }
+                    }}
+                    className={`flex-1 py-1.5 rounded text-[10px] font-headline font-bold transition-all flex items-center justify-center gap-1 ${createFormName.trim() && !creating ? 'bg-primary text-white hover:bg-primary/90' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
+                    {creating ? <Loader2 size={10} className="animate-spin" /> : <Plus size={10} />}
+                    {creating ? 'Cadastrando...' : 'Cadastrar'}
+                  </button>
+                  <button type="button" onClick={() => { setShowCreateForm(false); setCreateFormName(''); setCreateFormLogoFile(null); }}
+                    className="px-3 py-1.5 rounded text-[10px] font-headline font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button type="button" onClick={() => setShowCreateForm(true)}
+                className="w-full flex items-center gap-2 px-3 py-2 text-left text-[11px] font-headline font-bold text-primary hover:bg-primary/5 transition-colors border-b border-outline-variant/30">
+                <Plus size={12} /> Cadastrar novo time
+              </button>
+            )}
+            {/* Scrollable: Meu Clube + opponents list */}
             <div className="max-h-80 overflow-y-auto overscroll-contain">
               {team && (
                 <button type="button" disabled={teamUsedBy !== null}
@@ -131,71 +193,10 @@ function TeamSelectDropdown({ idx, s, team, filteredOpponents, allOpponents, sta
                   </button>
                 );
               })}
-              {opponents_list.length === 0 && !team && !showCreateForm && (
-                <div className="px-3 py-4 text-center text-[10px] text-on-surface-variant">Nenhum time cadastrado</div>
-              )}
-              {showCreateForm ? (
-                <div className="border-t border-outline-variant/30 px-3 py-3 space-y-2">
-                  <p className="text-[10px] font-headline font-bold text-on-surface uppercase tracking-wide">Novo Adversário</p>
-                  <input type="text" value={createFormName} onChange={(e) => setCreateFormName(e.target.value)}
-                    placeholder="Nome do time" autoFocus
-                    className="w-full px-2.5 py-1.5 rounded border border-outline-variant/40 text-[11px] text-on-surface bg-white focus:border-primary focus:outline-none transition-colors" />
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <span className="text-[10px] text-on-surface-variant">Logo:</span>
-                    <input type="file" accept="image/*" className="hidden" onChange={(e) => setCreateFormLogoFile(e.target.files?.[0] || null)} />
-                    <span className="text-[10px] text-primary hover:underline">{createFormLogoFile ? createFormLogoFile.name : 'Selecionar arquivo'}</span>
-                  </label>
-                  <div className="flex gap-2 pt-0.5">
-                    <button type="button" disabled={!createFormName.trim() || creating}
-                      onClick={async () => {
-                        const name = createFormName.trim();
-                        if (!name) return;
-                        // Check duplicate name against existing opponents (normalized)
-                        const lowerName = name.toLowerCase();
-                        const allNames = [...allOpponents.map((o: any) => o.name?.trim().toLowerCase()), ...standings.map((r: any) => r.teamName?.trim().toLowerCase())];
-                        if (allNames.includes(lowerName)) {
-                          toast(`Já existe um time com o nome "${name}".`, 'error');
-                          return;
-                        }
-                        setCreating(true);
-                        try {
-                          const fd = new FormData();
-                          fd.append('name', name);
-                          if (currentCategoryId) fd.append('categoryIds', currentCategoryId);
-                          if (createFormLogoFile) fd.append('logo', createFormLogoFile);
-                          const newOpp = await clubeApi.post('/admin/adversarios', fd);
-                          toast('Time cadastrado com sucesso!', 'success');
-                          onOpponentCreated(newOpp);
-                          // Directly update standings with new opponent (can't use selectOpponent
-                          // because setOpponents hasn't committed yet, so opponents.find won't find it)
-                          const copy = [...standings];
-                          copy[idx] = { ...copy[idx], opponentId: newOpp.id, teamName: newOpp.name, logoUrl: newOpp.logoUrl || copy[idx].logoUrl, teamId: null, isOwnTeam: false };
-                          setStandings(copy);
-                          setShowCreateForm(false);
-                          setCreateFormName('');
-                          setCreateFormLogoFile(null);
-                          setOpenDropdown(null);
-                        } catch (err: any) {
-                          toast('Erro: ' + err.message, 'error');
-                        } finally {
-                          setCreating(false);
-                        }
-                      }}
-                      className={`flex-1 py-1.5 rounded text-[10px] font-headline font-bold transition-all flex items-center justify-center gap-1 ${createFormName.trim() && !creating ? 'bg-primary text-white hover:bg-primary/90' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
-                      {creating ? <Loader2 size={10} className="animate-spin" /> : <Plus size={10} />}
-                      {creating ? 'Cadastrando...' : 'Cadastrar'}
-                    </button>
-                    <button type="button" onClick={() => { setShowCreateForm(false); setCreateFormName(''); setCreateFormLogoFile(null); }}
-                      className="px-3 py-1.5 rounded text-[10px] font-headline font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">
-                      Cancelar
-                    </button>
-                  </div>
+              {opponents_list.length === 0 && !team && (
+                <div className="px-3 py-4 text-center text-[10px] text-on-surface-variant">
+                  Nenhum time nesta categoria ainda
                 </div>
-              ) : (
-                <button type="button" onClick={() => setShowCreateForm(true)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-left border-t border-outline-variant/30 text-[11px] font-headline font-bold text-primary hover:bg-primary/5 transition-colors">
-                  <Plus size={12} /> Cadastrar novo time
-                </button>
               )}
             </div>
           </div>,
@@ -285,8 +286,10 @@ export function CompetitionsPage() {
   };
 
   const toggleExpand = async (id: string) => {
-    if (expanded === id) { setExpanded(null); setCompMatches([]); return; }
+    if (expanded === id) { setExpanded(null); setCompMatches([]); setOpenDropdown(null); return; }
+    setOpenDropdown(null);
     setExpanded(id); setStandingsLoading(true); setCompMatchesLoading(true);
+    loadOpponents();
     try {
       const comp = competitions.find((c) => c.id === id);
       const [standingsData, matchesData] = await Promise.all([
@@ -384,26 +387,16 @@ export function CompetitionsPage() {
   const isGrouped = currentComp?.tableFormat === 'grouped';
   const groups = isGrouped ? (currentComp?.groupNames || '').split(',').map((g: string) => g.trim()).filter(Boolean) : [];
 
-  // Filter opponents by competition's category (show opponents linked to the same category group)
+  // Filter opponents by EXACT competition category (no fallback, no group mixing)
   const filteredOpponents = useMemo(() => {
     if (!currentComp?.categoryId) return opponents;
-    // Use flatCategories (all categories flat) to find the competition's category
-    const compCat = flatCategories.find((c: any) => c.id === currentComp.categoryId);
-    if (!compCat) return opponents;
-    // Find the root parent: if this category is a child, use its parentId; otherwise use its own id
-    const targetParentId = compCat.parentId || currentComp.categoryId;
-    // Collect ALL category IDs in the same group (root + all children) from the flat list
-    const relatedIds = flatCategories
-      .filter((c: any) => c.id === targetParentId || c.parentId === targetParentId)
-      .map((c: any) => c.id);
-    if (relatedIds.length === 0) return opponents;
+    const targetId = currentComp.categoryId;
     const filtered = opponents.filter((o) => {
       const oppCats = (o.categories || []).map((oc: any) => oc.categoryId || oc.category?.id);
-      return oppCats.some((cid: string) => relatedIds.includes(cid));
+      return oppCats.some((cid: string) => cid === targetId);
     });
-    // Fallback: if no opponents matched the filter, show all opponents
-    return filtered.length > 0 ? filtered : opponents;
-  }, [opponents, currentComp?.categoryId, flatCategories]);
+    return filtered;
+  }, [opponents, currentComp?.categoryId]);
 
   // Warn about duplicate opponent names in the database (different IDs, same name)
   useEffect(() => {
