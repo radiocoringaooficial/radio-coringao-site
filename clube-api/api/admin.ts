@@ -188,6 +188,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           logoUrl = await uploadToCloudinary(file.buffer, 'opponents', file.mimetype);
         }
         const opp = await db.opponent.create({ data: { name: fields.name, shortName: fields.shortName, logoUrl, stadium: fields.stadium, city: fields.city, color: fields.color } });
+
+        // Associate categories if provided (comma-separated string or array)
+        let categoryIds: string[] = [];
+        if (fields.categoryIds) {
+          categoryIds = Array.isArray(fields.categoryIds)
+            ? fields.categoryIds
+            : String(fields.categoryIds).split(',').map((s: string) => s.trim()).filter(Boolean);
+        }
+        if (categoryIds.length > 0) {
+          await db.opponentCategory.createMany({
+            data: categoryIds.map((cid) => ({ opponentId: opp.id, categoryId: cid })),
+          });
+        }
+
         return res.status(201).json(opp);
       }
     }

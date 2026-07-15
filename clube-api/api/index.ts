@@ -46,6 +46,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json(data);
     }
 
+    // GET /api/categorias/flat — all categories flat with parent info
+    if (url === '/api/categorias/flat' || url.startsWith('/api/categorias/flat?')) {
+      const data = await db.category.findMany({
+        orderBy: { order: 'asc' },
+        include: { parent: { select: { name: true } } },
+      });
+      return res.status(200).json(data);
+    }
+
     const catSlugMatch = url.match(/^\/api\/categorias\/([^?]+)$/);
     if (catSlugMatch) {
       const slug = catSlugMatch[1];

@@ -16,6 +16,9 @@ interface TeamSelectDropdownProps {
   s: any;
   team: any;
   filteredOpponents: any[];
+  standings: any[];
+  currentCategoryId: string | null;
+  onOpponentCreated: (opp: any) => void;
   openDropdown: string | null;
   setOpenDropdown: (v: string | null) => void;
   dropdownPos: { top: number; left: number };
@@ -24,13 +27,24 @@ interface TeamSelectDropdownProps {
   selectOpponent: (idx: number, id: string) => void;
 }
 
-function TeamSelectDropdown({ idx, s, team, filteredOpponents, openDropdown, setOpenDropdown, dropdownPos, setDropdownPos, selectTeam, selectOpponent }: TeamSelectDropdownProps) {
+function getRowTeamKey(row: any): string {
+  if (row.teamId) return `team:${row.teamId}`;
+  if (row.opponentId) return row.opponentId;
+  return '';
+}
+
+function TeamSelectDropdown({ idx, s, team, filteredOpponents, standings, currentCategoryId, onOpponentCreated, openDropdown, setOpenDropdown, dropdownPos, setDropdownPos, selectTeam, selectOpponent }: TeamSelectDropdownProps) {
+  const toast = useToastStore((s) => s.addToast);
   const isOpen = openDropdown === `team-${idx}`;
   const opponents_list = filteredOpponents;
   const selected = undefined;
   const isTeamSelected = s.opponentId?.startsWith('team:');
   const selectedName = isTeamSelected ? team?.name : s.teamName;
   const btnRef = useRef<HTMLButtonElement>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createFormName, setCreateFormName] = useState('');
+  const [createFormLogoFile, setCreateFormLogoFile] = useState<File | null>(null);
+  const [creating, setCreating] = useState(false);
 
   // Fecha o dropdown ao rolar a página (padrão UI padrão)
   useEffect(() => {
@@ -48,7 +62,7 @@ function TeamSelectDropdown({ idx, s, team, filteredOpponents, openDropdown, set
     if (isOpen) { setOpenDropdown(null); return; }
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
-      const dropdownHeight = 260;
+      const dropdownHeight = 320;
       const spaceBelow = window.innerHeight - rect.bottom;
       let top = rect.bottom + 4;
       if (spaceBelow < dropdownHeight) {
@@ -68,40 +82,120 @@ function TeamSelectDropdown({ idx, s, team, filteredOpponents, openDropdown, set
         <span className={`truncate flex-1 ${selectedName ? 'text-on-surface font-medium' : 'text-on-surface-variant'}`}>{selectedName || 'Selecionar time...'}</span>
         <ChevronDown size={10} className={`text-on-surface-variant/40 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
-      {isOpen && createPortal(
-        <div data-team-select className="fixed z-[9999] w-60 bg-white rounded-lg shadow-xl border border-outline-variant" style={{ top: dropdownPos.top, left: dropdownPos.left }}>
-          <div className="max-h-60 overflow-y-auto overscroll-contain">
-            {team && (
-              <button type="button" onClick={() => { selectTeam(idx); setOpenDropdown(null); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors ${isTeamSelected ? 'bg-primary/5' : 'hover:bg-surface-container-low'}`}>
-                {team.logoUrl ? <img src={team.logoUrl} alt="" className="w-6 h-6 object-contain" /> :
-                  <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center"><Shield size={10} className="text-primary" /></div>}
-                <div>
-                  <p className="text-xs font-bold text-on-surface">{team.name}</p>
-                  <p className="text-[9px] text-primary font-headline">Meu Clube</p>
+      {isOpen && (() => {
+        // Build maps: by key (ID) AND by normalized name → row position for teams used in OTHER rows
+        const usedByKey: Record<string, number> = {};
+        const usedByName: Record<string, number> = {};
+        standings.forEach((row, i) => {
+          if (i === idx) return; // skip current row
+          const key = getRowTeamKey(row);
+          if (key) usedByKey[key] = i;
+          const normalizedName = row.teamName?.trim().toLowerCase();
+          if (normalizedName) usedByName[normalizedName] = i;
+        });
+        const teamKeyById = team ? `team:${team.id}` : '';
+        const teamUsedBy = team ? (usedByKey[teamKeyById] ?? usedByName[team.name?.trim().toLowerCase()] ?? null) : null;
+        return createPortal(
+          <div data-team-select className="fixed z-[9999] w-60 bg-white rounded-lg shadow-xl border border-outline-variant" style={{ top: dropdownPos.top, left: dropdownPos.left }}>
+            <div className="max-h-80 overflow-y-auto overscroll-contain">
+              {team && (
+                <button type="button" disabled={teamUsedBy !== null}
+                  onClick={() => { selectTeam(idx); setOpenDropdown(null); }}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors ${isTeamSelected ? 'bg-primary/5' : teamUsedBy !== null ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-container-low'}`}>
+                  {team.logoUrl ? <img src={team.logoUrl} alt="" className="w-6 h-6 object-contain" /> :
+                    <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center"><Shield size={10} className="text-primary" /></div>}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-on-surface">{team.name}</p>
+                    <p className="text-[9px] text-primary font-headline">Meu Clube</p>
+                  </div>
+                  {teamUsedBy !== null && <span className="text-[8px] text-on-surface-variant bg-surface-container rounded px-1.5 py-0.5 shrink-0">Linha {teamUsedBy + 1}</span>}
+                </button>
+              )}
+              {team && opponents_list.length > 0 && <div className="border-t border-outline-variant/30" />}
+              {opponents_list.map((o) => {
+                const normalizedName = o.name?.trim().toLowerCase();
+                const oppUsedBy = usedByKey[o.id] ?? usedByName[normalizedName] ?? null;
+                return (
+                  <button key={o.id} type="button" disabled={oppUsedBy !== null}
+                    onClick={() => { selectOpponent(idx, o.id); setOpenDropdown(null); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${s.opponentId === o.id ? 'bg-primary/5' : oppUsedBy !== null ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-container-low'}`}>
+                    {o.logoUrl ? <img src={o.logoUrl} alt="" className="w-5 h-5 object-contain" /> :
+                      <div className="w-5 h-5 rounded bg-surface-container flex items-center justify-center"><Users size={9} className="text-on-surface-variant" /></div>}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-bold text-on-surface">{o.name}</p>
+                      {o.shortName && <p className="text-[9px] text-on-surface-variant">{o.shortName}</p>}
+                    </div>
+                    {oppUsedBy !== null && <span className="text-[8px] text-on-surface-variant bg-surface-container rounded px-1.5 py-0.5 shrink-0">Linha {oppUsedBy + 1}</span>}
+                  </button>
+                );
+              })}
+              {opponents_list.length === 0 && !team && !showCreateForm && (
+                <div className="px-3 py-4 text-center text-[10px] text-on-surface-variant">Nenhum time cadastrado</div>
+              )}
+              {showCreateForm ? (
+                <div className="border-t border-outline-variant/30 px-3 py-3 space-y-2">
+                  <p className="text-[10px] font-headline font-bold text-on-surface uppercase tracking-wide">Novo Adversário</p>
+                  <input type="text" value={createFormName} onChange={(e) => setCreateFormName(e.target.value)}
+                    placeholder="Nome do time" autoFocus
+                    className="w-full px-2.5 py-1.5 rounded border border-outline-variant/40 text-[11px] text-on-surface bg-white focus:border-primary focus:outline-none transition-colors" />
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <span className="text-[10px] text-on-surface-variant">Logo:</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => setCreateFormLogoFile(e.target.files?.[0] || null)} />
+                    <span className="text-[10px] text-primary hover:underline">{createFormLogoFile ? createFormLogoFile.name : 'Selecionar arquivo'}</span>
+                  </label>
+                  <div className="flex gap-2 pt-0.5">
+                    <button type="button" disabled={!createFormName.trim() || creating}
+                      onClick={async () => {
+                        const name = createFormName.trim();
+                        if (!name) return;
+                        // Check duplicate name against existing opponents (normalized)
+                        const lowerName = name.toLowerCase();
+                        const allNames = [...opponents_list.map((o: any) => o.name?.trim().toLowerCase()), ...standings.map((r: any) => r.teamName?.trim().toLowerCase())];
+                        if (allNames.includes(lowerName)) {
+                          toast(`Já existe um time com o nome "${name}".`, 'error');
+                          return;
+                        }
+                        setCreating(true);
+                        try {
+                          const fd = new FormData();
+                          fd.append('name', name);
+                          if (currentCategoryId) fd.append('categoryIds', currentCategoryId);
+                          if (createFormLogoFile) fd.append('logo', createFormLogoFile);
+                          const newOpp = await clubeApi.post('/admin/adversarios', fd);
+                          toast('Time cadastrado com sucesso!', 'success');
+                          onOpponentCreated(newOpp);
+                          selectOpponent(idx, newOpp.id);
+                          setShowCreateForm(false);
+                          setCreateFormName('');
+                          setCreateFormLogoFile(null);
+                          setOpenDropdown(null);
+                        } catch (err: any) {
+                          toast('Erro: ' + err.message, 'error');
+                        } finally {
+                          setCreating(false);
+                        }
+                      }}
+                      className={`flex-1 py-1.5 rounded text-[10px] font-headline font-bold transition-all flex items-center justify-center gap-1 ${createFormName.trim() && !creating ? 'bg-primary text-white hover:bg-primary/90' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}>
+                      {creating ? <Loader2 size={10} className="animate-spin" /> : <Plus size={10} />}
+                      {creating ? 'Cadastrando...' : 'Cadastrar'}
+                    </button>
+                    <button type="button" onClick={() => { setShowCreateForm(false); setCreateFormName(''); setCreateFormLogoFile(null); }}
+                      className="px-3 py-1.5 rounded text-[10px] font-headline font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">
+                      Cancelar
+                    </button>
+                  </div>
                 </div>
-              </button>
-            )}
-            {team && opponents_list.length > 0 && <div className="border-t border-outline-variant/30" />}
-            {opponents_list.map((o) => (
-              <button key={o.id} type="button"
-                onClick={() => { selectOpponent(idx, o.id); setOpenDropdown(null); }}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${s.opponentId === o.id ? 'bg-primary/5' : 'hover:bg-surface-container-low'}`}>
-                {o.logoUrl ? <img src={o.logoUrl} alt="" className="w-5 h-5 object-contain" /> :
-                  <div className="w-5 h-5 rounded bg-surface-container flex items-center justify-center"><Users size={9} className="text-on-surface-variant" /></div>}
-                <div>
-                  <p className="text-[11px] font-bold text-on-surface">{o.name}</p>
-                  {o.shortName && <p className="text-[9px] text-on-surface-variant">{o.shortName}</p>}
-                </div>
-              </button>
-            ))}
-            {opponents_list.length === 0 && !team && (
-              <div className="px-3 py-4 text-center text-[10px] text-on-surface-variant">Nenhum time cadastrado</div>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
+              ) : (
+                <button type="button" onClick={() => setShowCreateForm(true)}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-left border-t border-outline-variant/30 text-[11px] font-headline font-bold text-primary hover:bg-primary/5 transition-colors">
+                  <Plus size={12} /> Cadastrar novo time
+                </button>
+              )}
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
     </div>
   );
 }
@@ -284,24 +378,61 @@ export function CompetitionsPage() {
   const isGrouped = currentComp?.tableFormat === 'grouped';
   const groups = isGrouped ? (currentComp?.groupNames || '').split(',').map((g: string) => g.trim()).filter(Boolean) : [];
 
-  // Filter opponents by competition's category modality (show all futebol opponents for any futebol competition)
+  // Filter opponents by competition's category (show opponents linked to the same category group)
   const filteredOpponents = useMemo(() => {
     if (!currentComp?.categoryId) return opponents;
-    const compCat = categories.find((c) => c.id === currentComp.categoryId);
+    // Use flatCategories (all categories flat) to find the competition's category
+    const compCat = flatCategories.find((c: any) => c.id === currentComp.categoryId);
     if (!compCat) return opponents;
-    // Collect all category IDs in the same modality group
+    // Find the root parent: if this category is a child, use its parentId; otherwise use its own id
     const targetParentId = compCat.parentId || currentComp.categoryId;
-    const relatedIds = categories
-      .filter((c) => c.id === targetParentId || c.parentId === targetParentId)
-      .map((c) => c.id);
-    return opponents.filter((o) => {
+    // Collect ALL category IDs in the same group (root + all children) from the flat list
+    const relatedIds = flatCategories
+      .filter((c: any) => c.id === targetParentId || c.parentId === targetParentId)
+      .map((c: any) => c.id);
+    if (relatedIds.length === 0) return opponents;
+    const filtered = opponents.filter((o) => {
       const oppCats = (o.categories || []).map((oc: any) => oc.categoryId || oc.category?.id);
       return oppCats.some((cid: string) => relatedIds.includes(cid));
     });
-  }, [opponents, currentComp?.categoryId, categories]);
+    // Fallback: if no opponents matched the filter, show all opponents
+    return filtered.length > 0 ? filtered : opponents;
+  }, [opponents, currentComp?.categoryId, flatCategories]);
+
+  // Warn about duplicate opponent names in the database (different IDs, same name)
+  useEffect(() => {
+    const nameMap = new Map<string, string[]>();
+    opponents.forEach((o) => {
+      const key = o.name?.trim().toLowerCase();
+      if (key) {
+        const ids = nameMap.get(key) || [];
+        ids.push(o.id);
+        nameMap.set(key, ids);
+      }
+    });
+    nameMap.forEach((ids, name) => {
+      if (ids.length > 1) {
+        console.warn(`[Adversários duplicados] "${name}" possui ${ids.length} cadastros com IDs diferentes:`, ids);
+      }
+    });
+  }, [opponents]);
 
   const selectTeam = (index: number) => {
     if (team) {
+      const newKey = `team:${team.id}`;
+      const newName = team.name?.trim().toLowerCase();
+      const existingIdx = standings.findIndex((s, i) => i !== index && getRowTeamKey(s) === newKey);
+      if (existingIdx !== -1) {
+        toast(`Este time já está cadastrado na linha ${existingIdx + 1}.`, 'error');
+        return;
+      }
+      if (newName) {
+        const nameIdx = standings.findIndex((s, i) => i !== index && s.teamName?.trim().toLowerCase() === newName);
+        if (nameIdx !== -1) {
+          toast(`Já existe um time com o nome "${team.name}" na linha ${nameIdx + 1}.`, 'error');
+          return;
+        }
+      }
       const copy = standings.map((s, i) => ({
         ...s,
         isOwnTeam: i === index ? true : false,
@@ -317,8 +448,21 @@ export function CompetitionsPage() {
       selectTeam(index);
       return;
     }
+    const existingIdx = standings.findIndex((s, i) => i !== index && getRowTeamKey(s) === opponentId);
+    if (existingIdx !== -1) {
+      toast(`Este time já está cadastrado na linha ${existingIdx + 1}.`, 'error');
+      return;
+    }
     const opp = opponents.find((o) => o.id === opponentId);
     if (opp) {
+      const newName = opp.name?.trim().toLowerCase();
+      if (newName) {
+        const nameIdx = standings.findIndex((s, i) => i !== index && s.teamName?.trim().toLowerCase() === newName);
+        if (nameIdx !== -1) {
+          toast(`Já existe um time com o nome "${opp.name}" na linha ${nameIdx + 1}.`, 'error');
+          return;
+        }
+      }
       const copy = [...standings];
       copy[index] = { ...copy[index], opponentId: opp.id, teamName: opp.name, logoUrl: opp.logoUrl || copy[index].logoUrl, teamId: null, isOwnTeam: false };
       setStandings(copy);
@@ -373,7 +517,7 @@ export function CompetitionsPage() {
           </label>
         </td>
         <td className="py-1.5 px-1 min-w-[160px]">
-          <TeamSelectDropdown key={`team-select-${idx}`} idx={idx} s={s} team={team} filteredOpponents={filteredOpponents} openDropdown={openDropdown} setOpenDropdown={setOpenDropdown} dropdownPos={dropdownPos} setDropdownPos={setDropdownPos} selectTeam={selectTeam} selectOpponent={selectOpponent} />
+          <TeamSelectDropdown key={`team-select-${idx}`} idx={idx} s={s} team={team} filteredOpponents={filteredOpponents} standings={standings} currentCategoryId={currentComp?.categoryId ?? null} onOpponentCreated={(opp) => setOpponents((prev) => [...prev, opp])} openDropdown={openDropdown} setOpenDropdown={setOpenDropdown} dropdownPos={dropdownPos} setDropdownPos={setDropdownPos} selectTeam={selectTeam} selectOpponent={selectOpponent} />
         </td>
         {isBasketball ? (
           <>
