@@ -11,6 +11,90 @@ const GENDER_LABEL: Record<string, string> = { MALE: 'Masculino', FEMALE: 'Femin
 const GENDER_BADGE: Record<string, string> = { MALE: 'bg-blue-50 text-blue-600', FEMALE: 'bg-pink-50 text-pink-600', MIXED: 'bg-purple-50 text-purple-600' };
 const MAX_PER_GROUP = 10;
 
+interface TeamSelectDropdownProps {
+  idx: number;
+  s: any;
+  team: any;
+  filteredOpponents: any[];
+  openDropdown: string | null;
+  setOpenDropdown: (v: string | null) => void;
+  dropdownPos: { top: number; left: number };
+  setDropdownPos: (v: { top: number; left: number }) => void;
+  selectTeam: (idx: number) => void;
+  selectOpponent: (idx: number, id: string) => void;
+}
+
+function TeamSelectDropdown({ idx, s, team, filteredOpponents, openDropdown, setOpenDropdown, dropdownPos, setDropdownPos, selectTeam, selectOpponent }: TeamSelectDropdownProps) {
+  const isOpen = openDropdown === `team-${idx}`;
+  const opponents_list = filteredOpponents;
+  const selected = undefined;
+  const isTeamSelected = s.opponentId?.startsWith('team:');
+  const selectedName = isTeamSelected ? team?.name : s.teamName;
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  const toggleOpen = () => {
+    if (isOpen) { setOpenDropdown(null); return; }
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      const dropdownHeight = 260;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      let top = rect.bottom + 4;
+      if (spaceBelow < dropdownHeight) {
+        top = Math.max(8, rect.top - dropdownHeight - 4);
+        window.scrollBy({ top: -200, behavior: 'smooth' });
+      }
+      setDropdownPos({ top, left: rect.left });
+    }
+    setOpenDropdown(`team-${idx}`);
+  };
+
+  return (
+    <div className="relative">
+      <button type="button" ref={btnRef} onClick={toggleOpen}
+        className="w-full flex items-center gap-2 text-left px-2 py-1 rounded-md border border-outline-variant/30 hover:border-primary/40 transition-colors text-[11px] min-h-[30px]">
+        {s.logoUrl ? <img src={s.logoUrl} alt="" className="w-5 h-5 object-contain shrink-0" /> :
+          <div className="w-5 h-5 rounded bg-surface-container shrink-0" />}
+        <span className={`truncate flex-1 ${selectedName ? 'text-on-surface font-medium' : 'text-on-surface-variant'}`}>{selectedName || 'Selecionar time...'}</span>
+        <ChevronDown size={10} className={`text-on-surface-variant/40 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {isOpen && createPortal(
+        <div data-team-select className="fixed z-[9999] w-60 bg-white rounded-lg shadow-xl border border-outline-variant" style={{ top: dropdownPos.top, left: dropdownPos.left }}>
+          <div className="max-h-60 overflow-y-auto overscroll-contain">
+            {team && (
+              <button type="button" onClick={() => { selectTeam(idx); setOpenDropdown(null); }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors ${isTeamSelected ? 'bg-primary/5' : 'hover:bg-surface-container-low'}`}>
+                {team.logoUrl ? <img src={team.logoUrl} alt="" className="w-6 h-6 object-contain" /> :
+                  <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center"><Shield size={10} className="text-primary" /></div>}
+                <div>
+                  <p className="text-xs font-bold text-on-surface">{team.name}</p>
+                  <p className="text-[9px] text-primary font-headline">Meu Clube</p>
+                </div>
+              </button>
+            )}
+            {team && opponents_list.length > 0 && <div className="border-t border-outline-variant/30" />}
+            {opponents_list.map((o) => (
+              <button key={o.id} type="button"
+                onClick={() => { selectOpponent(idx, o.id); setOpenDropdown(null); }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${s.opponentId === o.id ? 'bg-primary/5' : 'hover:bg-surface-container-low'}`}>
+                {o.logoUrl ? <img src={o.logoUrl} alt="" className="w-5 h-5 object-contain" /> :
+                  <div className="w-5 h-5 rounded bg-surface-container flex items-center justify-center"><Users size={9} className="text-on-surface-variant" /></div>}
+                <div>
+                  <p className="text-[11px] font-bold text-on-surface">{o.name}</p>
+                  {o.shortName && <p className="text-[9px] text-on-surface-variant">{o.shortName}</p>}
+                </div>
+              </button>
+            ))}
+            {opponents_list.length === 0 && !team && (
+              <div className="px-3 py-4 text-center text-[10px] text-on-surface-variant">Nenhum time cadastrado</div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}
+
 export function CompetitionsPage() {
   const [competitions, setCompetitions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -278,7 +362,7 @@ export function CompetitionsPage() {
           </label>
         </td>
         <td className="py-1.5 px-1 min-w-[160px]">
-          <TeamSelectDropdown idx={idx} s={s} />
+          <TeamSelectDropdown key={`team-select-${idx}`} idx={idx} s={s} team={team} filteredOpponents={filteredOpponents} openDropdown={openDropdown} setOpenDropdown={setOpenDropdown} dropdownPos={dropdownPos} setDropdownPos={setDropdownPos} selectTeam={selectTeam} selectOpponent={selectOpponent} />
         </td>
         {isBasketball ? (
           <>
@@ -366,76 +450,6 @@ export function CompetitionsPage() {
 
   const toggleCategory = (id: string) => {
     setExpandedCategoryId((prev) => prev === id ? null : id);
-  };
-
-  const TeamSelectDropdown = ({ idx, s }: { idx: number; s: any }) => {
-    const isOpen = openDropdown === `team-${idx}`;
-    const selected = opponents.find((o) => o.id === s.opponentId);
-    const isTeamSelected = s.opponentId?.startsWith('team:');
-    const selectedName = isTeamSelected ? team?.name : selected?.name || s.teamName;
-    const btnRef = useRef<HTMLButtonElement>(null);
-
-    const toggleOpen = () => {
-      if (isOpen) { setOpenDropdown(null); return; }
-      if (btnRef.current) {
-        const rect = btnRef.current.getBoundingClientRect();
-        const dropdownHeight = 260;
-        const spaceBelow = window.innerHeight - rect.bottom;
-        let top = rect.bottom + 4;
-        if (spaceBelow < dropdownHeight) {
-          top = Math.max(8, rect.top - dropdownHeight - 4);
-          window.scrollBy({ top: -200, behavior: 'smooth' });
-        }
-        setDropdownPos({ top, left: rect.left });
-      }
-      setOpenDropdown(`team-${idx}`);
-    };
-
-    return (
-      <div className="relative">
-        <button type="button" ref={btnRef} onClick={toggleOpen}
-          className="w-full flex items-center gap-2 text-left px-2 py-1 rounded-md border border-outline-variant/30 hover:border-primary/40 transition-colors text-[11px] min-h-[30px]">
-          {s.logoUrl ? <img src={s.logoUrl} alt="" className="w-5 h-5 object-contain shrink-0" /> :
-            <div className="w-5 h-5 rounded bg-surface-container shrink-0" />}
-          <span className={`truncate flex-1 ${selectedName ? 'text-on-surface font-medium' : 'text-on-surface-variant'}`}>{selectedName || 'Selecionar time...'}</span>
-          <ChevronDown size={10} className={`text-on-surface-variant/40 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
-        {isOpen && createPortal(
-          <div data-team-select className="fixed z-[9999] w-60 bg-white rounded-lg shadow-xl border border-outline-variant" style={{ top: dropdownPos.top, left: dropdownPos.left }}>
-            <div className="max-h-60 overflow-y-auto overscroll-contain">
-              {team && (
-                <button type="button" onClick={() => { selectTeam(idx); setOpenDropdown(null); }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors ${isTeamSelected ? 'bg-primary/5' : 'hover:bg-surface-container-low'}`}>
-                  {team.logoUrl ? <img src={team.logoUrl} alt="" className="w-6 h-6 object-contain" /> :
-                    <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center"><Shield size={10} className="text-primary" /></div>}
-                  <div>
-                    <p className="text-xs font-bold text-on-surface">{team.name}</p>
-                    <p className="text-[9px] text-primary font-headline">Meu Clube</p>
-                  </div>
-                </button>
-              )}
-              {team && filteredOpponents.length > 0 && <div className="border-t border-outline-variant/30" />}
-              {filteredOpponents.map((o) => (
-                <button key={o.id} type="button"
-                  onClick={() => { selectOpponent(idx, o.id); setOpenDropdown(null); }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${s.opponentId === o.id ? 'bg-primary/5' : 'hover:bg-surface-container-low'}`}>
-                  {o.logoUrl ? <img src={o.logoUrl} alt="" className="w-5 h-5 object-contain" /> :
-                    <div className="w-5 h-5 rounded bg-surface-container flex items-center justify-center"><Users size={9} className="text-on-surface-variant" /></div>}
-                  <div>
-                    <p className="text-[11px] font-bold text-on-surface">{o.name}</p>
-                    {o.shortName && <p className="text-[9px] text-on-surface-variant">{o.shortName}</p>}
-                  </div>
-                </button>
-              ))}
-              {filteredOpponents.length === 0 && !team && (
-                <div className="px-3 py-4 text-center text-[10px] text-on-surface-variant">Nenhum time cadastrado</div>
-              )}
-            </div>
-          </div>,
-          document.body
-        )}
-      </div>
-    );
   };
 
   const TableHeader = () => (
