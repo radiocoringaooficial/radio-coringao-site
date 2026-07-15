@@ -37,9 +37,14 @@ function parseMultipart(req: VercelRequest): Promise<{ fields: Record<string, an
     });
     busboy.on('finish', () => resolve({ fields, file: fileData }));
     busboy.on('error', reject);
-    const reqChunks: Buffer[] = [];
-    req.on('data', (chunk: Buffer) => reqChunks.push(chunk));
-    req.on('end', () => busboy.end(Buffer.concat(reqChunks)));
+
+    // Try rawBody first (Vercel buffers it), then pipe from stream
+    const rawBody: Buffer | undefined = (req as any).rawBody;
+    if (rawBody && rawBody.length > 0) {
+      busboy.end(rawBody);
+    } else {
+      req.pipe(busboy);
+    }
   });
 }
 
@@ -202,7 +207,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           });
         }
 
-        return res.status(201).json(opp);
+        // Return opponent WITH categories
+        const oppWithCats = await db.opponent.findUnique({
+          where: { id: opp.id },
+          include: { categories: { include: { category: { select: { id: true, name: true } } } } },
+        });
+        return res.status(201).json(oppWithCats);
       }
     }
 
