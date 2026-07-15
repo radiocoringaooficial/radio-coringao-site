@@ -11,7 +11,7 @@ async function uploadToCloudinary(buffer: Buffer, folder: string, mimeType: stri
   cloudinary.config({ cloud_name: CLOUDINARY_CLOUD, api_key: CLOUDINARY_KEY, api_secret: CLOUDINARY_SECRET });
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: `radio-coringao/${folder}`, resource_type: 'image', allowed_formats: ['jpg', 'jpeg', 'png', 'webp'], transformation: [{ width: 400, height: 400, crop: 'fill', quality: 'auto', fetch_format: 'auto' }] },
+      { folder: `radio-coringao/${folder}`, resource_type: 'image', allowed_formats: ['jpg', 'jpeg', 'png', 'webp'], transformation: [{ width: 400, height: 400, crop: 'limit', quality: 'auto', fetch_format: 'auto' }] },
       (error: any, result: any) => { if (error || !result) reject(error || new Error('Upload failed')); else resolve(result.secure_url); },
     );
     const { Readable } = require('stream');

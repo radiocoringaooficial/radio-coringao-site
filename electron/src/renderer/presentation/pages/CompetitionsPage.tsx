@@ -16,7 +16,9 @@ interface TeamSelectDropdownProps {
   s: any;
   team: any;
   filteredOpponents: any[];
+  allOpponents: any[];
   standings: any[];
+  setStandings: (v: any[]) => void;
   currentCategoryId: string | null;
   onOpponentCreated: (opp: any) => void;
   openDropdown: string | null;
@@ -33,7 +35,7 @@ function getRowTeamKey(row: any): string {
   return '';
 }
 
-function TeamSelectDropdown({ idx, s, team, filteredOpponents, standings, currentCategoryId, onOpponentCreated, openDropdown, setOpenDropdown, dropdownPos, setDropdownPos, selectTeam, selectOpponent }: TeamSelectDropdownProps) {
+function TeamSelectDropdown({ idx, s, team, filteredOpponents, allOpponents, standings, setStandings, currentCategoryId, onOpponentCreated, openDropdown, setOpenDropdown, dropdownPos, setDropdownPos, selectTeam, selectOpponent }: TeamSelectDropdownProps) {
   const toast = useToastStore((s) => s.addToast);
   const isOpen = openDropdown === `team-${idx}`;
   const opponents_list = filteredOpponents;
@@ -77,7 +79,7 @@ function TeamSelectDropdown({ idx, s, team, filteredOpponents, standings, curren
     <div className="relative">
       <button type="button" ref={btnRef} onClick={toggleOpen} data-team-btn
         className="w-full flex items-center gap-2 text-left px-2 py-1 rounded-md border border-outline-variant/30 hover:border-primary/40 transition-colors text-[11px] min-h-[30px]">
-        {s.logoUrl ? <img src={s.logoUrl} alt="" className="w-5 h-5 object-contain shrink-0" /> :
+        {s.logoUrl ? <img src={s.logoUrl} alt="" className="w-6 h-6 object-contain shrink-0" /> :
           <div className="w-5 h-5 rounded bg-surface-container shrink-0" />}
         <span className={`truncate flex-1 ${selectedName ? 'text-on-surface font-medium' : 'text-on-surface-variant'}`}>{selectedName || 'Selecionar time...'}</span>
         <ChevronDown size={10} className={`text-on-surface-variant/40 shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
@@ -119,8 +121,8 @@ function TeamSelectDropdown({ idx, s, team, filteredOpponents, standings, curren
                   <button key={o.id} type="button" disabled={oppUsedBy !== null}
                     onClick={() => { selectOpponent(idx, o.id); setOpenDropdown(null); }}
                     className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors ${s.opponentId === o.id ? 'bg-primary/5' : oppUsedBy !== null ? 'opacity-40 cursor-not-allowed' : 'hover:bg-surface-container-low'}`}>
-                    {o.logoUrl ? <img src={o.logoUrl} alt="" className="w-5 h-5 object-contain" /> :
-                      <div className="w-5 h-5 rounded bg-surface-container flex items-center justify-center"><Users size={9} className="text-on-surface-variant" /></div>}
+                    {o.logoUrl ? <img src={o.logoUrl} alt="" className="w-6 h-6 object-contain shrink-0" /> :
+                      <div className="w-6 h-6 rounded bg-surface-container flex items-center justify-center shrink-0"><Users size={10} className="text-on-surface-variant" /></div>}
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-bold text-on-surface">{o.name}</p>
                       {o.shortName && <p className="text-[9px] text-on-surface-variant">{o.shortName}</p>}
@@ -150,7 +152,7 @@ function TeamSelectDropdown({ idx, s, team, filteredOpponents, standings, curren
                         if (!name) return;
                         // Check duplicate name against existing opponents (normalized)
                         const lowerName = name.toLowerCase();
-                        const allNames = [...opponents_list.map((o: any) => o.name?.trim().toLowerCase()), ...standings.map((r: any) => r.teamName?.trim().toLowerCase())];
+                        const allNames = [...allOpponents.map((o: any) => o.name?.trim().toLowerCase()), ...standings.map((r: any) => r.teamName?.trim().toLowerCase())];
                         if (allNames.includes(lowerName)) {
                           toast(`Já existe um time com o nome "${name}".`, 'error');
                           return;
@@ -521,7 +523,7 @@ export function CompetitionsPage() {
           </label>
         </td>
         <td className="py-1.5 px-1 min-w-[160px]">
-          <TeamSelectDropdown key={`team-select-${idx}`} idx={idx} s={s} team={team} filteredOpponents={filteredOpponents} standings={standings} currentCategoryId={currentComp?.categoryId ?? null} onOpponentCreated={(opp) => setOpponents((prev) => [...prev, opp])} openDropdown={openDropdown} setOpenDropdown={setOpenDropdown} dropdownPos={dropdownPos} setDropdownPos={setDropdownPos} selectTeam={selectTeam} selectOpponent={selectOpponent} />
+          <TeamSelectDropdown key={`team-select-${idx}`} idx={idx} s={s} team={team} filteredOpponents={filteredOpponents} allOpponents={opponents} standings={standings} setStandings={setStandings} currentCategoryId={currentComp?.categoryId ?? null} onOpponentCreated={(opp) => setOpponents((prev) => [...prev, opp])} openDropdown={openDropdown} setOpenDropdown={setOpenDropdown} dropdownPos={dropdownPos} setDropdownPos={setDropdownPos} selectTeam={selectTeam} selectOpponent={selectOpponent} />
         </td>
         {isBasketball ? (
           <>
