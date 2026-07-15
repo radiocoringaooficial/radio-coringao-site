@@ -32,6 +32,18 @@ function TeamSelectDropdown({ idx, s, team, filteredOpponents, openDropdown, set
   const selectedName = isTeamSelected ? team?.name : s.teamName;
   const btnRef = useRef<HTMLButtonElement>(null);
 
+  // Fecha o dropdown ao rolar a página (padrão UI padrão)
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeOnScroll = () => setOpenDropdown(null);
+    window.addEventListener('scroll', closeOnScroll, { passive: true });
+    window.addEventListener('resize', closeOnScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', closeOnScroll);
+      window.removeEventListener('resize', closeOnScroll);
+    };
+  }, [isOpen, setOpenDropdown]);
+
   const toggleOpen = () => {
     if (isOpen) { setOpenDropdown(null); return; }
     if (btnRef.current) {
@@ -41,7 +53,6 @@ function TeamSelectDropdown({ idx, s, team, filteredOpponents, openDropdown, set
       let top = rect.bottom + 4;
       if (spaceBelow < dropdownHeight) {
         top = Math.max(8, rect.top - dropdownHeight - 4);
-        window.scrollBy({ top: -200, behavior: 'smooth' });
       }
       setDropdownPos({ top, left: rect.left });
     }
