@@ -4,7 +4,7 @@ import { SportsContent } from "@/presentation/components/sports/SportsContent";
 import { clubeClient } from "@/infrastructure/api/http-client";
 import { httpClient } from "@/infrastructure/api/http-client";
 
-const SPORT_SLABS = ["futebol", "basquete", "futsal", "futebol-feminino", "sub-20", "sub-17"];
+const SPORT_SLABS = ["futebol", "basquete", "futsal", "futebol-feminino", "futebol-masculino", "sub-20", "sub-17"];
 
 // Map sport slugs to match category slugs for API queries
 const SPORT_TO_MATCH_CATEGORY: Record<string, string> = {
@@ -12,6 +12,7 @@ const SPORT_TO_MATCH_CATEGORY: Record<string, string> = {
   "basquete": "basquete",
   "futsal": "futsal",
   "futebol-feminino": "feminino",
+  "futebol-masculino": "principal",
   "sub-20": "sub-20",
   "sub-17": "sub-17",
 };
@@ -22,7 +23,8 @@ const SPORT_TO_NEWS_CATEGORY: Record<string, string> = {
   "basquete": "basquete",
   "futsal": "futsal",
   "futebol-feminino": "futebol-feminino",
-  "sub-20": "futebol",
+  "futebol-masculino": "futebol-masculino",
+  "sub-20": "sub-20",
   "sub-17": "futebol",
 };
 

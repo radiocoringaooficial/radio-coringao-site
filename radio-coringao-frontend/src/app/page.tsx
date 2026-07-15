@@ -77,7 +77,8 @@ export default async function Home() {
   // Partidas agendadas do banco de dados
   const CATEGORY_LABELS: Record<string, string> = {
     principal: "Futebol", feminino: "Feminino", basquete: "Basquete",
-    futsal: "Futsal", "sub-20": "Sub-20", "sub-17": "Sub-17",
+    futsal: "Futsal", "futebol-masculino": "Futebol Masculino",
+    "sub-20": "Sub-20", "sub-17": "Sub-17",
   };
   const matches = scheduledMatches.map((m: any, i) => ({
     ...m,
