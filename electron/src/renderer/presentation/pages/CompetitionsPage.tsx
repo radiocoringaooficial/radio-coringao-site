@@ -164,7 +164,11 @@ function TeamSelectDropdown({ idx, s, team, filteredOpponents, standings, curren
                           const newOpp = await clubeApi.post('/admin/adversarios', fd);
                           toast('Time cadastrado com sucesso!', 'success');
                           onOpponentCreated(newOpp);
-                          selectOpponent(idx, newOpp.id);
+                          // Directly update standings with new opponent (can't use selectOpponent
+                          // because setOpponents hasn't committed yet, so opponents.find won't find it)
+                          const copy = [...standings];
+                          copy[idx] = { ...copy[idx], opponentId: newOpp.id, teamName: newOpp.name, logoUrl: newOpp.logoUrl || copy[idx].logoUrl, teamId: null, isOwnTeam: false };
+                          setStandings(copy);
                           setShowCreateForm(false);
                           setCreateFormName('');
                           setCreateFormLogoFile(null);
