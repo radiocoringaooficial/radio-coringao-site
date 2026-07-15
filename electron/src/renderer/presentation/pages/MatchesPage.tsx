@@ -234,7 +234,6 @@ export function MatchesPage() {
   const upcoming = matches.filter((m) => ['SCHEDULED', 'IN_PLAY', 'POSTPONED'].includes(m.status));
   const past = matches.filter((m) => ['FINISHED', 'CANCELLED'].includes(m.status));
   const filteredCompetitions = useMemo(() => {
-    console.log('[COMP DEBUG] form.categoryId:', form.categoryId, '| competitions total:', competitions.length);
     if (!form.categoryId) return competitions;
     const selected = categories.find((c: any) => c.id === form.categoryId);
     if (!selected) return competitions;
@@ -248,6 +247,15 @@ export function MatchesPage() {
     // Child category: strict exact match only
     return competitions.filter((c) => c.categoryId === form.categoryId);
   }, [competitions, form.categoryId, categories]);
+
+  // Build category hierarchy: root categories with their children nested
+  const categoryHierarchy = useMemo(() => {
+    const roots = categories.filter((c: any) => !c.parentId);
+    return roots.map((root: any) => ({
+      ...root,
+      children: categories.filter((c: any) => c.parentId === root.id),
+    }));
+  }, [categories]);
   const selectedComp = competitions.find((c) => c.id === form.competitionId);
   const isFriendly = selectedComp?.tableFormat === 'friendly';
 
@@ -512,7 +520,7 @@ export function MatchesPage() {
                 className={`px-2 py-1.5 rounded text-[10px] font-body text-left transition-all ${form.categoryId === '' ? 'bg-primary text-white font-bold shadow-sm' : 'bg-surface hover:bg-surface-container-low text-on-surface'}`}>
                 Todas as categorias
               </button>
-              {categories.map((parent) => (
+              {categoryHierarchy.map((parent: any) => (
                 <div key={parent.id} className="mt-1">
                   <button type="button" onClick={() => setForm({ ...form, categoryId: parent.id, competitionId: '' })}
                     className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[10px] font-body text-left transition-all ${form.categoryId === parent.id ? 'bg-primary text-white font-bold shadow-sm' : 'bg-surface hover:bg-surface-container-low text-on-surface'}`}>
@@ -520,6 +528,17 @@ export function MatchesPage() {
                     <span>{parent.name}</span>
                     {parent.gender && <span className={`text-[8px] px-1 py-0.5 rounded ${form.categoryId === parent.id ? 'bg-white/20 text-white' : (GENDER_BADGE[parent.gender] || 'bg-gray-100 text-gray-500')}`}>{GENDER_LABEL[parent.gender] || parent.gender}</span>}
                   </button>
+                  {parent.children.length > 0 && (
+                    <div className="grid grid-cols-2 gap-1 ml-3 mt-1">
+                      {parent.children.map((child: any) => (
+                        <button key={child.id} type="button" onClick={() => setForm({ ...form, categoryId: child.id, competitionId: '' })}
+                          className={`px-2 py-1.5 rounded text-[10px] font-body text-left transition-all ${form.categoryId === child.id ? 'bg-primary text-white font-bold shadow-sm' : 'bg-surface hover:bg-surface-container-low text-on-surface'}`}>
+                          <span>{child.name}</span>
+                          {child.gender && <span className={`ml-1 inline-block text-[7px] px-0.5 py-0.5 rounded ${form.categoryId === child.id ? 'bg-white/20 text-white' : (GENDER_BADGE[child.gender] || 'bg-gray-100 text-gray-500')}`}>{GENDER_LABEL[child.gender] || child.gender}</span>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
