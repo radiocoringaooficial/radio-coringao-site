@@ -235,18 +235,8 @@ export function MatchesPage() {
   const past = matches.filter((m) => ['FINISHED', 'CANCELLED'].includes(m.status));
   const filteredCompetitions = useMemo(() => {
     if (!form.categoryId) return competitions;
-    const selected = categories.find((c: any) => c.id === form.categoryId);
-    if (!selected) return competitions;
-    if (!selected.parentId) {
-      // Root category: show competitions from root + all children
-      const relatedIds = categories
-        .filter((c: any) => c.id === form.categoryId || c.parentId === form.categoryId)
-        .map((c: any) => c.id);
-      return competitions.filter((c) => relatedIds.includes(c.categoryId));
-    }
-    // Child category: strict exact match only
     return competitions.filter((c) => c.categoryId === form.categoryId);
-  }, [competitions, form.categoryId, categories]);
+  }, [competitions, form.categoryId]);
 
   // Build category hierarchy: root categories with their children nested
   const categoryHierarchy = useMemo(() => {
@@ -522,12 +512,20 @@ export function MatchesPage() {
               </button>
               {categoryHierarchy.map((parent: any) => (
                 <div key={parent.id} className="mt-1">
-                  <button type="button" onClick={() => setForm({ ...form, categoryId: parent.id, competitionId: '' })}
-                    className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[10px] font-body text-left transition-all ${form.categoryId === parent.id ? 'bg-primary text-white font-bold shadow-sm' : 'bg-surface hover:bg-surface-container-low text-on-surface'}`}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                    <span>{parent.name}</span>
-                    {parent.gender && <span className={`text-[8px] px-1 py-0.5 rounded ${form.categoryId === parent.id ? 'bg-white/20 text-white' : (GENDER_BADGE[parent.gender] || 'bg-gray-100 text-gray-500')}`}>{GENDER_LABEL[parent.gender] || parent.gender}</span>}
-                  </button>
+                  {parent.children.length > 0 ? (
+                    <div className="flex items-center gap-1.5 px-2 py-1.5 text-[10px] text-on-surface-variant/60">
+                      <span className="w-1.5 h-1.5 rounded-full bg-on-surface-variant/30 shrink-0" />
+                      <span className="font-bold uppercase tracking-wide">{parent.name}</span>
+                      {parent.gender && <span className="text-[8px] px-1 py-0.5 rounded bg-gray-100 text-gray-500">{GENDER_LABEL[parent.gender] || parent.gender}</span>}
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => setForm({ ...form, categoryId: parent.id, competitionId: '' })}
+                      className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded text-[10px] font-body text-left transition-all ${form.categoryId === parent.id ? 'bg-primary text-white font-bold shadow-sm' : 'bg-surface hover:bg-surface-container-low text-on-surface'}`}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                      <span>{parent.name}</span>
+                      {parent.gender && <span className={`text-[8px] px-1 py-0.5 rounded ${form.categoryId === parent.id ? 'bg-white/20 text-white' : (GENDER_BADGE[parent.gender] || 'bg-gray-100 text-gray-500')}`}>{GENDER_LABEL[parent.gender] || parent.gender}</span>}
+                    </button>
+                  )}
                   {parent.children.length > 0 && (
                     <div className="grid grid-cols-2 gap-1 ml-3 mt-1">
                       {parent.children.map((child: any) => (
