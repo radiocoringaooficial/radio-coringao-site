@@ -181,7 +181,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const where: any = {};
         if (q) where.name = { contains: q, mode: 'insensitive' };
         const [data, total] = await Promise.all([
-          db.opponent.findMany({ where, orderBy: { name: 'asc' }, take: limit }),
+          db.opponent.findMany({ where, orderBy: { name: 'asc' }, take: limit, include: { categories: { include: { category: { select: { id: true, name: true } } } } } }),
           db.opponent.count({ where }),
         ]);
         return res.status(200).json({ data, total });
@@ -223,11 +223,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (file && file.buffer.length > 0) {
         logoUrl = await uploadToCloudinary(file.buffer, 'opponents', file.mimetype);
       }
-      const updateData: any = { ...fields };
+
+      // Extract categoryIds BEFORE spreading fields into updateData
+      let categoryIds: string[] | undefined;
+      if (fields.categoryIds !== undefined) {
+        categoryIds = Array.isArray(fields.categoryIds)
+          ? fields.categoryIds
+          : String(fields.categoryIds).split(',').map((s: string) => s.trim()).filter(Boolean);
+      }
+
+      // Only pass valid Opponent fields to update
+      const updateData: any = {};
+      if (fields.name) updateData.name = fields.name.trim();
+      if (fields.shortName !== undefined) updateData.shortName = fields.shortName?.trim() || null;
+      if (fields.stadium !== undefined) updateData.stadium = fields.stadium?.trim() || null;
+      if (fields.city !== undefined) updateData.city = fields.city?.trim() || null;
+      if (fields.foundedYear !== undefined) updateData.foundedYear = fields.foundedYear ? Number(fields.foundedYear) : null;
+      if (fields.color !== undefined) updateData.color = fields.color?.trim() || null;
       if (logoUrl) updateData.logoUrl = logoUrl;
-      delete updateData.logo;
+
       const opp = await db.opponent.update({ where: { id: oppMatch[1] }, data: updateData });
-      return res.status(200).json(opp);
+
+      // Handle category updates separately (replace all)
+      if (categoryIds !== undefined) {
+        await db.opponentCategory.deleteMany({ where: { opponentId: opp.id } });
+        if (categoryIds.length > 0) {
+          await db.opponentCategory.createMany({
+            data: categoryIds.map((cid) => ({ opponentId: opp.id, categoryId: cid })),
+          });
+        }
+      }
+
+      // Return opponent WITH categories
+      const oppWithCats = await db.opponent.findUnique({
+        where: { id: opp.id },
+        include: { categories: { include: { category: { select: { id: true, name: true } } } } },
+      });
+      return res.status(200).json(oppWithCats);
     }
     if (oppMatch && method === 'DELETE') {
       await db.opponent.delete({ where: { id: oppMatch[1] } });
@@ -240,8 +272,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const page = parseInt(urlObj.searchParams.get('page') || '1');
         const limit = parseInt(urlObj.searchParams.get('limit') || '50');
         const competitionId = urlObj.searchParams.get('competitionId');
+        const archived = urlObj.searchParams.get('archived');
         const where: any = {};
         if (competitionId) where.competitionId = competitionId;
+        // Filter by archived status: default is false (not archived)
+        if (archived === 'true') where.isArchived = true;
+        else if (archived === 'false') where.isArchived = false;
+        else where.isArchived = false;
         const skip = (page - 1) * limit;
         const [data, total] = await Promise.all([
           db.match.findMany({ where, orderBy: { date: 'desc' }, skip, take: limit, include: { opponent: true, competition: { include: { category: true } } } }),
@@ -263,6 +300,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (matchEdit && method === 'DELETE') {
       await db.match.delete({ where: { id: matchEdit[1] } });
       return res.status(204).end();
+    }
+
+    // ─── MATCH ARCHIVE/UNARCHIVE ───────────────────────────────
+    const matchArchive = url.match(/^\/partidas\/([^/]+)\/archive$/);
+    if (matchArchive && method === 'PATCH') {
+      const match = await db.match.update({ where: { id: matchArchive[1] }, data: { isArchived: true } });
+      return res.status(200).json(match);
+    }
+    const matchUnarchive = url.match(/^\/partidas\/([^/]+)\/unarchive$/);
+    if (matchUnarchive && method === 'PATCH') {
+      const match = await db.match.update({ where: { id: matchUnarchive[1] }, data: { isArchived: false } });
+      return res.status(200).json(match);
     }
 
     // ─── STANDINGS LOGO ────────────────────────────────────────

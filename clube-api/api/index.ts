@@ -69,16 +69,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (url === '/api/adversarios' || url.startsWith('/api/adversarios?')) {
-      const data = await db.opponent.findMany({ orderBy: { name: 'asc' } });
+      const data = await db.opponent.findMany({
+        orderBy: { name: 'asc' },
+        include: { categories: { include: { category: { select: { id: true, name: true } } } } },
+      });
       return res.status(200).json(data);
     }
 
     if (url === '/api/partidas' || url.startsWith('/api/partidas?')) {
       const urlObj = new URL(url, 'http://localhost');
       const status = urlObj.searchParams.get('status');
+      const archived = urlObj.searchParams.get('archived');
       const limitParam = parseInt(urlObj.searchParams.get('limit') || '50');
       const where: any = {};
       if (status) where.status = status;
+      // Filter by archived status: default is false (not archived)
+      if (archived === 'true') where.isArchived = true;
+      else if (archived === 'false') where.isArchived = false;
+      else where.isArchived = false;
       const data = await db.match.findMany({ where, orderBy: { date: 'desc' }, take: limitParam, include: { opponent: true, competition: { include: { category: true } } } });
       return res.status(200).json(data);
     }
