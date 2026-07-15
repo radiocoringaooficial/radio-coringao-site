@@ -153,7 +153,21 @@ export function ArticleEditPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    newsApi.get('/categorias').then((data) => setCategories(Array.isArray(data) ? data : [])).catch(() => {});
+    newsApi.get('/categorias').then((data) => {
+      const flat = Array.isArray(data) ? data : [];
+      // Construir estrutura aninhada: categorias sem parentId viram pais, filhos são agrupados
+      const byId = new Map(flat.map((c: any) => [c.id, { ...c, children: [] as any[] }]));
+      const parents: any[] = [];
+      for (const cat of flat) {
+        const node = byId.get(cat.id)!;
+        if (cat.parentId && byId.has(cat.parentId)) {
+          byId.get(cat.parentId)!.children.push(node);
+        } else {
+          parents.push(node);
+        }
+      }
+      setCategories(parents);
+    }).catch(() => {});
     if (id) {
       setLoading(true);
       newsApi.get(`/admin/articles/${id}`).then((a) => {
