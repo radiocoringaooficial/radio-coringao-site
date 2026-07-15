@@ -50,7 +50,7 @@ function TeamSelectDropdown({ idx, s, team, filteredOpponents, openDropdown, set
 
   return (
     <div className="relative">
-      <button type="button" ref={btnRef} onClick={toggleOpen}
+      <button type="button" ref={btnRef} onClick={toggleOpen} data-team-btn
         className="w-full flex items-center gap-2 text-left px-2 py-1 rounded-md border border-outline-variant/30 hover:border-primary/40 transition-colors text-[11px] min-h-[30px]">
         {s.logoUrl ? <img src={s.logoUrl} alt="" className="w-5 h-5 object-contain shrink-0" /> :
           <div className="w-5 h-5 rounded bg-surface-container shrink-0" />}
@@ -142,7 +142,7 @@ export function CompetitionsPage() {
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (!target.closest('[data-team-select]')) setOpenDropdown(null);
+      if (!target.closest('[data-team-select]') && !target.closest('[data-team-btn]')) setOpenDropdown(null);
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
