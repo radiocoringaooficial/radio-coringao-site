@@ -347,7 +347,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ─── SQUAD ─────────────────────────────────────────────────
     if (url === '/elenco' || url === '/elenco/') {
       if (method === 'GET') {
-        const squad = await db.squadMember.findMany({ orderBy: { name: 'asc' }, include: { category: true } });
+        // Reactivate squad members whose LOAN_OUT returnDate has passed
+        const now = new Date();
+        const expiredLoans = await db.playerMovement.findMany({
+          where: { type: 'LOAN_OUT', returnDate: { lte: now }, squadMemberId: { not: null } },
+          select: { squadMemberId: true },
+        });
+        const toReactivate = [...new Set(expiredLoans.map((m) => m.squadMemberId).filter(Boolean))];
+        if (toReactivate.length > 0) {
+          await db.squadMember.updateMany({ where: { id: { in: toReactivate }, isActive: false }, data: { isActive: true, inactiveReason: null } });
+        }
+
+        // Filter out SOLD players: show active OR loaned (inactiveReason = 'LOANED')
+        const squad = await db.squadMember.findMany({
+          orderBy: { name: 'asc' },
+          where: { OR: [{ isActive: true }, { inactiveReason: 'LOANED' }] },
+          include: { category: true },
+        });
         return res.status(200).json(squad);
       }
       if (method === 'POST') {
@@ -417,6 +433,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           playerPercentage: req.body.playerPercentage != null ? Number(req.body.playerPercentage) : null,
           returnDate: req.body.returnDate ? new Date(req.body.returnDate) : null,
         } });
+
+        // Auto-deactivate squad member on DEPARTURE (sale) or LOAN_OUT
+        if (movement.squadMemberId) {
+          if (movement.type === 'DEPARTURE') {
+            await db.squadMember.update({ where: { id: movement.squadMemberId }, data: { isActive: false, inactiveReason: 'SOLD' } });
+          } else if (movement.type === 'LOAN_OUT') {
+            await db.squadMember.update({ where: { id: movement.squadMemberId }, data: { isActive: false, inactiveReason: 'LOANED' } });
+          }
+        }
+
         return res.status(201).json(movement);
       }
     }
@@ -434,10 +460,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (data.playerPercentage != null) data.playerPercentage = Number(data.playerPercentage);
       if (data.returnDate) data.returnDate = new Date(data.returnDate);
       const movement = await db.playerMovement.update({ where: { id: movMatch[1] }, data });
+
+      // Auto-deactivate squad member on DEPARTURE or LOAN_OUT
+      if (movement.squadMemberId) {
+        if (movement.type === 'DEPARTURE') {
+          await db.squadMember.update({ where: { id: movement.squadMemberId }, data: { isActive: false, inactiveReason: 'SOLD' } });
+        } else if (movement.type === 'LOAN_OUT') {
+          await db.squadMember.update({ where: { id: movement.squadMemberId }, data: { isActive: false, inactiveReason: 'LOANED' } });
+        } else {
+          // Type changed FROM DEPARTURE/LOAN_OUT to something else → reactivate
+          await db.squadMember.update({ where: { id: movement.squadMemberId }, data: { isActive: true, inactiveReason: null } });
+        }
+      }
+
       return res.status(200).json(movement);
     }
     if (movMatch && method === 'DELETE') {
+      // Before deleting, check if squadMember should be reactivated
+      const deletedMovement = await db.playerMovement.findUnique({ where: { id: movMatch[1] } });
       await db.playerMovement.delete({ where: { id: movMatch[1] } });
+      if (deletedMovement?.squadMemberId && (deletedMovement.type === 'DEPARTURE' || deletedMovement.type === 'LOAN_OUT')) {
+        // Check if any other active departure/loan exists for this player
+        const otherActive = await db.playerMovement.findFirst({
+          where: {
+            squadMemberId: deletedMovement.squadMemberId,
+            id: { not: movMatch[1] },
+            type: { in: ['DEPARTURE', 'LOAN_OUT'] },
+          },
+        });
+        if (!otherActive) {
+          await db.squadMember.update({ where: { id: deletedMovement.squadMemberId }, data: { isActive: true, inactiveReason: null } });
+        }
+      }
       return res.status(204).end();
     }
 

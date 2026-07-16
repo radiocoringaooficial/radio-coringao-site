@@ -209,6 +209,7 @@ model SquadMember {
   photoUrl    String?
   birthDate   DateTime?
   isActive    Boolean  @default(true)
+  inactiveReason String?  // null=ativo, 'SOLD'=vendido, 'LOANED'=emprestado
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

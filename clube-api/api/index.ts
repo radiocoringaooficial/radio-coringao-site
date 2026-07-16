@@ -165,7 +165,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (url === '/api/elenco' || url.startsWith('/api/elenco?')) {
-      const data = await db.squadMember.findMany({ orderBy: { name: 'asc' } });
+      // Reactivate squad members whose LOAN_OUT returnDate has passed
+      const now = new Date();
+      const expiredLoans = await db.playerMovement.findMany({
+        where: { type: 'LOAN_OUT', returnDate: { lte: now }, squadMemberId: { not: null } },
+        select: { squadMemberId: true },
+      });
+      const toReactivate = [...new Set(expiredLoans.map((m) => m.squadMemberId).filter(Boolean))];
+      if (toReactivate.length > 0) {
+        await db.squadMember.updateMany({ where: { id: { in: toReactivate }, isActive: false }, data: { isActive: true, inactiveReason: null } });
+      }
+
+      // Filter out SOLD players: show active OR loaned
+      const data = await db.squadMember.findMany({ orderBy: { name: 'asc' }, where: { OR: [{ isActive: true }, { inactiveReason: 'LOANED' }] } });
       return res.status(200).json(data);
     }
 
