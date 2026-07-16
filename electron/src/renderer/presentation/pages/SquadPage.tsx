@@ -92,6 +92,32 @@ export function SquadPage() {
     return null;
   };
 
+  // Lista plana de categorias-folha (sem filhos) para as abas de filtro
+  const leafCategories = useMemo(() => {
+    const leaves: any[] = [];
+    for (const p of categories) {
+      if (p.children && p.children.length > 0) {
+        // Categorias-raiz com filhos: mostrar cada filho como aba
+        for (const child of p.children) {
+          leaves.push(child);
+        }
+      } else {
+        // Categorias sem filhos: mostrar a própria como aba
+        leaves.push(p);
+      }
+    }
+    return leaves;
+  }, [categories]);
+
+  // Contagem de jogadores por categoria-folha
+  const playerCountByCategory = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const player of items) {
+      counts[player.categoryId] = (counts[player.categoryId] || 0) + 1;
+    }
+    return counts;
+  }, [items]);
+
   const grouped = useMemo(() => {
     const groups: Record<string, { parent: any; children: Record<string, any[]>; allPlayers: any[] }> = {};
     for (const p of categories) {
@@ -113,7 +139,33 @@ export function SquadPage() {
     return Object.values(groups).filter((g) => g.allPlayers.length > 0);
   }, [items, categories]);
 
-  const filtered = filterCategory === 'all' ? grouped : grouped.filter((g) => g.parent.id === filterCategory);
+  // Filtrar itens por categoria-folha selecionada
+  const filteredItems = useMemo(() => {
+    if (filterCategory === 'all') return items;
+    return items.filter((item) => item.categoryId === filterCategory);
+  }, [items, filterCategory]);
+
+  // Reagrupar itens filtrados para exibição (mantém a estrutura de abas)
+  const filteredGrouped = useMemo(() => {
+    if (filterCategory === 'all') return grouped;
+    const groups: Record<string, { parent: any; children: Record<string, any[]>; allPlayers: any[] }> = {};
+    for (const p of categories) {
+      groups[p.id] = { parent: p, children: {}, allPlayers: [] };
+    }
+    for (const player of filteredItems) {
+      const parentId = getCatParentId(player.categoryId);
+      if (!parentId || !groups[parentId]) continue;
+      groups[parentId].allPlayers.push(player);
+      const parent = groups[parentId].parent;
+      const child = parent.children?.find((c: any) => c.id === player.categoryId);
+      const groupKey = child ? child.id : '__parent__';
+      if (!groups[parentId].children[groupKey]) groups[parentId].children[groupKey] = [];
+      groups[parentId].children[groupKey].push(player);
+    }
+    return Object.values(groups).filter((g) => g.allPlayers.length > 0);
+  }, [filteredItems, categories, grouped]);
+
+  const filtered = filterCategory === 'all' ? grouped : filteredGrouped;
 
   const toggleGroup = (id: string) => {
     setExpandedGroups((prev) => {
@@ -137,15 +189,15 @@ export function SquadPage() {
       </div>
 
       {/* Filtro por categoria */}
-      {!loading && grouped.length > 0 && (
+      {!loading && leafCategories.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <button onClick={() => setFilterCategory('all')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${filterCategory === 'all' ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-low'}`}>
             Todos ({items.length})
           </button>
-          {grouped.map((g) => (
-            <button key={g.parent.id} onClick={() => setFilterCategory(g.parent.id)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ${filterCategory === g.parent.id ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-low'}`}>
-              {g.parent.name}
-              <span className={`text-[9px] px-1 py-0.5 rounded ${filterCategory === g.parent.id ? 'bg-white/20' : 'bg-surface-container-low'}`}>{g.allPlayers.length}</span>
+          {leafCategories.map((cat) => (
+            <button key={cat.id} onClick={() => setFilterCategory(cat.id)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5 ${filterCategory === cat.id ? 'bg-primary text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-low'}`}>
+              {cat.name}
+              <span className={`text-[9px] px-1 py-0.5 rounded ${filterCategory === cat.id ? 'bg-white/20' : 'bg-surface-container-low'}`}>{playerCountByCategory[cat.id] || 0}</span>
             </button>
           ))}
           <div className="ml-auto flex gap-1">
