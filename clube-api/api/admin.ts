@@ -373,7 +373,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           photoUrl = await uploadToCloudinary(file.buffer, 'squad', file.mimetype);
         }
         const shirtNum = fields.shirtNumber ? parseInt(fields.shirtNumber, 10) : null;
-        const member = await db.squadMember.create({ data: { categoryId: fields.categoryId, name: fields.name, position: fields.position, shirtNumber: isNaN(shirtNum) ? null : shirtNum, photoUrl } });
+        const finalShirtNumber = isNaN(shirtNum) ? null : shirtNum;
+
+        if (finalShirtNumber !== null) {
+          const conflict = await db.squadMember.findFirst({
+            where: { categoryId: fields.categoryId, shirtNumber: finalShirtNumber, isActive: true },
+            include: { category: true },
+          });
+          if (conflict) {
+            return res.status(409).json({
+              error: `Número #${finalShirtNumber} já está em uso por ${conflict.name} em ${conflict.category.name}.`,
+            });
+          }
+        }
+
+        const member = await db.squadMember.create({ data: { categoryId: fields.categoryId, name: fields.name, position: fields.position, shirtNumber: finalShirtNumber, photoUrl } });
         return res.status(201).json(member);
       }
     }
@@ -388,8 +402,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const updateData: any = { ...fields };
       if (photoUrl) updateData.photoUrl = photoUrl;
       delete updateData.photo;
-      if (updateData.shirtNumber) updateData.shirtNumber = parseInt(updateData.shirtNumber, 10);
-      if (isNaN(updateData.shirtNumber)) updateData.shirtNumber = null;
+
+      // Parse shirtNumber only if explicitly provided in body
+      let parsedShirtNumber: number | null = null;
+      let hasShirtNumber = false;
+      if (fields.shirtNumber !== undefined && fields.shirtNumber !== '') {
+        hasShirtNumber = true;
+        parsedShirtNumber = parseInt(fields.shirtNumber, 10);
+        if (isNaN(parsedShirtNumber)) parsedShirtNumber = null;
+      }
+      updateData.shirtNumber = hasShirtNumber ? parsedShirtNumber : undefined;
+
+      // Validate shirtNumber uniqueness only when shirtNumber is being set
+      if (hasShirtNumber && parsedShirtNumber !== null) {
+        const targetCategoryId = fields.categoryId || (await db.squadMember.findUnique({ where: { id: squadMatch[1] }, select: { categoryId: true } }))?.categoryId;
+        if (targetCategoryId) {
+          const conflict = await db.squadMember.findFirst({
+            where: { categoryId: targetCategoryId, shirtNumber: parsedShirtNumber, isActive: true, NOT: { id: squadMatch[1] } },
+            include: { category: true },
+          });
+          if (conflict) {
+            return res.status(409).json({
+              error: `Número #${parsedShirtNumber} já está em uso por ${conflict.name} em ${conflict.category.name}.`,
+            });
+          }
+        }
+      }
+
+      // Remove undefined keys so Prisma doesn't try to set them
+      for (const key of Object.keys(updateData)) {
+        if (updateData[key] === undefined) delete updateData[key];
+      }
+
       const member = await db.squadMember.update({ where: { id: squadMatch[1] }, data: updateData });
       return res.status(200).json(member);
     }
