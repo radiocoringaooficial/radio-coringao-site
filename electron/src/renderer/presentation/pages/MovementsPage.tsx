@@ -381,10 +381,15 @@ export function MovementsPage() {
         if (clubList.length > 0) clubId = clubList[0].id;
       } catch {}
 
+      // Get player's categoryId for snapshot
+      const selectedPlayer = squad.find((p) => p.id === form.squadMemberId);
+      const categoryId = selectedPlayer?.category?.id || null;
+
       const data: any = {
         squadMemberId: form.squadMemberId, type: form.type, date: new Date(form.date).toISOString(),
         opponentId: form.opponentId || null,
         clubId: clubId,
+        categoryId: categoryId,
         season: selectedSeason,
         isFreeLoan: form.isFreeLoan, paysSalary: form.paysSalary,
         corinthiansPercentage: form.corinthiansPercentage ? Number(form.corinthiansPercentage) : null,
@@ -505,8 +510,8 @@ export function MovementsPage() {
 
           {/* Direction arrow */}
           <div className="flex items-center gap-0.5 shrink-0">
-            {team?.logoUrl ? <img src={team.logoUrl} alt="" className="w-5 h-5 object-contain shrink-0" /> :
-              <div className="w-4 h-4 rounded bg-primary/10 flex items-center justify-center"><Shield size={6} className="text-primary" /></div>}
+            {team?.logoUrl ? <img src={team.logoUrl} alt="" className="w-3.5 h-3.5 object-contain shrink-0" /> :
+              <div className="w-3.5 h-3.5 rounded bg-primary/10 flex items-center justify-center"><Shield size={5} className="text-primary" /></div>}
             <span className={`text-[10px] font-bold ${isOut ? 'text-red-500' : 'text-blue-500'}`}>{isOut ? '→' : '←'}</span>
             {opp ? (
               <div className="flex items-center gap-1">
@@ -567,6 +572,7 @@ export function MovementsPage() {
       </div>
 
       {/* Cards financeiros por temporada */}
+      <p className="text-xs font-headline font-bold text-on-surface-variant uppercase tracking-wide mb-2">Resumo Financeiro por Temporada</p>
       <div className="mb-6 space-y-3">
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -664,13 +670,21 @@ export function MovementsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Agrupar movimentações por temporada */}
+          {/* Agrupar movimentações por temporada — usa allMovements (todas as seasons) */}
       {(() => {
-        const allBySeason: Record<string, any[]> = {};
-        movements.forEach(m => { const s = m.season || '2026'; if (!allBySeason[s]) allBySeason[s] = []; allBySeason[s].push(m); });
+        const activeBySeason: Record<string, any[]> = {};
         const archivedBySeason: Record<string, any[]> = {};
-        archivedMovements.forEach(m => { const s = m.season || '2026'; if (!archivedBySeason[s]) archivedBySeason[s] = []; archivedBySeason[s].push(m); });
-        const allSeasons = [...new Set([...Object.keys(allBySeason), ...Object.keys(archivedBySeason)])].sort().reverse();
+        allMovements.forEach(m => {
+          const s = m.season || '2026';
+          if (m.isArchived) {
+            if (!archivedBySeason[s]) archivedBySeason[s] = [];
+            archivedBySeason[s].push(m);
+          } else {
+            if (!activeBySeason[s]) activeBySeason[s] = [];
+            activeBySeason[s].push(m);
+          }
+        });
+        const allSeasons = [...new Set([...Object.keys(activeBySeason), ...Object.keys(archivedBySeason)])].sort().reverse();
 
         const renderSection = (title: string, color: string, icon: any, items: any[], grouped: Record<string, any[]>, seasonPrefix: string) => {
           if (Object.keys(grouped).length === 0) return null;
@@ -712,7 +726,7 @@ export function MovementsPage() {
         }, {});
 
         return allSeasons.map(season => {
-          const sMov = allBySeason[season] || [];
+          const sMov = activeBySeason[season] || [];
           const sArc = archivedBySeason[season] || [];
           const sArr = sMov.filter(m => IN_TYPES.includes(m.type));
           const sDep = sMov.filter(m => OUT_TYPES.includes(m.type));
@@ -736,6 +750,7 @@ export function MovementsPage() {
               </button>
               {isOpen && (
                 <div className="px-4 pb-4 space-y-4 fade-in">
+                  <p className="text-[10px] font-headline font-bold text-on-surface-variant uppercase tracking-wide">Detalhamento por Categoria</p>
                   {renderSection('Chegadas', 'text-blue-600', <TrendingDown size={12} />, sArr, groupByCategory(sArr), `${season}-arr`)}
                   {renderSection('Saídas', 'text-red-600', <TrendingUp size={12} />, sDep, groupByCategory(sDep), `${season}-dep`)}
                   {renderSection('Arquivados', 'text-gray-500', <Archive size={12} />, sArc, groupByCategory(sArc), `${season}-arc`)}
@@ -763,7 +778,7 @@ export function MovementsPage() {
                   <p className="text-sm font-bold text-on-surface truncate">{editing.playerName || editing.squadMember?.name}</p>
                   <div className="flex items-center gap-1.5">
                     {editing.squadMember?.shirtNumber && <span className="text-[10px] font-bold text-primary">#{editing.squadMember.shirtNumber}</span>}
-                    {editing.squadMember?.category?.name && <span className="text-[10px] text-on-surface-variant">{editing.squadMember.category.name}</span>}
+                    {(editing.category || editing.squadMember?.category) && <span className="text-[10px] text-on-surface-variant">{(editing.category || editing.squadMember?.category)?.name}</span>}
                   </div>
                 </div>
               </div>

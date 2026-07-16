@@ -283,7 +283,7 @@ export async function movementsAdminRoutes(app: FastifyInstance): Promise<void> 
         squadMemberId: body.squadMemberId,
         playerName: player.name,
         playerPhotoUrl: player.photoUrl ?? null,
-        categoryId: player.categoryId ?? body.categoryId ?? null,
+        categoryId: player.categoryId || body.categoryId || null,
         type: body.type as MovementType,
         date: new Date(body.date),
         clubId: body.clubId ?? null,
@@ -313,6 +313,8 @@ export async function movementsAdminRoutes(app: FastifyInstance): Promise<void> 
     // RETURN = retorno → jogador é reativado
     const movementType = body.type as MovementType;
     if (movementType === 'DEPARTURE') {
+      // Desvincula movimentações antigas antes de deletar (preserva histórico)
+      await prisma.playerMovement.updateMany({ where: { squadMemberId: body.squadMemberId }, data: { squadMemberId: null } }).catch(() => {});
       await prisma.squadMember.delete({ where: { id: body.squadMemberId } }).catch(() => {});
     } else if (movementType === 'LOAN_OUT') {
       await prisma.squadMember.update({ where: { id: body.squadMemberId }, data: { isActive: false } }).catch(() => {});
@@ -388,6 +390,8 @@ export async function movementsAdminRoutes(app: FastifyInstance): Promise<void> 
       const member = await prisma.squadMember.findUnique({ where: { id: movement.squadMemberId } });
       if (member) {
         if (type === 'DEPARTURE') {
+          // Desvincula movimentações antigas antes de deletar (preserva histórico)
+          await prisma.playerMovement.updateMany({ where: { squadMemberId: movement.squadMemberId }, data: { squadMemberId: null } }).catch(() => {});
           await prisma.squadMember.delete({ where: { id: movement.squadMemberId } }).catch(() => {});
         } else if (type === 'LOAN_OUT') {
           await prisma.squadMember.update({ where: { id: movement.squadMemberId }, data: { isActive: false } }).catch(() => {});
