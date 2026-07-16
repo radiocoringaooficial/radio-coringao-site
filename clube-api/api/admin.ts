@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import jwt from 'jsonwebtoken';
 import Busboy from 'busboy';
+import { Prisma } from '@prisma/client';
 
 const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD_NAME;
 const CLOUDINARY_KEY = process.env.CLOUDINARY_API_KEY;
@@ -387,8 +388,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
 
-        const member = await db.squadMember.create({ data: { categoryId: fields.categoryId, name: fields.name, position: fields.position, shirtNumber: finalShirtNumber, photoUrl } });
-        return res.status(201).json(member);
+        try {
+          const member = await db.squadMember.create({ data: { categoryId: fields.categoryId, name: fields.name, position: fields.position, shirtNumber: finalShirtNumber, photoUrl } });
+          return res.status(201).json(member);
+        } catch (e: any) {
+          if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+            return res.status(409).json({ error: 'Já existe um jogador com esse número nessa categoria.' });
+          }
+          throw e;
+        }
       }
     }
 
@@ -434,8 +442,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (updateData[key] === undefined) delete updateData[key];
       }
 
-      const member = await db.squadMember.update({ where: { id: squadMatch[1] }, data: updateData });
-      return res.status(200).json(member);
+      try {
+        const member = await db.squadMember.update({ where: { id: squadMatch[1] }, data: updateData });
+        return res.status(200).json(member);
+      } catch (e: any) {
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+          return res.status(409).json({ error: 'Já existe um jogador com esse número nessa categoria.' });
+        }
+        throw e;
+      }
     }
     if (squadMatch && method === 'DELETE') {
       await db.squadMember.delete({ where: { id: squadMatch[1] } });

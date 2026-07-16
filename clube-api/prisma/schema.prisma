@@ -218,6 +218,9 @@ model SquadMember {
 
   @@index([categoryId])
   @@map("squad_members")
+  // NOTE: A partial unique index exists on (categoryId, shirtNumber) WHERE isActive=true AND shirtNumber IS NOT NULL.
+  // Created via manual migration (20260716000000) because Prisma does not support partial indexes in schema.prisma.
+  // Prevents duplicate shirt numbers within the same category for active players.
 }
 
 // ─── Clubes envolvidos em transferências (origem/destino) ──────
