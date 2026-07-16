@@ -313,8 +313,9 @@ export async function movementsAdminRoutes(app: FastifyInstance): Promise<void> 
     // RETURN = retorno → jogador é reativado
     const movementType = body.type as MovementType;
     if (movementType === 'DEPARTURE') {
-      // Desvincula movimentações antigas antes de deletar (preserva histórico)
-      await prisma.playerMovement.updateMany({ where: { squadMemberId: body.squadMemberId }, data: { squadMemberId: null } }).catch(() => {});
+      // Não desvincula movimentações aqui — o onDelete: SetNull no schema
+      // já cuida disso quando o SquadMember é deletado. Fazer updateMany
+      // antes anularia o squadMemberId da movimentação recém-criada.
       await prisma.squadMember.delete({ where: { id: body.squadMemberId } }).catch(() => {});
     } else if (movementType === 'LOAN_OUT') {
       await prisma.squadMember.update({ where: { id: body.squadMemberId }, data: { isActive: false } }).catch(() => {});
@@ -390,8 +391,8 @@ export async function movementsAdminRoutes(app: FastifyInstance): Promise<void> 
       const member = await prisma.squadMember.findUnique({ where: { id: movement.squadMemberId } });
       if (member) {
         if (type === 'DEPARTURE') {
-          // Desvincula movimentações antigas antes de deletar (preserva histórico)
-          await prisma.playerMovement.updateMany({ where: { squadMemberId: movement.squadMemberId }, data: { squadMemberId: null } }).catch(() => {});
+          // Não desvincula movimentações aqui — o onDelete: SetNull no schema
+          // já cuida disso quando o SquadMember é deletado.
           await prisma.squadMember.delete({ where: { id: movement.squadMemberId } }).catch(() => {});
         } else if (type === 'LOAN_OUT') {
           await prisma.squadMember.update({ where: { id: movement.squadMemberId }, data: { isActive: false } }).catch(() => {});
