@@ -93,6 +93,19 @@ export async function squadAdminRoutes(app: FastifyInstance): Promise<void> {
         });
       }
 
+      // Bloqueia categorias-pai (que têm filhos) — só categorias-filha podem ser atribuídas a jogadores
+      const hasChildren = await prisma.category.findFirst({
+        where: { parentId: body.categoryId },
+        select: { id: true },
+      });
+      if (hasChildren) {
+        return reply.code(422).send({
+          error: `A categoria "${category.name}" é uma categoria-pai e não pode ser atribuída diretamente a jogadores.`,
+          field: 'categoryId',
+          hint: 'Selecione uma subcategoria específica (ex: "Futebol Masculino Principal" em vez de "Futebol Masculino").',
+        });
+      }
+
       // Bloqueia número de camisa já em uso por outro jogador ativo
       // na MESMA categoria (times diferentes podem repetir números livremente).
       if (body.shirtNumber !== undefined) {

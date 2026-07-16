@@ -243,30 +243,35 @@ export function SquadPage() {
           <div>
             <label className="block font-headline text-label-sm font-bold text-on-surface mb-2">Categoria / Modalidade *</label>
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1 border border-outline-variant/30 rounded-lg p-2">
-              {categories.map((parent) => (
-                <div key={parent.id}>
-                  <div className="flex items-center gap-1.5 mb-1 px-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                    <span className="font-headline text-[10px] font-bold text-on-surface uppercase tracking-wide">{parent.name}</span>
-                    <span className={`text-[8px] px-1 py-0.5 rounded ${GENDER_BADGE[parent.gender] || 'bg-gray-100 text-gray-500'}`}>{GENDER_LABEL[parent.gender] || parent.gender}</span>
-                  </div>
-                  {parent.children && parent.children.length > 0 && (
-                    <div className="grid grid-cols-2 gap-1 ml-3">
-                      {parent.children.map((child: any) => (
-                        <button key={child.id} type="button" onClick={() => setForm({ ...form, categoryId: child.id })}
-                          className={`px-2 py-1.5 rounded text-[10px] font-body text-left transition-all ${form.categoryId === child.id ? 'bg-primary text-white font-bold shadow-sm' : 'bg-surface hover:bg-surface-container-low text-on-surface'}`}>
-                          <span>{child.name}</span>
-                          <span className={`ml-1 inline-block text-[7px] px-0.5 py-0.5 rounded ${form.categoryId === child.id ? 'bg-white/20 text-white' : (GENDER_BADGE[child.gender] || 'bg-gray-100 text-gray-500')}`}>{GENDER_LABEL[child.gender] || child.gender}</span>
-                        </button>
-                      ))}
+              {categories.map((parent) => {
+                const hasActiveChildren = parent.children?.some((c: any) => c.isActive);
+                const hasAnyChildren = parent.children && parent.children.length > 0;
+                return (
+                  <div key={parent.id}>
+                    <div className="flex items-center gap-1.5 mb-1 px-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                      <span className="font-headline text-[10px] font-bold text-on-surface uppercase tracking-wide">{parent.name}</span>
+                      <span className={`text-[8px] px-1 py-0.5 rounded ${GENDER_BADGE[parent.gender] || 'bg-gray-100 text-gray-500'}`}>{GENDER_LABEL[parent.gender] || parent.gender}</span>
                     </div>
-                  )}
-                  {!parent.children?.length && (
-                    <button type="button" onClick={() => setForm({ ...form, categoryId: parent.id })}
-                      className={`ml-3 px-2 py-1.5 rounded text-[10px] font-body text-left transition-all ${form.categoryId === parent.id ? 'bg-primary text-white font-bold shadow-sm' : 'bg-surface hover:bg-surface-container-low text-on-surface'}`}>{parent.name}</button>
-                  )}
-                </div>
-              ))}
+                    {hasAnyChildren && (
+                      <div className="grid grid-cols-2 gap-1 ml-3">
+                        {parent.children.map((child: any) => (
+                          <button key={child.id} type="button" disabled={!child.isActive}
+                            onClick={() => setForm({ ...form, categoryId: child.id })}
+                            className={`px-2 py-1.5 rounded text-[10px] font-body text-left transition-all ${form.categoryId === child.id ? 'bg-primary text-white font-bold shadow-sm' : !child.isActive ? 'bg-gray-50 text-gray-400 cursor-not-allowed line-through' : 'bg-surface hover:bg-surface-container-low text-on-surface'}`}>
+                            <span>{child.name}</span>
+                            {!child.isActive && <span className="ml-1 text-[7px] text-gray-400">(inativa)</span>}
+                            <span className={`ml-1 inline-block text-[7px] px-0.5 py-0.5 rounded ${form.categoryId === child.id ? 'bg-white/20 text-white' : (GENDER_BADGE[child.gender] || 'bg-gray-100 text-gray-500')}`}>{GENDER_LABEL[child.gender] || child.gender}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {!hasAnyChildren && (
+                      <p className="ml-3 text-[9px] text-gray-400 italic py-1">Nenhuma subcategoria disponível</p>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             {form.categoryId && <p className="text-[10px] text-on-surface-variant mt-1">Selecionado: <strong>{getCategoryLabel(form.categoryId)}</strong></p>}
           </div>
