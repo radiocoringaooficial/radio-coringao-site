@@ -42,7 +42,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (url === '/api/categorias' || url.startsWith('/api/categorias?')) {
-      const data = await db.category.findMany({ orderBy: { order: 'asc' } });
+      const data = await db.category.findMany({
+        where: { isActive: true, parentId: null },
+        orderBy: { order: 'asc' },
+        include: {
+          children: {
+            where: { isActive: true },
+            orderBy: { order: 'asc' },
+          },
+        },
+      });
       return res.status(200).json(data);
     }
 
