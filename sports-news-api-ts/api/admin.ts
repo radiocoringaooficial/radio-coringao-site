@@ -112,13 +112,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // ─── DEBUG: verificar constraint FK de authorId (temporário, sem auth) ──
+    // ─── DEBUG: fix constraint FK de authorId (temporário, sem auth) ──
     if (urlPath === '/debug-db-info') {
       try {
         const db = await getPrisma();
-        const fkCheck = await db.$queryRaw`SELECT conname, confdeltype FROM pg_constraint WHERE conrelid = 'articles'::regclass AND contype = 'f' AND conname LIKE '%author%'`;
-        const colCheck = await db.$queryRaw`SELECT column_name, is_nullable FROM information_schema.columns WHERE table_name = 'articles' AND column_name IN ('authorId', 'authorNameSnapshot', 'authorAvatarSnapshot', 'authorCargo') ORDER BY column_name`;
-        return res.status(200).json({ foreignKey: fkCheck, columns: colCheck });
+        const fkBefore = await db.$queryRaw`SELECT conname, confdeltype FROM pg_constraint WHERE conrelid = 'articles'::regclass AND contype = 'f' AND conname LIKE '%author%'`;
+        // FIX: dropar constraint antiga (RESTRICT) e recriar com SET NULL
+        await db.$executeRawUnsafe(`ALTER TABLE "articles" ALTER COLUMN "authorId" DROP NOT NULL`);
+        await db.$executeRawUnsafe(`ALTER TABLE "articles" DROP CONSTRAINT "articles_authorId_fkey"`);
+        await db.$executeRawUnsafe(`ALTER TABLE "articles" ADD CONSTRAINT "articles_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE`);
+        const fkAfter = await db.$queryRaw`SELECT conname, confdeltype FROM pg_constraint WHERE conrelid = 'articles'::regclass AND contype = 'f' AND conname LIKE '%author%'`;
+        return res.status(200).json({ foreignKeyBefore: fkBefore, foreignKeyAfter: fkAfter, fixApplied: true });
       } catch (e: any) {
         return res.status(500).json({ error: e.message });
       }
