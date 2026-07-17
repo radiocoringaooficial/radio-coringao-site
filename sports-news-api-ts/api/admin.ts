@@ -643,7 +643,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ─── USERS ────────────────────────────────────────────────
     if (url === '/users' || url === '/users/') {
       if (method === 'GET') {
-        const users = await db.user.findMany({ select: { id: true, name: true, email: true, role: true, avatar: true, position: true, cargos: true, isActive: true, createdAt: true, lastLoginAt: true, lastSeenAt: true }, orderBy: { createdAt: 'desc' } });
+        const isActiveParam = req.query.isActive;
+        const where = isActiveParam === 'true' ? { isActive: true } : {};
+        const users = await db.user.findMany({ where, select: { id: true, name: true, email: true, role: true, avatar: true, position: true, cargos: true, isActive: true, createdAt: true, lastLoginAt: true, lastSeenAt: true }, orderBy: { createdAt: 'desc' } });
         return res.status(200).json(users);
       }
       if (method === 'POST') {
