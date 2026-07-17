@@ -112,19 +112,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // ─── DEBUG: apply live stream migration (temporário, sem auth) ──
-    if (urlPath === '/debug-apply-migration') {
-      try {
-        const db = await getPrisma();
-        await db.$executeRawUnsafe(`ALTER TABLE "site_settings" ADD COLUMN IF NOT EXISTS "liveStreamUrl" TEXT`);
-        await db.$executeRawUnsafe(`ALTER TABLE "site_settings" ADD COLUMN IF NOT EXISTS "liveStreamActive" BOOLEAN NOT NULL DEFAULT false`);
-        const check = await db.$queryRaw`SELECT column_name FROM information_schema.columns WHERE table_name = 'site_settings' AND column_name IN ('liveStreamUrl', 'liveStreamActive')`;
-        return res.status(200).json({ fixApplied: true, columns: check });
-      } catch (e: any) {
-        return res.status(500).json({ error: e.message });
-      }
-    }
-
     // All admin routes require auth
     let user: any;
     try { user = verifyToken(req); } catch { return res.status(401).json({ error: 'Token inválido' }); }
