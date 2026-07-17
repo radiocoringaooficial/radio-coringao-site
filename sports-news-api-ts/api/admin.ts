@@ -773,7 +773,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── DASHBOARD ────────────────────────────────────────────
-    urlPath.startsWith('/dashboard')) {
+    if (urlPath.startsWith('/dashboard')) {
       if (urlPath === '/dashboard' || urlPath === '/dashboard/') {
         const [totalArticles, totalCategories, totalUsers, totalTags, totalBanners, totalSponsors, recentArticles] = await Promise.all([
           db.article.count(),
@@ -792,7 +792,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(categories);
       }
 
-      urlPath.startsWith('/dashboard/articles-per-month')) {
+      if (urlPath.startsWith('/dashboard/articles-per-month')) {
         const urlObj = new URL(url, 'http://localhost');
         const months = parseInt(urlObj.searchParams.get('months') || '6');
         const articles = await db.article.findMany({ select: { status: true, createdAt: true } });
@@ -815,7 +815,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const result = Object.entries(filled).map(([month, v]) => ({ month, ...v }));
         return res.status(200).json(result);
       }
-      urlPath.startsWith('/dashboard/articles-per-year')) {
+      if (urlPath.startsWith('/dashboard/articles-per-year')) {
         const urlObj = new URL(url, 'http://localhost');
         const years = parseInt(urlObj.searchParams.get('years') || '5');
         const articles = await db.article.findMany({ select: { status: true, createdAt: true } });
@@ -837,7 +837,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const result = Object.entries(filled).map(([year, v]) => ({ year, ...v }));
         return res.status(200).json(result);
       }
-      urlPath.startsWith('/dashboard/views-per-month')) {
+      if (urlPath.startsWith('/dashboard/views-per-month')) {
         const urlObj = new URL(url, 'http://localhost');
         const months = parseInt(urlObj.searchParams.get('months') || '6');
         const views = await db.articleView.findMany({ select: { viewedAt: true, ipHash: true } });
@@ -861,7 +861,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const result = Object.entries(filled).map(([month, v]) => ({ month, ...v }));
         return res.status(200).json(result);
       }
-      urlPath.startsWith('/dashboard/views-per-year')) {
+      if (urlPath.startsWith('/dashboard/views-per-year')) {
         const urlObj = new URL(url, 'http://localhost');
         const years = parseInt(urlObj.searchParams.get('years') || '5');
         const views = await db.articleView.findMany({ select: { viewedAt: true, ipHash: true } });
