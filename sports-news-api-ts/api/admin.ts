@@ -112,6 +112,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // ─── DEBUG: verificar constraint FK de authorId (temporário, sem auth) ──
+    if (urlPath === '/debug-db-info') {
+      try {
+        const db = await getPrisma();
+        const fkCheck = await db.$queryRaw`SELECT conname, confdeltype FROM pg_constraint WHERE conrelid = 'articles'::regclass AND contype = 'f' AND conname LIKE '%author%'`;
+        const colCheck = await db.$queryRaw`SELECT column_name, is_nullable FROM information_schema.columns WHERE table_name = 'articles' AND column_name IN ('authorId', 'authorNameSnapshot', 'authorAvatarSnapshot', 'authorCargo') ORDER BY column_name`;
+        return res.status(200).json({ foreignKey: fkCheck, columns: colCheck });
+      } catch (e: any) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
     // All admin routes require auth
     let user: any;
     try { user = verifyToken(req); } catch { return res.status(401).json({ error: 'Token inválido' }); }
