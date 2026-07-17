@@ -71,7 +71,7 @@ export function ArticleContent({ article, topStories, nextMatch, slug }: Article
           categorySlug: a.category?.slug || "",
           author: a.author?.name || "",
           authorAvatar: a.author?.avatar || "",
-          authorPosition: a.author?.position || "",
+          authorPosition: a.authorCargo || a.author?.position || "",
           imageUrl: a.coverImage || "",
           imageAlt: a.coverImageAlt || a.title,
           publishedAt: a.publishedAt || "",

@@ -25,7 +25,7 @@ function transformArticle(apiArticle: any): NewsArticle {
     categorySlug: apiArticle.category?.slug || apiArticle.categorySlug || '',
     author: apiArticle.author?.name || apiArticle.author || '',
     authorAvatar: apiArticle.author?.avatar || apiArticle.authorAvatar || '',
-    authorPosition: apiArticle.author?.position || apiArticle.authorRole || '',
+    authorPosition: apiArticle.authorCargo || apiArticle.author?.position || apiArticle.authorRole || '',
     imageUrl: apiArticle.coverImage || apiArticle.imageUrl || null,
     imageAlt: apiArticle.coverImageAlt || apiArticle.imageAlt || '',
   };
@@ -55,6 +55,7 @@ function transformMatch(apiMatch: any): any {
     venue: apiMatch.venue || '',
     competition: apiMatch.competition?.name || apiMatch.competition || '',
     category: apiMatch.competition?.category?.slug || '',
+    categoryName: apiMatch.competition?.category?.name || '',
     hasTickets: false,
     status: apiMatch.status,
     homeScore: apiMatch.homeScore,
