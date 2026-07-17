@@ -132,6 +132,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
+    const jobTitleMatch = url.match(/^\/job-titles\/([^/]+)$/);
+    if (jobTitleMatch && method === 'DELETE') {
+      const id = jobTitleMatch[1];
+      const existing = await db.jobTitle.findUnique({ where: { id } });
+      if (!existing) return res.status(404).json({ error: 'Cargo não encontrado' });
+      await db.jobTitle.delete({ where: { id } });
+      return res.status(204).end();
+    }
+
     // ─── DASHBOARD ────────────────────────────────────────────
     if (url === '/dashboard' || url === '/dashboard/') {
       const now = new Date();
