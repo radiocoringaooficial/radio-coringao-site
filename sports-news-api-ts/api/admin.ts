@@ -77,7 +77,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const url = (req.url?.replace('/api/admin', '') || '/').split('?')[0];
+  const url = (req.url?.replace('/api/admin', '') || '/');
+  const urlPath = url.split('?')[0];
+  const urlObj = new URL(url, 'http://localhost');
   const method = req.method || 'GET';
 
   try {
@@ -90,7 +92,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── LOGIN ────────────────────────────────────────────────
-    if (url === '/login' && method === 'POST') {
+    if (urlPath === '/login' && method === 'POST') {
       const { email, password } = req.body || {};
       if (!email || !password) return res.status(400).json({ error: 'Email e senha obrigatórios' });
 
@@ -118,7 +120,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     db.user.update({ where: { id: user.id }, data: { lastSeenAt: new Date() } }).catch(() => {});
 
     // ─── JOB TITLES (Cargos Exibíveis) ──────────────────────
-    if (url === '/job-titles' || url === '/job-titles/') {
+    if (urlPath === '/job-titles' || urlPath === '/job-titles/') {
       if (method === 'GET') {
         const titles = await db.jobTitle.findMany({ orderBy: { name: 'asc' } });
         return res.status(200).json(titles);
@@ -135,7 +137,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const jobTitleMatch = url.match(/^\/job-titles\/([^/]+)$/);
+    const jobTitleMatch = urlPath.match(/^\/job-titles\/([^/]+)$/);
     if (jobTitleMatch && method === 'DELETE') {
       const id = jobTitleMatch[1];
       const existing = await db.jobTitle.findUnique({ where: { id } });
@@ -145,7 +147,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── DASHBOARD ────────────────────────────────────────────
-    if (url === '/dashboard' || url === '/dashboard/') {
+    if (urlPath === '/dashboard' || urlPath === '/dashboard/') {
       const now = new Date();
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
@@ -223,13 +225,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    if (url === '/dashboard/categorias' || url === '/dashboard/categorias/') {
+    if (urlPath === '/dashboard/categorias' || urlPath === '/dashboard/categorias/') {
       const categories = await db.category.findMany({ include: { _count: { select: { articles: true } } }, orderBy: { order: 'asc' } });
       return res.status(200).json(categories);
     }
 
     // ─── ARTICLES ─────────────────────────────────────────────
-    if (url === '/materias' || url.startsWith('/materias?')) {
+    if (urlPath === '/materias' || urlPath === '/materias/') {
       if (method === 'GET') {
         const urlObj = new URL(url, 'http://localhost');
         const page = parseInt(urlObj.searchParams.get('page') || '1');
@@ -270,7 +272,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Article by ID
-    const articleMatch = url.match(/^\/materias\/([^/]+)$/);
+    const articleMatch = urlPath.match(/^\/materias\/([^/]+)$/);
     if (articleMatch) {
       const id = articleMatch[1];
       if (method === 'GET') {
@@ -319,7 +321,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Article status
-    const statusMatch = url.match(/^\/materias\/([^/]+)\/status$/);
+    const statusMatch = urlPath.match(/^\/materias\/([^/]+)\/status$/);
     if (statusMatch && (method === 'PUT' || method === 'PATCH')) {
       const id = statusMatch[1];
       const { status } = req.body || {};
@@ -328,7 +330,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── ARTICLES (alias /articles → same as /materias) ────────
-    if (url === '/articles' || url.startsWith('/articles?')) {
+    if (urlPath === '/articles' || urlPath === '/articles/') {
       if (method === 'GET') {
         const urlObj = new URL(url, 'http://localhost');
         const page = parseInt(urlObj.searchParams.get('page') || '1');
@@ -345,7 +347,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const articleIdMatch = url.match(/^\/articles\/([^/]+)$/);
+    const articleIdMatch = urlPath.match(/^\/articles\/([^/]+)$/);
     if (articleIdMatch) {
       const id = articleIdMatch[1];
       if (method === 'GET') {
@@ -393,7 +395,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const articleStatusMatch = url.match(/^\/articles\/([^/]+)\/status$/);
+    const articleStatusMatch = urlPath.match(/^\/articles\/([^/]+)\/status$/);
     if (articleStatusMatch && (method === 'PUT' || method === 'PATCH')) {
       const id = articleStatusMatch[1];
       const { status } = req.body || {};
@@ -402,13 +404,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Articles archive/unarchive
-    const articleArchiveMatch = url.match(/^\/articles\/([^/]+)\/archive$/);
+    const articleArchiveMatch = urlPath.match(/^\/articles\/([^/]+)\/archive$/);
     if (articleArchiveMatch && method === 'PATCH') {
       const id = articleArchiveMatch[1];
       await db.article.update({ where: { id }, data: { status: 'ARCHIVED' } });
       return res.status(200).json({ ok: true });
     }
-    const articleUnarchiveMatch = url.match(/^\/articles\/([^/]+)\/unarchive$/);
+    const articleUnarchiveMatch = urlPath.match(/^\/articles\/([^/]+)\/unarchive$/);
     if (articleUnarchiveMatch && method === 'PATCH') {
       const id = articleUnarchiveMatch[1];
       await db.article.update({ where: { id }, data: { status: 'DRAFT' } });
@@ -416,7 +418,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Content image upload (inline)
-    if (url === '/articles/content-image' && method === 'POST') {
+    if (urlPath === '/articles/content-image' && method === 'POST') {
       try {
         const { image } = req.body as any;
         if (!image || !image.startsWith('data:image/')) {
@@ -438,7 +440,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── CATEGORIES ───────────────────────────────────────────
-    if (url === '/categorias' || url === '/categorias/') {
+    if (urlPath === '/categorias' || urlPath === '/categorias/') {
       if (method === 'GET') {
         const categories = await db.category.findMany({ orderBy: { order: 'asc' }, include: { _count: { select: { articles: true } } } });
         return res.status(200).json(categories);
@@ -449,7 +451,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const catMatch = url.match(/^\/categorias\/([^/]+)$/);
+    const catMatch = urlPath.match(/^\/categorias\/([^/]+)$/);
     if (catMatch) {
       const id = catMatch[1];
       if (method === 'PUT' || method === 'PATCH') {
@@ -484,7 +486,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── BANNERS ──────────────────────────────────────────────
-    if (url === '/banners' || url === '/banners/') {
+    if (urlPath === '/banners' || urlPath === '/banners/') {
       if (method === 'GET') {
         const banners = await db.banner.findMany({ orderBy: { order: 'asc' } });
         return res.status(200).json(banners);
@@ -495,7 +497,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const bannerMatch = url.match(/^\/banners\/([^/]+)$/);
+    const bannerMatch = urlPath.match(/^\/banners\/([^/]+)$/);
     if (bannerMatch) {
       const id = bannerMatch[1];
       if (method === 'PUT' || method === 'PATCH') {
@@ -509,7 +511,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── MENU ─────────────────────────────────────────────────
-    if (url === '/menu' || url === '/menu/') {
+    if (urlPath === '/menu' || urlPath === '/menu/') {
       if (method === 'GET') {
         const allItems = await db.menuItem.findMany({ orderBy: { order: 'asc' } });
         const parents = allItems.filter((i: any) => !i.parentId);
@@ -537,7 +539,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const menuMatch = url.match(/^\/menu\/([^/]+)$/);
+    const menuMatch = urlPath.match(/^\/menu\/([^/]+)$/);
     if (menuMatch) {
       const id = menuMatch[1];
       if (method === 'PUT' || method === 'PATCH') {
@@ -578,7 +580,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── SPONSORS ─────────────────────────────────────────────
-    if (url === '/patrocinadores' || url === '/patrocinadores/') {
+    if (urlPath === '/patrocinadores' || urlPath === '/patrocinadores/') {
       if (method === 'GET') {
         const sponsors = await db.sponsor.findMany({ orderBy: { order: 'asc' } });
         return res.status(200).json(sponsors);
@@ -594,7 +596,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const sponsorMatch = url.match(/^\/patrocinadores\/([^/]+)$/);
+    const sponsorMatch = urlPath.match(/^\/patrocinadores\/([^/]+)$/);
     if (sponsorMatch) {
       const id = sponsorMatch[1];
       if (method === 'PUT' || method === 'PATCH') {
@@ -616,7 +618,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── EVENTS ───────────────────────────────────────────────
-    if (url === '/eventos' || url === '/eventos/') {
+    if (urlPath === '/eventos' || urlPath === '/eventos/') {
       if (method === 'GET') {
         const events = await db.event.findMany({ orderBy: { startsAt: 'desc' } });
         return res.status(200).json(events);
@@ -627,7 +629,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const eventMatch = url.match(/^\/eventos\/([^/]+)$/);
+    const eventMatch = urlPath.match(/^\/eventos\/([^/]+)$/);
     if (eventMatch) {
       const id = eventMatch[1];
       if (method === 'PUT' || method === 'PATCH') {
@@ -641,7 +643,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── USERS ────────────────────────────────────────────────
-    if (url === '/users' || url === '/users/') {
+    if (urlPath === '/users' || urlPath === '/users/') {
       if (method === 'GET') {
         const isActiveParam = req.query.isActive;
         const where = isActiveParam === 'true' ? { isActive: true } : {};
@@ -663,7 +665,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const userMatch = url.match(/^\/users\/([^/]+)$/);
+    const userMatch = urlPath.match(/^\/users\/([^/]+)$/);
     if (userMatch) {
       const id = userMatch[1];
       if (method === 'PUT' || method === 'PATCH') {
@@ -690,7 +692,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const pwMatch = url.match(/^\/users\/([^/]+)\/password$/);
+    const pwMatch = urlPath.match(/^\/users\/([^/]+)\/password$/);
     if (pwMatch && (method === 'PUT' || method === 'PATCH')) {
       const id = pwMatch[1];
       const bcrypt = await import('bcryptjs');
@@ -700,7 +702,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── SETTINGS ─────────────────────────────────────────────
-    if (url === '/configuracoes' || url === '/configuracoes/') {
+    if (urlPath === '/configuracoes' || urlPath === '/configuracoes/') {
       if (method === 'GET') {
         const settings = await db.siteSettings.findUnique({ where: { id: 'main' } });
         return res.status(200).json(settings || {});
@@ -716,7 +718,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── FOOTER LINKS ─────────────────────────────────────────
-    if (url === '/links-rodape' || url === '/links-rodape/') {
+    if (urlPath === '/links-rodape' || urlPath === '/links-rodape/') {
       if (method === 'GET') {
         const links = await db.footerLink.findMany({ orderBy: { order: 'asc' } });
         return res.status(200).json(links);
@@ -732,7 +734,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const linkMatch = url.match(/^\/links-rodape\/([^/]+)$/);
+    const linkMatch = urlPath.match(/^\/links-rodape\/([^/]+)$/);
     if (linkMatch) {
       const id = linkMatch[1];
       if (method === 'PUT' || method === 'PATCH') {
@@ -753,7 +755,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── TAGS ─────────────────────────────────────────────────
-    if (url === '/tags' || url === '/tags/') {
+    if (urlPath === '/tags' || urlPath === '/tags/') {
       if (method === 'GET') {
         const tags = await db.tag.findMany();
         return res.status(200).json(tags);
@@ -764,15 +766,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const tagMatch = url.match(/^\/tags\/([^/]+)$/);
+    const tagMatch = urlPath.match(/^\/tags\/([^/]+)$/);
     if (tagMatch && method === 'DELETE') {
       await db.tag.delete({ where: { id: tagMatch[1] } });
       return res.status(204).end();
     }
 
     // ─── DASHBOARD ────────────────────────────────────────────
-    if (url.startsWith('/dashboard')) {
-      if (url === '/dashboard' || url === '/dashboard/') {
+    urlPath.startsWith('/dashboard')) {
+      if (urlPath === '/dashboard' || urlPath === '/dashboard/') {
         const [totalArticles, totalCategories, totalUsers, totalTags, totalBanners, totalSponsors, recentArticles] = await Promise.all([
           db.article.count(),
           db.category.count(),
@@ -785,12 +787,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ totalArticles, totalCategories, totalUsers, totalTags, totalBanners, totalSponsors, recentArticles });
       }
 
-      if (url === '/dashboard/categorias' || url === '/dashboard/categorias/') {
+      if (urlPath === '/dashboard/categorias' || urlPath === '/dashboard/categorias/') {
         const categories = await db.category.findMany({ include: { _count: { select: { articles: true } } }, orderBy: { order: 'asc' } });
         return res.status(200).json(categories);
       }
 
-      if (url.startsWith('/dashboard/articles-per-month')) {
+      urlPath.startsWith('/dashboard/articles-per-month')) {
         const urlObj = new URL(url, 'http://localhost');
         const months = parseInt(urlObj.searchParams.get('months') || '6');
         const articles = await db.article.findMany({ select: { status: true, createdAt: true } });
@@ -813,7 +815,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const result = Object.entries(filled).map(([month, v]) => ({ month, ...v }));
         return res.status(200).json(result);
       }
-      if (url.startsWith('/dashboard/articles-per-year')) {
+      urlPath.startsWith('/dashboard/articles-per-year')) {
         const urlObj = new URL(url, 'http://localhost');
         const years = parseInt(urlObj.searchParams.get('years') || '5');
         const articles = await db.article.findMany({ select: { status: true, createdAt: true } });
@@ -835,7 +837,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const result = Object.entries(filled).map(([year, v]) => ({ year, ...v }));
         return res.status(200).json(result);
       }
-      if (url.startsWith('/dashboard/views-per-month')) {
+      urlPath.startsWith('/dashboard/views-per-month')) {
         const urlObj = new URL(url, 'http://localhost');
         const months = parseInt(urlObj.searchParams.get('months') || '6');
         const views = await db.articleView.findMany({ select: { viewedAt: true, ipHash: true } });
@@ -859,7 +861,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const result = Object.entries(filled).map(([month, v]) => ({ month, ...v }));
         return res.status(200).json(result);
       }
-      if (url.startsWith('/dashboard/views-per-year')) {
+      urlPath.startsWith('/dashboard/views-per-year')) {
         const urlObj = new URL(url, 'http://localhost');
         const years = parseInt(urlObj.searchParams.get('years') || '5');
         const views = await db.articleView.findMany({ select: { viewedAt: true, ipHash: true } });
@@ -884,7 +886,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── SETTINGS LOGO ────────────────────────────────────────
-    if (url === '/configuracoes/logo' && method === 'PUT') {
+    if (urlPath === '/configuracoes/logo' && method === 'PUT') {
       const { file } = await parseMultipart(req);
       if (!file || file.buffer.length === 0) {
         return res.status(400).json({ error: 'Nenhuma imagem enviada.' });
@@ -895,7 +897,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── CONTENT IMAGE UPLOAD ─────────────────────────────────
-    if (url === '/articles/content-image' && method === 'POST') {
+    if (urlPath === '/articles/content-image' && method === 'POST') {
       try {
         const { image } = req.body as any;
         if (!image || !image.startsWith('data:image/')) {
@@ -917,7 +919,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── RESET VIEW COUNTS ────────────────────────────────────
-    if (url === '/reset-viewcounts' && method === 'POST') {
+    if (urlPath === '/reset-viewcounts' && method === 'POST') {
       // Zera todos os viewCount e recalcula a partir de articleView (IPs únicos por dia)
       await db.article.updateMany({ data: { viewCount: 0 } });
       const uniqueViews = await db.articleView.groupBy({
