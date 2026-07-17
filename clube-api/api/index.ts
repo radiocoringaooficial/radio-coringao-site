@@ -174,6 +174,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (url === '/api/elenco' || url.startsWith('/api/elenco?')) {
+      const urlObj = new URL(url, 'http://localhost');
+      const category = urlObj.searchParams.get('category');
+
       // Reactivate squad members whose LOAN_OUT returnDate has passed
       const now = new Date();
       const expiredLoans = await db.playerMovement.findMany({
@@ -185,8 +188,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await db.squadMember.updateMany({ where: { id: { in: toReactivate }, isActive: false }, data: { isActive: true, inactiveReason: null } });
       }
 
-      // Filter out SOLD players: show active OR loaned
-      const data = await db.squadMember.findMany({ orderBy: { name: 'asc' }, where: { OR: [{ isActive: true }, { inactiveReason: 'LOANED' }] } });
+      // Build where clause: always filter by active or loaned
+      const where: any = { OR: [{ isActive: true }, { inactiveReason: 'LOANED' }] };
+
+      // If category slug is provided, filter by that category
+      if (category && category.trim() !== '') {
+        const categoryRecord = await db.category.findFirst({ where: { slug: category } });
+        if (!categoryRecord) {
+          return res.status(200).json([]);
+        }
+        where.category = { slug: category };
+      }
+
+      const data = await db.squadMember.findMany({ orderBy: { name: 'asc' }, where });
       return res.status(200).json(data);
     }
 

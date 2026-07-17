@@ -349,8 +349,8 @@ export function MovementsPage() {
     const f = {
       squadMemberId: playerId, direction: dir, type: m.type, date: m.date ? new Date(m.date).toISOString().slice(0, 10) : '',
       opponentId: m.opponentId || (m.type === 'RETURN' ? 'corinthians' : ''), notes: m.notes || '',
-      value: m.valueCents ? String(Number(m.valueCents) / 100) : '',
-      loanValue: m.loanValueCents ? String(Number(m.loanValueCents) / 100) : '',
+      value: m.valueCents ? (Number(m.valueCents) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '',
+      loanValue: m.loanValueCents ? (Number(m.loanValueCents) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '',
       isFreeLoan: m.isFreeLoan || false, paysSalary: m.paysSalary || false,
       corinthiansPercentage: m.corinthiansPercentage != null ? String(m.corinthiansPercentage) : '',
       soldPercentage: m.soldPercentage != null ? String(m.soldPercentage) : '',

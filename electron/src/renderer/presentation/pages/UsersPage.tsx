@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { newsApi } from '@/infrastructure/api/client';
 import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Modal } from '@/presentation/components/ui/Modal';
+import { ConfirmDialog } from '@/presentation/components/ui/ConfirmDialog';
 import { ImageUpload } from '@/presentation/components/ui/ImageUpload';
 import { TableSkeleton } from '@/presentation/components/ui/Skeleton';
 import { useToastStore } from '@/presentation/stores/toast-store';
@@ -34,14 +35,17 @@ export function UsersPage() {
   const [items, setItems] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [showInactive, setShowInactive] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'JORNALISTA' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'JORNALISTA', position: '' });
   const [initialForm, setInitialForm] = useState<typeof form | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [jobTitles, setJobTitles] = useState<{ id: string; name: string }[]>([]);
+  const [newTitleInput, setNewTitleInput] = useState('');
+  const [addingTitle, setAddingTitle] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
   const toast = useToastStore((s) => s.addToast);
 
   const isDirty = initialForm !== null && (
@@ -51,19 +55,27 @@ export function UsersPage() {
   const load = async () => {
     try {
       setLoading(true);
-      const data = await newsApi.get(`/admin/users?page=${page}&limit=${LIMIT}${showInactive ? '' : '&isActive=true'}`);
+      const data = await newsApi.get(`/admin/users?page=${page}&limit=${LIMIT}&isActive=true`);
       setItems(data?.data || (Array.isArray(data) ? data : []));
       setTotal(data?.total || 0);
     } catch (e: any) { toast('Erro: ' + e.message, 'error'); }
     finally { setLoading(false); }
   };
-  useEffect(() => { load(); }, [page, showInactive]);
+  useEffect(() => { load(); }, [page]);
+
+  // Fetch job titles on mount
+  useEffect(() => {
+    newsApi.get('/admin/job-titles').then((data) => {
+      const titles = Array.isArray(data) ? data.map((t: any) => ({ id: t.id, name: t.name })) : [];
+      setJobTitles(titles);
+    }).catch(() => {});
+  }, []);
 
   const totalPages = Math.ceil(total / LIMIT);
 
   const openNew = () => {
     setEditing(null);
-    const newForm = { name: '', email: '', password: '', role: 'JORNALISTA' };
+    const newForm = { name: '', email: '', password: '', role: 'JORNALISTA', position: '' };
     setForm(newForm);
     setInitialForm(newForm);
     setAvatarFile(null);
@@ -72,7 +84,7 @@ export function UsersPage() {
 
   const openEdit = (u: any) => {
     setEditing(u);
-    const loaded = { name: u.name, email: u.email, password: '', role: u.role };
+    const loaded = { name: u.name, email: u.email, password: '', role: u.role, position: u.position || '' };
     setForm(loaded);
     setInitialForm(loaded);
     setAvatarFile(null);
@@ -87,7 +99,7 @@ export function UsersPage() {
     try {
       setSaving(true);
       if (editing) {
-        await newsApi.patch(`/admin/users/${editing.id}`, { name: form.name, email: form.email, role: form.role });
+        await newsApi.patch(`/admin/users/${editing.id}`, { name: form.name, email: form.email, role: form.role, position: form.position || null });
         if (form.password.trim()) {
           await newsApi.patch(`/admin/users/${editing.id}/password`, { newPassword: form.password });
         }
@@ -103,10 +115,11 @@ export function UsersPage() {
           fd.append('email', form.email);
           fd.append('password', form.password);
           fd.append('role', form.role);
+          fd.append('position', form.position || '');
           fd.append('avatar', avatarFile);
           await newsApi.post('/admin/users', fd);
         } else {
-          await newsApi.post('/admin/users', { name: form.name, email: form.email, password: form.password, role: form.role });
+          await newsApi.post('/admin/users', { name: form.name, email: form.email, password: form.password, role: form.role, position: form.position || null });
         }
       }
       toast('Salvo com sucesso!', 'success'); setModalOpen(false); load();
@@ -121,15 +134,47 @@ export function UsersPage() {
     });
   };
 
+  const handleAddTitle = async () => {
+    const name = newTitleInput.trim();
+    if (!name) return;
+    setAddingTitle(true);
+    try {
+      const created = await newsApi.post('/admin/job-titles', { name });
+      if (created?.id && created?.name && !jobTitles.some((t) => t.id === created.id)) {
+        setJobTitles((prev) => [...prev, { id: created.id, name: created.name }].sort((a, b) => a.name.localeCompare(b.name)));
+      }
+      setForm((prev) => ({ ...prev, position: created?.name || name }));
+      setNewTitleInput('');
+    } catch (e: any) {
+      toast('Erro: ' + e.message, 'error');
+    } finally {
+      setAddingTitle(false);
+    }
+  };
+
+  const handleDeleteTitle = (title: { id: string; name: string }) => {
+    setConfirmDelete(title);
+  };
+
+  const confirmDeleteTitle = async () => {
+    if (!confirmDelete) return;
+    try {
+      await newsApi.delete(`/admin/job-titles/${confirmDelete.id}`);
+      setJobTitles((prev) => prev.filter((t) => t.id !== confirmDelete.id));
+      setForm((prev) => ({ ...prev, position: prev.position === confirmDelete.name ? '' : prev.position }));
+      toast('Cargo removido.', 'success');
+    } catch (e: any) {
+      toast('Erro: ' + e.message, 'error');
+    } finally {
+      setConfirmDelete(null);
+    }
+  };
+
   return (
     <div className="fade-in">
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-headline text-headline-md font-bold text-on-surface">Usuários</h1>
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 cursor-pointer text-xs text-on-surface-variant">
-            <input type="checkbox" checked={showInactive} onChange={(e) => { setShowInactive(e.target.checked); setPage(1); }} className="rounded" />
-            Mostrar inativos
-          </label>
           <button onClick={openNew} className="btn-secondary flex items-center gap-2"><Plus size={16} /> Novo Usuário</button>
         </div>
       </div>
@@ -199,12 +244,49 @@ export function UsersPage() {
               {Object.entries(ROLES).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
           </div>
+          <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Cargo Exibível</label>
+            <select value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} className="select-field">
+              <option value="">Nenhum</option>
+              {jobTitles.map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
+            </select>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {jobTitles.map((t) => (
+                <span key={t.id} className="inline-flex items-center gap-1 bg-surface-container-low text-on-surface-variant text-[11px] font-bold px-2 py-1 rounded-full">
+                  {t.name}
+                  <button type="button" onClick={() => handleDeleteTitle(t)} className="hover:text-red-500 ml-0.5">&times;</button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2 mt-2">
+              <input
+                value={newTitleInput}
+                onChange={(e) => setNewTitleInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTitle(); } }}
+                className="input-field flex-1 text-sm"
+                placeholder="Novo cargo..."
+                disabled={addingTitle}
+              />
+              <button type="button" onClick={handleAddTitle} disabled={addingTitle || !newTitleInput.trim()} className="btn-secondary px-3 text-sm">
+                {addingTitle ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+              </button>
+            </div>
+          </div>
           <button onClick={handleSave} disabled={saving || !isDirty} className="btn-secondary w-full flex items-center justify-center gap-2">
             {saving && <Loader2 size={16} className="animate-spin" />}
             Salvar
           </button>
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Deletar cargo"
+        message={`Deletar o cargo "${confirmDelete?.name}"? Isso não afeta usuários que já têm esse cargo salvo.`}
+        confirmLabel="Deletar"
+        danger
+        onConfirm={confirmDeleteTitle}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

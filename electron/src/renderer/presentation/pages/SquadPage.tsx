@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { clubeApi } from '@/infrastructure/api/client';
-import { Plus, Pencil, Trash2, Shield, Loader2, ChevronDown, ChevronRight, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Shield, Loader2, Users, ChevronRight, ChevronDown } from 'lucide-react';
 import { Modal } from '@/presentation/components/ui/Modal';
 import { ImageUpload } from '@/presentation/components/ui/ImageUpload';
 import { Skeleton } from '@/presentation/components/ui/Skeleton';
@@ -20,10 +20,11 @@ export function SquadPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState({ name: '', position: '', shirtNumber: '', categoryId: '', birthDate: '', isActive: 'true' });
+  const [selectedModality, setSelectedModality] = useState('');
   const [initialForm, setInitialForm] = useState<typeof form | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const toast = useToastStore((s) => s.addToast);
 
   const isDirty = !editing && photoFile ? true : (initialForm !== null && JSON.stringify(form) !== JSON.stringify(initialForm));
@@ -39,11 +40,15 @@ export function SquadPage() {
   };
   useEffect(() => { load(); }, []);
 
-  const openNew = () => { setEditing(null); const f = { name: '', position: '', shirtNumber: '', categoryId: '', birthDate: '', isActive: 'true' }; setForm(f); setInitialForm({ ...f }); setPhotoFile(null); setModalOpen(true); };
+  const openNew = () => { setEditing(null); const f = { name: '', position: '', shirtNumber: '', categoryId: '', birthDate: '', isActive: 'true' }; setForm(f); setInitialForm({ ...f }); setPhotoFile(null); setSelectedModality(''); setModalOpen(true); };
   const openEdit = (item: any) => {
     setEditing(item);
     const f = { name: item.name || '', position: item.position || '', shirtNumber: item.shirtNumber ? String(item.shirtNumber) : '', categoryId: item.categoryId || '', birthDate: item.birthDate ? new Date(item.birthDate).toISOString().slice(0, 10) : '', isActive: String(item.isActive ?? true) };
-    setForm(f); setInitialForm({ ...f }); setPhotoFile(null); setModalOpen(true);
+    setForm(f); setInitialForm({ ...f }); setPhotoFile(null);
+    // Find the parent modality for this category
+    const parentModality = categories.find((c: any) => c.children?.some((ch: any) => ch.id === item.categoryId));
+    setSelectedModality(parentModality?.id || '');
+    setModalOpen(true);
   };
 
   const handleSave = async () => {
@@ -84,14 +89,6 @@ export function SquadPage() {
     return '—';
   };
 
-  const getCatParentId = (catId: string) => {
-    for (const p of categories) {
-      if (p.id === catId) return p.id;
-      if (p.children?.some((c: any) => c.id === catId)) return p.id;
-    }
-    return null;
-  };
-
   // Lista plana de categorias-folha (sem filhos) para as abas de filtro
   const leafCategories = useMemo(() => {
     const leaves: any[] = [];
@@ -118,54 +115,26 @@ export function SquadPage() {
     return counts;
   }, [items]);
 
-  const grouped = useMemo(() => {
-    const groups: Record<string, { parent: any; children: Record<string, any[]>; allPlayers: any[] }> = {};
-    for (const p of categories) {
-      groups[p.id] = { parent: p, children: {}, allPlayers: [] };
-    }
-
+  // Modo "Todos": uma seção por categoria-folha
+  const allByLeaf = useMemo(() => {
+    const sections: { leaf: any; players: any[] }[] = [];
+    const byId: Record<string, any[]> = {};
     for (const player of items) {
-      const parentId = getCatParentId(player.categoryId);
-      if (!parentId || !groups[parentId]) continue;
-      groups[parentId].allPlayers.push(player);
-
-      const parent = groups[parentId].parent;
-      const child = parent.children?.find((c: any) => c.id === player.categoryId);
-      const groupKey = child ? child.id : '__parent__';
-      if (!groups[parentId].children[groupKey]) groups[parentId].children[groupKey] = [];
-      groups[parentId].children[groupKey].push(player);
+      if (!byId[player.categoryId]) byId[player.categoryId] = [];
+      byId[player.categoryId].push(player);
     }
+    for (const leaf of leafCategories) {
+      const players = byId[leaf.id];
+      if (players && players.length > 0) sections.push({ leaf, players });
+    }
+    return sections;
+  }, [items, leafCategories]);
 
-    return Object.values(groups).filter((g) => g.allPlayers.length > 0);
-  }, [items, categories]);
-
-  // Filtrar itens por categoria-folha selecionada
-  const filteredItems = useMemo(() => {
-    if (filterCategory === 'all') return items;
+  // Modo filtro específico: jogadores daquela folha, sem card-pai
+  const filteredPlayers = useMemo(() => {
+    if (filterCategory === 'all') return [];
     return items.filter((item) => item.categoryId === filterCategory);
   }, [items, filterCategory]);
-
-  // Reagrupar itens filtrados para exibição (mantém a estrutura de abas)
-  const filteredGrouped = useMemo(() => {
-    if (filterCategory === 'all') return grouped;
-    const groups: Record<string, { parent: any; children: Record<string, any[]>; allPlayers: any[] }> = {};
-    for (const p of categories) {
-      groups[p.id] = { parent: p, children: {}, allPlayers: [] };
-    }
-    for (const player of filteredItems) {
-      const parentId = getCatParentId(player.categoryId);
-      if (!parentId || !groups[parentId]) continue;
-      groups[parentId].allPlayers.push(player);
-      const parent = groups[parentId].parent;
-      const child = parent.children?.find((c: any) => c.id === player.categoryId);
-      const groupKey = child ? child.id : '__parent__';
-      if (!groups[parentId].children[groupKey]) groups[parentId].children[groupKey] = [];
-      groups[parentId].children[groupKey].push(player);
-    }
-    return Object.values(groups).filter((g) => g.allPlayers.length > 0);
-  }, [filteredItems, categories, grouped]);
-
-  const filtered = filterCategory === 'all' ? grouped : filteredGrouped;
 
   const toggleGroup = (id: string) => {
     setExpandedGroups((prev) => {
@@ -174,9 +143,6 @@ export function SquadPage() {
       return next;
     });
   };
-
-  const expandAll = () => setExpandedGroups(new Set(grouped.map((g) => g.parent.id)));
-  const collapseAll = () => setExpandedGroups(new Set());
 
   return (
     <div className="fade-in">
@@ -200,10 +166,6 @@ export function SquadPage() {
               <span className={`text-[9px] px-1 py-0.5 rounded ${filterCategory === cat.id ? 'bg-white/20' : 'bg-surface-container-low'}`}>{playerCountByCategory[cat.id] || 0}</span>
             </button>
           ))}
-          <div className="ml-auto flex gap-1">
-            <button onClick={expandAll} className="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant" title="Expandir todos"><ChevronDown size={14} /></button>
-            <button onClick={collapseAll} className="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant" title="Recolher todos"><ChevronRight size={14} /></button>
-          </div>
         </div>
       )}
 
@@ -222,66 +184,95 @@ export function SquadPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {filtered.map((group) => {
-            const isExpanded = expandedGroups.has(group.parent.id);
-            return (
-              <div key={group.parent.id} className="card overflow-hidden">
-                <button onClick={() => toggleGroup(group.parent.id)} className="w-full flex items-center gap-3 py-3 px-1 text-left hover:bg-surface-container-low/50 transition-colors">
-                  {isExpanded ? <ChevronDown size={16} className="text-on-surface-variant shrink-0" /> : <ChevronRight size={16} className="text-on-surface-variant shrink-0" />}
-                  <Users size={16} className="text-primary shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-headline text-sm font-bold text-on-surface">{group.parent.name}</span>
-                      {group.parent.gender && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${GENDER_BADGE[group.parent.gender] || 'bg-gray-100 text-gray-500'}`}>{GENDER_LABEL[group.parent.gender] || group.parent.gender}</span>}
+          {filterCategory === 'all' ? (
+            /* Modo "Todos": accordion por categoria-folha, todos fechados por padrão */
+            allByLeaf.map(({ leaf, players }) => {
+              const isExpanded = expandedGroups.has(leaf.id);
+              return (
+                <div key={leaf.id} className="card overflow-hidden">
+                  <button onClick={() => toggleGroup(leaf.id)} className="w-full flex items-center gap-3 py-3 px-3 text-left hover:bg-surface-container-low/50 transition-colors">
+                    {isExpanded ? <ChevronDown size={16} className="text-on-surface-variant shrink-0" /> : <ChevronRight size={16} className="text-on-surface-variant shrink-0" />}
+                    <Users size={16} className="text-primary shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-headline text-sm font-bold text-on-surface">{leaf.name}</span>
+                        {leaf.gender && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${GENDER_BADGE[leaf.gender] || 'bg-gray-100 text-gray-500'}`}>{GENDER_LABEL[leaf.gender] || leaf.gender}</span>}
+                      </div>
                     </div>
-                  </div>
-                  <span className="badge bg-surface-container text-on-surface-variant text-[10px]">{group.allPlayers.length} jogador{group.allPlayers.length !== 1 ? 'es' : ''}</span>
-                </button>
-
-                {isExpanded && (
-                  <div className="border-t border-outline-variant/50 pt-3 pb-1 px-1 fade-in">
-                    {Object.entries(group.children).map(([childKey, players]) => {
-                      const childCat = childKey === '__parent__' ? null : group.parent.children?.find((c: any) => c.id === childKey);
-                      return (
-                        <div key={childKey} className="mb-3 last:mb-0">
-                          {childCat && (
-                            <div className="flex items-center gap-1.5 mb-2 ml-8">
-                              <span className="w-1 h-1 rounded-full bg-primary" />
-                              <span className="font-headline text-[10px] font-bold text-on-surface-variant uppercase">{childCat.name}</span>
-                              {childCat.gender && <span className={`text-[8px] px-1 py-0.5 rounded ${GENDER_BADGE[childCat.gender] || 'bg-gray-100 text-gray-500'}`}>{GENDER_LABEL[childCat.gender]}</span>}
+                    <span className="badge bg-surface-container text-on-surface-variant text-[10px]">{players.length} jogador{players.length !== 1 ? 'es' : ''}</span>
+                  </button>
+                  {isExpanded && (
+                    <div className="border-t border-outline-variant/50 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-3 fade-in">
+                      {players.map((item) => (
+                        <div key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-low/50 transition-colors group/player">
+                          {item.photoUrl ? <img src={item.photoUrl} alt="" className="w-10 h-10 rounded-full object-cover border border-outline-variant shrink-0" /> :
+                            <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center shrink-0"><Shield size={14} className="text-on-surface-variant/30" /></div>}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-body text-xs font-bold text-on-surface truncate">{item.name}</p>
+                              {item.shirtNumber && <span className="text-[9px] font-headline font-bold text-primary">#{item.shirtNumber}</span>}
                             </div>
-                          )}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 ml-8">
-                            {players.map((item) => (
-                              <div key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-low/50 transition-colors group/player">
-                                {item.photoUrl ? <img src={item.photoUrl} alt="" className="w-10 h-10 rounded-full object-cover border border-outline-variant shrink-0" /> :
-                                  <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center shrink-0"><Shield size={14} className="text-on-surface-variant/30" /></div>}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <p className="font-body text-xs font-bold text-on-surface truncate">{item.name}</p>
-                                    {item.shirtNumber && <span className="text-[9px] font-headline font-bold text-primary">#{item.shirtNumber}</span>}
-                                  </div>
-                                  {item.position && <p className="text-[9px] text-on-surface-variant">{item.position}</p>}
-                                  <span className={`inline-block text-[8px] font-bold px-1 py-0.5 rounded mt-0.5 ${item.isActive ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>{item.isActive ? 'Ativo' : 'Inativo'}</span>
-                                </div>
-                                <div className="flex gap-0.5 opacity-0 group-hover/player:opacity-100 transition-opacity shrink-0">
-                                  <button onClick={() => openEdit(item)} className="p-1 rounded hover:bg-surface-container-low text-on-surface-variant"><Pencil size={12} /></button>
-                                  <button onClick={() => handleDelete(item.id)} disabled={deletingId === item.id} className="p-1 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-50">
-                                    {deletingId === item.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
+                            {item.position && <p className="text-[9px] text-on-surface-variant">{item.position}</p>}
+                            <span className={`inline-block text-[8px] font-bold px-1 py-0.5 rounded mt-0.5 ${item.isActive ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>{item.isActive ? 'Ativo' : 'Inativo'}</span>
+                          </div>
+                          <div className="flex gap-0.5 opacity-0 group-hover/player:opacity-100 transition-opacity shrink-0">
+                            <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-1 rounded hover:bg-surface-container-low text-on-surface-variant"><Pencil size={12} /></button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} disabled={deletingId === item.id} className="p-1 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-50">
+                              {deletingId === item.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                            </button>
                           </div>
                         </div>
-                      );
-                    })}
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          ) : (
+            /* Modo filtro específico: jogadores da folha, sem card-pai, sempre aberto */
+            <div className="card overflow-hidden">
+              {(() => {
+                const leaf = leafCategories.find((c) => c.id === filterCategory);
+                return (
+                  <div className="flex items-center gap-3 py-3 px-3 border-b border-outline-variant/50">
+                    <Users size={16} className="text-primary shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-headline text-sm font-bold text-on-surface">{leaf?.name || ''}</span>
+                        {leaf?.gender && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${GENDER_BADGE[leaf.gender] || 'bg-gray-100 text-gray-500'}`}>{GENDER_LABEL[leaf.gender] || leaf.gender}</span>}
+                      </div>
+                    </div>
+                    <span className="badge bg-surface-container text-on-surface-variant text-[10px]">{filteredPlayers.length} jogador{filteredPlayers.length !== 1 ? 'es' : ''}</span>
                   </div>
+                );
+              })()}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-3">
+                {filteredPlayers.map((item) => (
+                  <div key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-low/50 transition-colors group/player">
+                    {item.photoUrl ? <img src={item.photoUrl} alt="" className="w-10 h-10 rounded-full object-cover border border-outline-variant shrink-0" /> :
+                      <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center shrink-0"><Shield size={14} className="text-on-surface-variant/30" /></div>}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-body text-xs font-bold text-on-surface truncate">{item.name}</p>
+                        {item.shirtNumber && <span className="text-[9px] font-headline font-bold text-primary">#{item.shirtNumber}</span>}
+                      </div>
+                      {item.position && <p className="text-[9px] text-on-surface-variant">{item.position}</p>}
+                      <span className={`inline-block text-[8px] font-bold px-1 py-0.5 rounded mt-0.5 ${item.isActive ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>{item.isActive ? 'Ativo' : 'Inativo'}</span>
+                    </div>
+                    <div className="flex gap-0.5 opacity-0 group-hover/player:opacity-100 transition-opacity shrink-0">
+                      <button onClick={() => openEdit(item)} className="p-1 rounded hover:bg-surface-container-low text-on-surface-variant"><Pencil size={12} /></button>
+                      <button onClick={() => handleDelete(item.id)} disabled={deletingId === item.id} className="p-1 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-50">
+                        {deletingId === item.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {filteredPlayers.length === 0 && (
+                  <p className="col-span-full text-on-surface-variant text-sm py-8 text-center">Nenhum jogador nesta categoria.</p>
                 )}
               </div>
-            );
-          })}
-          {!loading && filtered.length === 0 && <p className="text-on-surface-variant text-sm py-8 text-center">Nenhum jogador encontrado.</p>}
+            </div>
+          )}
         </div>
       )}
 
@@ -293,37 +284,44 @@ export function SquadPage() {
           </div>
 
           <div>
-            <label className="block font-headline text-label-sm font-bold text-on-surface mb-2">Categoria / Modalidade *</label>
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1 border border-outline-variant/30 rounded-lg p-2">
-              {categories.map((parent) => (
-                <div key={parent.id}>
-                  <div className="flex items-center gap-1.5 mb-1 px-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                    <span className="font-headline text-[10px] font-bold text-on-surface uppercase tracking-wide">{parent.name}</span>
-                    <span className={`text-[8px] px-1 py-0.5 rounded ${GENDER_BADGE[parent.gender] || 'bg-gray-100 text-gray-500'}`}>{GENDER_LABEL[parent.gender] || parent.gender}</span>
-                  </div>
-                  {parent.children && parent.children.length > 0 && (
-                    <div className="grid grid-cols-2 gap-1 ml-3">
-                      {parent.children.map((child: any) => (
-                        <button key={child.id} type="button" disabled={!child.isActive}
-                          onClick={() => setForm({ ...form, categoryId: child.id })}
-                          className={`px-2 py-1.5 rounded text-[10px] font-body text-left transition-all ${form.categoryId === child.id ? 'bg-primary text-white font-bold shadow-sm' : !child.isActive ? 'bg-gray-50 text-gray-400 cursor-not-allowed line-through' : 'bg-surface hover:bg-surface-container-low text-on-surface'}`}>
-                          <span>{child.name}</span>
-                          {!child.isActive && <span className="ml-1 text-[7px] text-gray-400">(inativa)</span>}
-                          <span className={`ml-1 inline-block text-[7px] px-0.5 py-0.5 rounded ${form.categoryId === child.id ? 'bg-white/20 text-white' : (GENDER_BADGE[child.gender] || 'bg-gray-100 text-gray-500')}`}>{GENDER_LABEL[child.gender] || child.gender}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {!parent.children?.length && (
-                    <button type="button" onClick={() => setForm({ ...form, categoryId: parent.id })}
-                      className={`ml-3 px-2 py-1.5 rounded text-[10px] font-body text-left transition-all ${form.categoryId === parent.id ? 'bg-primary text-white font-bold shadow-sm' : 'bg-surface hover:bg-surface-container-low text-on-surface'}`}>{parent.name}</button>
-                  )}
-                </div>
+            <label className="block font-headline text-label-sm font-bold text-on-surface mb-2">Modalidade *</label>
+            <select value={selectedModality} onChange={(e) => {
+              const modId = e.target.value;
+              setSelectedModality(modId);
+              // If selected modality has no children, set categoryId directly
+              const mod = categories.find((c: any) => c.id === modId);
+              if (mod && (!mod.children || mod.children.length === 0)) {
+                setForm({ ...form, categoryId: mod.id });
+              } else {
+                setForm({ ...form, categoryId: '' });
+              }
+            }} className="select-field w-full">
+              <option value="">Selecione a modalidade...</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
-            </div>
-            {form.categoryId && <p className="text-[10px] text-on-surface-variant mt-1">Selecionado: <strong>{getCategoryLabel(form.categoryId)}</strong></p>}
+            </select>
           </div>
+
+          {selectedModality && (() => {
+            const mod = categories.find((c: any) => c.id === selectedModality);
+            if (!mod || !mod.children || mod.children.length === 0) return null;
+            return (
+              <div>
+                <label className="block font-headline text-label-sm font-bold text-on-surface mb-2">Subcategoria *</label>
+                <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })} className="select-field w-full">
+                  <option value="">Selecione a subcategoria...</option>
+                  {mod.children.map((child: any) => (
+                    <option key={child.id} value={child.id} disabled={!child.isActive}>
+                      {child.name} {!child.isActive && '(inativa)'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            );
+          })()}
+
+          {form.categoryId && <p className="text-[10px] text-on-surface-variant mt-1">Selecionado: <strong>{getCategoryLabel(form.categoryId)}</strong></p>}
 
           <div className="grid grid-cols-2 gap-4">
             <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Posição</label>

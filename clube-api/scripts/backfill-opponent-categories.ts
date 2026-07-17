@@ -5,13 +5,18 @@
  */
 import { PrismaClient } from '@prisma/client';
 
-const FUTEBOL_ROOT_ID = '7755b046-5379-46f5-8fa0-f06cb143f78b';
+const prisma = new PrismaClient();
 const apply = process.argv.includes('--apply');
 
-async function main() {
-  const prisma = new PrismaClient();
+async function getCategoryBySlug(slug: string) {
+  const cat = await prisma.category.findUnique({ where: { slug } });
+  if (!cat) throw new Error(`Categoria com slug "${slug}" não encontrada no banco.`);
+  return cat;
+}
 
-  // Find opponents with NO categories
+async function main() {
+  const futebol = await getCategoryBySlug('futebol');
+
   const opponentsWithoutCategories = await prisma.opponent.findMany({
     where: {
       categories: { none: {} },
@@ -20,7 +25,6 @@ async function main() {
     select: { id: true, name: true },
   });
 
-  // Find opponents that already have categories (for reference)
   const opponentsWithCategories = await prisma.opponent.findMany({
     where: {
       categories: { some: {} },
@@ -34,7 +38,7 @@ async function main() {
   });
 
   console.log(`\n=== BACKFILL OPPONENT CATEGORIES ===`);
-  console.log(`Categoria alvo: Futebol (root) — ID: ${FUTEBOL_ROOT_ID}`);
+  console.log(`Categoria alvo: Futebol (root) — ID: ${futebol.id}`);
   console.log(`Modo: ${apply ? 'APLICAR' : 'DRY-RUN (sem alterações)'}\n`);
 
   console.log(`Opponents SEM categoria: ${opponentsWithoutCategories.length}`);
@@ -60,14 +64,13 @@ async function main() {
     return;
   }
 
-  // Apply: create OpponentCategory records
   console.log(`\nAplicando backfill...`);
   let count = 0;
   for (const o of opponentsWithoutCategories) {
     await prisma.opponentCategory.create({
       data: {
         opponentId: o.id,
-        categoryId: FUTEBOL_ROOT_ID,
+        categoryId: futebol.id,
       },
     });
     count++;

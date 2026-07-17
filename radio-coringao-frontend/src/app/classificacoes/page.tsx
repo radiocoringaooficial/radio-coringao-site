@@ -62,13 +62,34 @@ function mapEntry(entry: StandingEntry, modality: "FOOTBALL" | "FUTSAL" | "BASKE
 }
 
 export default async function ClassificacoesPage() {
-  const categories = [
-    { slug: "principal", label: "Futebol" },
-    { slug: "basquete", label: "Basquete" },
-    { slug: "futsal", label: "Futsal" },
-    { slug: "feminino", label: "Feminino" },
-    { slug: "sub-20", label: "Sub-20" },
-  ];
+  // Busca nomes reais das categorias da API (evita hardcode)
+  let categories: { slug: string; label: string }[] = [];
+  try {
+    const catRes = await fetch(`${CLUBE_URL}/categorias`, { cache: "no-store" });
+    if (catRes.ok) {
+      const catData = await catRes.json();
+      for (const root of catData) {
+        if (root.children?.length > 0) {
+          for (const child of root.children) {
+            categories.push({ slug: child.slug, label: child.name });
+          }
+        } else {
+          categories.push({ slug: root.slug, label: root.name });
+        }
+      }
+    }
+  } catch {}
+
+  // Fallback caso a API não responda
+  if (categories.length === 0) {
+    categories = [
+      { slug: "principal", label: "Masculino Principal" },
+      { slug: "basquete", label: "Basquete" },
+      { slug: "futsal", label: "Futsal" },
+      { slug: "feminino", label: "Feminino" },
+      { slug: "sub-20", label: "Masculino Sub-20" },
+    ];
+  }
 
   const results = await Promise.all(
     categories.map(async (cat) => {

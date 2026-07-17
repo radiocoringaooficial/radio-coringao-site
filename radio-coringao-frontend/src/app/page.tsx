@@ -75,16 +75,11 @@ export default async function Home() {
   const sideArticles = [2, 3].map(p => byPosition.get(p)).filter(Boolean);
 
   // Partidas agendadas do banco de dados
-  const CATEGORY_LABELS: Record<string, string> = {
-    principal: "Futebol", feminino: "Feminino", basquete: "Basquete",
-    futsal: "Futsal", "futebol-masculino": "Futebol Masculino",
-    "sub-20": "Sub-20", "sub-17": "Sub-17",
-  };
   const matches = scheduledMatches.map((m: any, i) => ({
     ...m,
     title: m.competition || `Partida ${i + 1}`,
     competition: m.competition || "",
-    category: CATEGORY_LABELS[m.category] || m.category || "",
+    category: m.categoryName || m.category || "",
   }));
 
   const topRead = weekHighlights.length > 0 ? weekHighlights.slice(0, 5) : latestNews.slice(0, 5);

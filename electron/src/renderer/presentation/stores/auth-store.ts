@@ -7,6 +7,8 @@ interface User {
   email: string;
   role: string;
   avatar?: string;
+  position?: string;
+  cargos?: string[];
 }
 
 interface AuthState {
