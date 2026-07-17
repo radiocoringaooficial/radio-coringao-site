@@ -96,7 +96,9 @@ export function NextMatchCard(props: NextMatchCardProps) {
             </div>
           )}
           <Link
-            href="#"
+            href="https://www.fieltorcedor.com.br/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="block w-full rounded-md border border-white/20 bg-white/10 py-3 text-center font-label-sm text-label-sm uppercase font-bold text-white transition-all duration-200 hover:bg-white hover:text-primary"
           >
             Ingressos

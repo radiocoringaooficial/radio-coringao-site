@@ -424,7 +424,7 @@ export function SportsContent({
                 {nextMatch.round && <p className="mt-2 inline-block rounded-full bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary">{nextMatch.round}</p>}
               </div>
               {nextMatch.hasTickets && (
-                <Link href="#" className="mt-4 block w-full rounded-md bg-primary py-3 text-center font-label-sm text-label-sm uppercase font-bold text-on-primary transition-all duration-200 hover:bg-gray-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]">
+                <Link href="https://www.fieltorcedor.com.br/" target="_blank" rel="noopener noreferrer" className="mt-4 block w-full rounded-md bg-primary py-3 text-center font-label-sm text-label-sm uppercase font-bold text-on-primary transition-all duration-200 hover:bg-gray-700 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]">
                   Ingressos Disponíveis
                 </Link>
               )}

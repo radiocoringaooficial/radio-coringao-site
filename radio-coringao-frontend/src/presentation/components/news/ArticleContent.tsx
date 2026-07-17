@@ -181,7 +181,7 @@ export function ArticleContent({ article, topStories, nextMatch, slug }: Article
             <p className="text-center text-[11px] text-on-surface-variant">
               {nextMatch.venue}
             </p>
-            <Link href="#" className="mt-3 block w-full rounded-md bg-primary py-2.5 text-center text-[11px] font-bold text-on-primary transition-colors hover:bg-secondary">
+            <Link href="https://www.fieltorcedor.com.br/" target="_blank" rel="noopener noreferrer" className="mt-3 block w-full rounded-md bg-primary py-2.5 text-center text-[11px] font-bold text-on-primary transition-colors hover:bg-secondary">
               Ingressos
             </Link>
           </div>
