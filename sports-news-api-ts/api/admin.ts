@@ -687,8 +687,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role });
       }
       if (method === 'DELETE') {
-        await db.user.delete({ where: { id } });
-        return res.status(204).end();
+        try {
+          await db.user.delete({ where: { id } });
+          return res.status(204).end();
+        } catch (err: any) {
+          if (err?.code === 'P2003') {
+            return res.status(409).json({ error: 'Não é possível excluir este usuário porque ele é autor de artigos existentes. Transfira os artigos para outro autor ou desative o usuário em vez de excluí-lo.' });
+          }
+          throw err;
+        }
       }
     }
 
