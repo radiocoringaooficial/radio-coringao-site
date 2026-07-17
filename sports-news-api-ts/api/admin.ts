@@ -965,6 +965,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ ok: true, reset: true, articlesRecalculated: updated });
     }
 
+    // ─── DEBUG: info do banco (temporário) ──────────────────────
+    if (urlPath === '/debug-db-info') {
+      const dbInfo = await db.$queryRaw`SELECT current_database() as db_name, inet_server_addr() as server_addr`;
+      const colCheck = await db.$queryRaw`SELECT column_name FROM information_schema.columns WHERE table_name = 'articles' AND column_name IN ('authorNameSnapshot', 'authorAvatarSnapshot', 'authorCargo') ORDER BY column_name`;
+      return res.status(200).json({ db: dbInfo, articleColumns: colCheck, envDatabaseUrl: process.env.DATABASE_URL ? 'SET (hidden)' : 'EMPTY/MISSING' });
+    }
+
     return res.status(404).json({ error: 'Route not found' });
   } catch (err: any) {
     console.error('Admin handler error:', err?.message);
