@@ -150,6 +150,7 @@ model Article {
   // Relacionamentos
   authorId        String?
   authorNameSnapshot String?  // Nome do autor congelado quando o usuário é deletado
+  authorAvatarSnapshot String? // Avatar do autor congelado quando o usuário é deletado
   authorCargo     String?   // Cargo exibido como "autor deste artigo" (fallback: author.position)
   categoryId      String
   author          User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)

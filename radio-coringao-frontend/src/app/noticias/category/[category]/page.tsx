@@ -82,7 +82,7 @@ export default async function NewsCategoryPage({ params }: Props) {
     category: article.category?.name || categoryInfo!.name,
     categorySlug: article.category?.slug || categoryInfo!.slug,
     author: article.author?.name || article.authorNameSnapshot || "",
-    authorAvatar: article.author?.avatar || "",
+    authorAvatar: article.author?.avatar || article.authorAvatarSnapshot || "",
     imageUrl: article.coverImage || "",
     imageAlt: article.coverImageAlt || article.title,
     publishedAt: article.publishedAt || "",

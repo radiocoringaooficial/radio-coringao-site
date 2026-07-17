@@ -36,7 +36,7 @@ function mapApiArticle(a: any): NewsArticle {
     category: a.category?.name || "",
     categorySlug: a.category?.slug || "",
     author: a.author?.name || a.authorNameSnapshot || "",
-    authorAvatar: a.author?.avatar || "",
+    authorAvatar: a.author?.avatar || a.authorAvatarSnapshot || "",
     imageUrl: a.coverImage || "",
     imageAlt: a.coverImageAlt || a.title,
     publishedAt: a.publishedAt || "",

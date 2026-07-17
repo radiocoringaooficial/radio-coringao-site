@@ -52,7 +52,7 @@ function mapApiArticle(article: ApiArticle): NewsArticle {
     category: article.category?.name || "",
     categorySlug: article.category?.slug || "",
     author: (article as any).author?.name || (article as any).authorNameSnapshot || "",
-    authorAvatar: (article as any).author?.avatar || "",
+    authorAvatar: (article as any).author?.avatar || (article as any).authorAvatarSnapshot || "",
     authorPosition: (article as any).author?.position || "",
     imageUrl: article.coverImage || "",
     imageAlt: article.coverImageAlt || article.title,

@@ -13,7 +13,10 @@ function getAuthHeaders(): Record<string, string> {
 }
 
 function buildErrorMessage(res: any, err: any): string {
-  const base = err.error || err.message || `Erro ${res.status}`;
+  // Mostrar a mensagem real da exceção quando existe e é diferente do genérico
+  const base = err.message && err.message !== err.error
+    ? `${err.error}: ${err.message}`
+    : (err.error || err.message || `Erro ${res.status}`);
   const hint = err.hint ? `\n${err.hint}` : '';
   const field = err.field ? ` (${err.field})` : '';
   return `${base}${field}${hint}`;

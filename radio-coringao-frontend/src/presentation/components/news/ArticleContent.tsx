@@ -70,7 +70,7 @@ export function ArticleContent({ article, topStories, nextMatch, slug }: Article
           category: a.category?.name || "",
           categorySlug: a.category?.slug || "",
           author: a.author?.name || a.authorNameSnapshot || "",
-          authorAvatar: a.author?.avatar || "",
+          authorAvatar: a.author?.avatar || a.authorAvatarSnapshot || "",
           authorPosition: a.authorCargo || a.author?.position || "",
           imageUrl: a.coverImage || "",
           imageAlt: a.coverImageAlt || a.title,

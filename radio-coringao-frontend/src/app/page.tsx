@@ -20,7 +20,7 @@ function mapArticle(article: any) {
     category: article.category?.name || "",
     categorySlug: article.category?.slug || "",
     author: article.author?.name || article.authorNameSnapshot || "",
-    authorAvatar: article.author?.avatar || "",
+    authorAvatar: article.author?.avatar || article.authorAvatarSnapshot || "",
     imageUrl: article.coverImage || "",
     imageAlt: article.coverImageAlt || article.title,
     publishedAt: article.publishedAt || "",

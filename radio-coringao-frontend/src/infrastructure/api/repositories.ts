@@ -25,7 +25,7 @@ function transformArticle(apiArticle: any): NewsArticle {
     category: apiArticle.category?.name || apiArticle.category || '',
     categorySlug: apiArticle.category?.slug || apiArticle.categorySlug || '',
     author: authorName,
-    authorAvatar: apiArticle.author?.avatar || apiArticle.authorAvatar || '',
+    authorAvatar: apiArticle.author?.avatar || apiArticle.authorAvatarSnapshot || apiArticle.authorAvatar || '',
     authorPosition: apiArticle.authorCargo || apiArticle.author?.position || apiArticle.authorRole || '',
     imageUrl: apiArticle.coverImage || apiArticle.imageUrl || null,
     imageAlt: apiArticle.coverImageAlt || apiArticle.imageAlt || '',
