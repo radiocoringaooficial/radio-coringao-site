@@ -106,7 +106,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
       return res.status(200).json({
         token,
-        user: { id: user.id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, position: user.position },
+        user: { id: user.id, name: user.name, email: user.email, role: user.role, avatar: user.avatar, position: user.position, cargos: user.cargos },
       });
     }
 
@@ -234,7 +234,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.status(409).json({ error: `Posição #${orderVal} já ocupada por "${conflicting.title}". Remova a posição desse artigo primeiro.` });
           }
         }
-        const article = await db.article.create({ data: { title: fields.title, subtitle: fields.subtitle ? sanitizePlainText(fields.subtitle) : null, slug: fields.slug || fields.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-'), content: fields.content || '', excerpt: fields.excerpt, status: fields.status || 'DRAFT', type: fields.type || 'NEWS', isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', authorId: user.id, categoryId: fields.categoryId, coverImage: coverImageUrl, scheduledAt: fields.scheduledAt || null, publishedAt: fields.status === 'PUBLISHED' ? new Date() : null, order: orderVal } });
+        const article = await db.article.create({ data: { title: fields.title, subtitle: fields.subtitle ? sanitizePlainText(fields.subtitle) : null, slug: fields.slug || fields.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-'), content: fields.content || '', excerpt: fields.excerpt, status: fields.status || 'DRAFT', type: fields.type || 'NEWS', isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', authorId: user.id, authorCargo: fields.authorCargo || null, categoryId: fields.categoryId, coverImage: coverImageUrl, scheduledAt: fields.scheduledAt || null, publishedAt: fields.status === 'PUBLISHED' ? new Date() : null, order: orderVal } });
         return res.status(201).json(article);
       }
     }
@@ -278,6 +278,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (fields.coverImageAlt !== undefined) updateData.coverImageAlt = fields.coverImageAlt;
         if (fields.coverImageCredit !== undefined) updateData.coverImageCredit = fields.coverImageCredit;
         if (fields.order !== undefined) updateData.order = parseInt(fields.order, 10);
+        if (fields.authorCargo !== undefined) updateData.authorCargo = fields.authorCargo || null;
         const article = await db.article.update({ where: { id }, data: updateData });
         return res.status(200).json(article);
       }
@@ -352,6 +353,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (fields.coverImageAlt !== undefined) updateData.coverImageAlt = fields.coverImageAlt;
         if (fields.coverImageCredit !== undefined) updateData.coverImageCredit = fields.coverImageCredit;
         if (fields.order !== undefined) updateData.order = parseInt(fields.order, 10);
+        if (fields.authorCargo !== undefined) updateData.authorCargo = fields.authorCargo || null;
         const article = await db.article.update({ where: { id }, data: updateData });
         return res.status(200).json(article);
       }
@@ -611,7 +613,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ─── USERS ────────────────────────────────────────────────
     if (url === '/users' || url === '/users/') {
       if (method === 'GET') {
-        const users = await db.user.findMany({ select: { id: true, name: true, email: true, role: true, avatar: true, position: true, isActive: true, createdAt: true, lastLoginAt: true }, orderBy: { createdAt: 'desc' } });
+        const users = await db.user.findMany({ select: { id: true, name: true, email: true, role: true, avatar: true, position: true, cargos: true, isActive: true, createdAt: true, lastLoginAt: true }, orderBy: { createdAt: 'desc' } });
         return res.status(200).json(users);
       }
       if (method === 'POST') {
@@ -622,7 +624,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         const bcrypt = await import('bcryptjs');
         const hashed = await bcrypt.default.hash(fields.password, 12);
-        const newUser = await db.user.create({ data: { name: fields.name, email: fields.email, password: hashed, role: fields.role || 'JORNALISTA', position: fields.position, avatar: avatarUrl } });
+        const cargos = fields.cargos ? (typeof fields.cargos === 'string' ? fields.cargos.split(',').map((s: string) => s.trim()).filter(Boolean) : fields.cargos) : [];
+        const newUser = await db.user.create({ data: { name: fields.name, email: fields.email, password: hashed, role: fields.role || 'JORNALISTA', position: fields.position, cargos, avatar: avatarUrl } });
         return res.status(201).json({ id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role });
       }
     }
@@ -637,6 +640,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           avatarUrl = await uploadToCloudinary(file.buffer, 'avatars', file.mimetype);
         }
         const data: any = { name: fields.name, email: fields.email, role: fields.role, position: fields.position, avatar: avatarUrl };
+        if (fields.cargos !== undefined) {
+          data.cargos = typeof fields.cargos === 'string' ? fields.cargos.split(',').map((s: string) => s.trim()).filter(Boolean) : fields.cargos;
+        }
         if (fields.isActive !== undefined) data.isActive = fields.isActive === true || fields.isActive === 'true';
         if (fields.password) {
           const bcrypt = await import('bcryptjs');

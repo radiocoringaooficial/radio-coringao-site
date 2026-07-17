@@ -32,6 +32,7 @@ model User {
   avatar       String?  // URL da foto no Cloudinary
   bio          String?
   position     String?  // Cargo exibível (ex: "Editor-Chefe", "Repórter")
+  cargos       String[] @default([])  // Cargos múltiplos (ex: ["Jornalista", "Radialista"])
   isActive     Boolean  @default(true)
   lastLoginAt  DateTime?
   lastLogoutAt DateTime?
@@ -137,6 +138,7 @@ model Article {
 
   // Relacionamentos
   authorId        String
+  authorCargo     String?   // Cargo exibido como "autor deste artigo" (fallback: author.position)
   categoryId      String
   author          User          @relation(fields: [authorId], references: [id])
   category        Category      @relation(fields: [categoryId], references: [id])
