@@ -657,7 +657,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const bcrypt = await import('bcryptjs');
         const hashed = await bcrypt.default.hash(fields.password, 12);
         const cargos = fields.cargos ? (typeof fields.cargos === 'string' ? fields.cargos.split(',').map((s: string) => s.trim()).filter(Boolean) : fields.cargos) : [];
-        const newUser = await db.user.create({ data: { name: fields.name, email: fields.email, password: hashed, role: fields.role || 'JORNALISTA', position: fields.position, cargos, avatar: avatarUrl } });
+        const isActive = fields.isActive !== undefined ? (fields.isActive === true || fields.isActive === 'true') : true;
+        const newUser = await db.user.create({ data: { name: fields.name, email: fields.email, password: hashed, role: fields.role || 'JORNALISTA', position: fields.position, cargos, avatar: avatarUrl, isActive } });
         return res.status(201).json({ id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role });
       }
     }
