@@ -50,19 +50,22 @@ export function NextMatchCard(props: NextMatchCardProps) {
 
       <div className="relative z-10 flex flex-1 flex-col justify-between p-5">
         {/* Header */}
-        <div>
-          <div className="flex flex-wrap items-center justify-center gap-2">
+        <div className="flex flex-col items-center gap-2">
+          {/* Linha 1: linhas decorativas + competição */}
+          <div className="flex w-full items-center gap-2">
             <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent" />
             <span className={`shrink-0 whitespace-nowrap rounded-full border ${color.border} ${color.bg} px-3 py-1 font-label-sm text-label-sm font-bold uppercase tracking-wider ${color.text}`}>
               {competition}
             </span>
-            {category && (
-              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/50" title={category}>
-                {category}
-              </span>
-            )}
             <div className="h-px flex-1 bg-gradient-to-l from-white/20 to-transparent" />
           </div>
+
+          {/* Linha 2: categoria (só aparece se existir) */}
+          {category && (
+            <span className="max-w-full truncate rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white/50" title={category}>
+              {category}
+            </span>
+          )}
         </div>
 
         {/* Teams */}
