@@ -112,23 +112,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // ─── DEBUG: info do banco + fix de colunas (temporário, sem auth) ──
-    if (urlPath === '/debug-db-info') {
-      try {
-        const db = await getPrisma();
-        const dbInfo = await db.$queryRaw`SELECT current_database() as db_name, inet_server_addr() as server_addr`;
-        const colCheckBefore = await db.$queryRaw`SELECT column_name FROM information_schema.columns WHERE table_name = 'articles' AND column_name IN ('authorNameSnapshot', 'authorAvatarSnapshot', 'authorCargo') ORDER BY column_name`;
-        // FIX: adicionar colunas que podem estar faltando no banco real
-        await db.$executeRawUnsafe(`ALTER TABLE "articles" ADD COLUMN IF NOT EXISTS "authorNameSnapshot" TEXT`);
-        await db.$executeRawUnsafe(`ALTER TABLE "articles" ADD COLUMN IF NOT EXISTS "authorAvatarSnapshot" TEXT`);
-        // Re-verify após o ALTER
-        const colCheckAfter = await db.$queryRaw`SELECT column_name FROM information_schema.columns WHERE table_name = 'articles' AND column_name IN ('authorNameSnapshot', 'authorAvatarSnapshot', 'authorCargo') ORDER BY column_name`;
-        return res.status(200).json({ db: dbInfo, articleColumnsBefore: colCheckBefore, articleColumnsAfter: colCheckAfter, envDatabaseUrl: process.env.DATABASE_URL ? 'SET (hidden)' : 'EMPTY/MISSING', fixApplied: true });
-      } catch (e: any) {
-        return res.status(500).json({ error: e.message });
-      }
-    }
-
     // All admin routes require auth
     let user: any;
     try { user = verifyToken(req); } catch { return res.status(401).json({ error: 'Token inválido' }); }
