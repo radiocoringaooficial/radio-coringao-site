@@ -320,7 +320,7 @@ export function Header() {
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 lg:flex">
           {navItems.map((item) => (
             <div key={item.slug} className="relative" onMouseEnter={() => openMenuDelayed(item.slug)} onMouseLeave={closeMenuDelayed}>
-              <Link href={item.subItems?.[0]?.link || `/${item.slug}`} className={`font-label-sm text-label-sm font-bold transition-colors hover:text-primary ${openMenu === item.slug ? "active text-primary" : "text-on-surface-variant"}`} onClick={() => setOpenMenu(null)}>
+              <Link href={item.subItems?.[0]?.link || `/${item.slug}`} className={`whitespace-nowrap font-label-sm text-label-sm font-bold transition-colors hover:text-primary ${openMenu === item.slug ? "active text-primary" : "text-on-surface-variant"}`} onClick={() => setOpenMenu(null)}>
                 {item.label}
               </Link>
             </div>
