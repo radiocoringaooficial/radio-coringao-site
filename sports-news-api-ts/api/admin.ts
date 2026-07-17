@@ -114,6 +114,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let user: any;
     try { user = verifyToken(req); } catch { return res.status(401).json({ error: 'Token inválido' }); }
 
+    // ─── JOB TITLES (Cargos Exibíveis) ──────────────────────
+    if (url === '/job-titles' || url === '/job-titles/') {
+      if (method === 'GET') {
+        const titles = await db.jobTitle.findMany({ orderBy: { name: 'asc' } });
+        return res.status(200).json(titles);
+      }
+      if (method === 'POST') {
+        const { name } = req.body || {};
+        if (!name || !name.trim()) return res.status(400).json({ error: 'Nome do cargo é obrigatório' });
+        const trimmed = name.trim();
+        // Case-insensitive duplicate check: return existing if found
+        const existing = await db.jobTitle.findFirst({ where: { name: { equals: trimmed, mode: 'insensitive' } } });
+        if (existing) return res.status(200).json(existing);
+        const title = await db.jobTitle.create({ data: { name: trimmed } });
+        return res.status(201).json(title);
+      }
+    }
+
     // ─── DASHBOARD ────────────────────────────────────────────
     if (url === '/dashboard' || url === '/dashboard/') {
       const now = new Date();

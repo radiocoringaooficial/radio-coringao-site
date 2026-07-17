@@ -10,6 +10,17 @@ datasource db {
 }
 
 // ============================================================
+// CARGOS EXIBÍVEIS (Job Titles) — lista global gerenciável
+// ============================================================
+model JobTitle {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("job_titles")
+}
+
+// ============================================================
 // USUÁRIOS DO PAINEL ADMIN
 // ============================================================
 enum Role {
