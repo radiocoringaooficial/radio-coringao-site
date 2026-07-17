@@ -114,6 +114,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let user: any;
     try { user = verifyToken(req); } catch { return res.status(401).json({ error: 'Token inválido' }); }
 
+    // Update lastSeenAt (fire-and-forget, non-blocking)
+    db.user.update({ where: { id: user.id }, data: { lastSeenAt: new Date() } }).catch(() => {});
+
     // ─── JOB TITLES (Cargos Exibíveis) ──────────────────────
     if (url === '/job-titles' || url === '/job-titles/') {
       if (method === 'GET') {
@@ -640,7 +643,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ─── USERS ────────────────────────────────────────────────
     if (url === '/users' || url === '/users/') {
       if (method === 'GET') {
-        const users = await db.user.findMany({ select: { id: true, name: true, email: true, role: true, avatar: true, position: true, cargos: true, isActive: true, createdAt: true, lastLoginAt: true }, orderBy: { createdAt: 'desc' } });
+        const users = await db.user.findMany({ select: { id: true, name: true, email: true, role: true, avatar: true, position: true, cargos: true, isActive: true, createdAt: true, lastLoginAt: true, lastSeenAt: true }, orderBy: { createdAt: 'desc' } });
         return res.status(200).json(users);
       }
       if (method === 'POST') {
