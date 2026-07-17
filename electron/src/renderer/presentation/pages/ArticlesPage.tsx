@@ -11,6 +11,7 @@ export function ArticlesPage() {
   const [articles, setArticles] = useState<any[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,15 @@ export function ArticlesPage() {
   const [archived, setArchived] = useState<any[]>([]);
   const [totalArchived, setTotalArchived] = useState(0);
   const toast = useToastStore((s) => s.addToast);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const loadArticles = async () => {
     try {
@@ -78,7 +88,7 @@ export function ArticlesPage() {
         <div className="flex items-center gap-3">
           <div className="relative flex-1">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
-            <input placeholder="Buscar artigos..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="input-field pl-10" />
+            <input placeholder="Buscar artigos..." value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="input-field pl-10" />
           </div>
           <div className="relative">
             <select
@@ -113,7 +123,7 @@ export function ArticlesPage() {
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-3">
                       {a.coverImage ? <img src={a.coverImage} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" /> : <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center shrink-0"><FileText size={16} className="text-on-surface-variant" /></div>}
-                      <div className="min-w-0"><p className="font-body text-sm font-medium truncate">{a.title}</p><p className="text-xs text-on-surface-variant">{a.author?.name || ''}</p></div>
+                      <div className="min-w-0"><p className="font-body text-sm font-medium truncate">{a.title}</p><p className="text-xs text-on-surface-variant">{a.author?.name || a.authorNameSnapshot || ''}</p></div>
                     </div>
                   </td>
                   <td className="py-3 px-4"><span className="badge bg-surface-container text-on-surface-variant">{a.category?.name || '-'}</span></td>

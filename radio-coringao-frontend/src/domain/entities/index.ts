@@ -8,6 +8,7 @@ export interface NewsArticle {
   author: string;
   authorAvatar?: string;
   authorPosition?: string;
+  authorNameSnapshot?: string;
   imageUrl: string;
   imageAlt: string;
   publishedAt: string;

@@ -5,7 +5,7 @@ import { FileText, Eye, Clock, CheckCircle, TrendingUp, ArrowUpRight } from 'luc
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { DashboardSkeleton } from '@/presentation/components/ui/Skeleton';
 
-interface TopArticle { id: string; title: string; viewCount: number; coverImage?: string; category?: { name: string; color?: string }; author?: { name: string }; }
+interface TopArticle { id: string; title: string; viewCount: number; coverImage?: string; category?: { name: string; color?: string }; author?: { name: string }; authorNameSnapshot?: string; }
 interface MonthData { month: string; published: number; review: number; }
 interface ReadsData { month: string; reads: number; uniqueReaders: number; }
 
@@ -24,12 +24,20 @@ function Sparkline({ data, dataKey, color, gradientId }: { data: any[]; dataKey:
 
 export function DashboardPage() {
   const [data, setData] = useState<any>(null);
+  const [yearlyData, setYearlyData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    newsApi.get('/admin/dashboard').then(setData).catch((err) => setError(err.message)).finally(() => setLoading(false));
+    Promise.all([
+      newsApi.get('/admin/dashboard'),
+      newsApi.get('/admin/dashboard/articles-per-year?years=5'),
+      newsApi.get('/admin/dashboard/views-per-year?years=5'),
+    ]).then(([dash, artYear, viewsYear]) => {
+      setData(dash);
+      setYearlyData({ articlesPerYear: artYear, viewsPerYear: viewsYear });
+    }).catch((err) => setError(err.message)).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <DashboardSkeleton />;
@@ -47,9 +55,9 @@ export function DashboardPage() {
   const fmtReads = (d: ReadsData[]) => d.map((item) => { const [y, m] = item.month.split('-'); return { ...item, label: `${monthLabels[m] || m} ${y}` }; });
 
   const artByYear = articlesPerMonth.reduce((acc: Record<string, number>, d) => { const y = d.month.slice(0, 4); acc[y] = (acc[y] || 0) + d.published; return acc; }, {});
-  const yearlyArt = Object.entries(artByYear).map(([year, published]) => ({ year, published }));
+  const yearlyArt = yearlyData?.articlesPerYear || Object.entries(artByYear).map(([year, published]) => ({ year, published }));
   const viewsByYear = readsPerMonth.reduce((acc: Record<string, number>, d) => { const y = d.month.slice(0, 4); acc[y] = (acc[y] || 0) + d.reads; return acc; }, {});
-  const yearlyViews = Object.entries(viewsByYear).map(([year, reads]) => ({ year, reads }));
+  const yearlyViews = yearlyData?.viewsPerYear || Object.entries(viewsByYear).map(([year, reads]) => ({ year, reads }));
 
   const ChartCard = ({ title, subtitle, icon, color, gradientId, labels, dataKey, onClick }: any) => (
     <div className="card cursor-pointer hover:shadow-lg hover:border-primary/20 transition-all group" onClick={onClick}>
@@ -92,7 +100,7 @@ export function DashboardPage() {
                   <p className="text-sm font-bold text-on-surface truncate">{article.title}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     {article.category && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700">{article.category.name}</span>}
-                    {article.author && <span className="text-[10px] text-on-surface-variant">{article.author.name}</span>}
+                    {(article.author?.name || article.authorNameSnapshot) && <span className="text-[10px] text-on-surface-variant">{article.author?.name || article.authorNameSnapshot}</span>}
                   </div>
                 </div>
                 <div className="text-right shrink-0"><p className="text-sm font-bold text-on-surface">{article.viewCount.toLocaleString()}</p><p className="text-[10px] text-on-surface-variant">views</p></div>

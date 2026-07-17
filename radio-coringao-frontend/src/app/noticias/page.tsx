@@ -40,7 +40,7 @@ async function fetchNewsData(sort: string = "recent") {
     content: article.content || "",
     category: article.category?.name || "",
     categorySlug: article.category?.slug || "",
-    author: article.author?.name || "",
+    author: article.author?.name || article.authorNameSnapshot || "",
     authorAvatar: article.author?.avatar || "",
     authorPosition: article.author?.position || "",
     imageUrl: article.coverImage || "",

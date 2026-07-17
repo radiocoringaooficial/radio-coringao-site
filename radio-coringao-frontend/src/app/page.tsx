@@ -19,7 +19,7 @@ function mapArticle(article: any) {
     content: article.content || "",
     category: article.category?.name || "",
     categorySlug: article.category?.slug || "",
-    author: article.author?.name || "",
+    author: article.author?.name || article.authorNameSnapshot || "",
     authorAvatar: article.author?.avatar || "",
     imageUrl: article.coverImage || "",
     imageAlt: article.coverImageAlt || article.title,

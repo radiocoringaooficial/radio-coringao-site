@@ -51,7 +51,7 @@ function mapApiArticle(article: ApiArticle): NewsArticle {
     content: (article as any).content || "",
     category: article.category?.name || "",
     categorySlug: article.category?.slug || "",
-    author: (article as any).author?.name || "",
+    author: (article as any).author?.name || (article as any).authorNameSnapshot || "",
     authorAvatar: (article as any).author?.avatar || "",
     authorPosition: (article as any).author?.position || "",
     imageUrl: article.coverImage || "",

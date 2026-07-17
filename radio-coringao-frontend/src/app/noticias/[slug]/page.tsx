@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       locale: "pt_BR",
       type: "article",
       publishedTime: article.publishedAt,
-      authors: [article.author],
+      authors: [article.author || article.authorNameSnapshot || 'Autor removido'],
       tags: [article.category],
     },
     twitter: {

@@ -40,7 +40,7 @@ export function SearchDropdown({ query, visible, onClose }: SearchDropdownProps)
               excerpt: a.excerpt || "",
               category: a.category?.name || "",
               categorySlug: a.category?.slug || "",
-              author: a.author?.name || "",
+              author: a.author?.name || a.authorNameSnapshot || "",
               authorAvatar: a.author?.avatar || "",
               imageUrl: a.coverImage || "",
               imageAlt: a.coverImageAlt || a.title,

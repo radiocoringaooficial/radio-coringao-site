@@ -81,7 +81,7 @@ export default async function NewsCategoryPage({ params }: Props) {
     content: article.content || "",
     category: article.category?.name || categoryInfo!.name,
     categorySlug: article.category?.slug || categoryInfo!.slug,
-    author: article.author?.name || "",
+    author: article.author?.name || article.authorNameSnapshot || "",
     authorAvatar: article.author?.avatar || "",
     imageUrl: article.coverImage || "",
     imageAlt: article.coverImageAlt || article.title,

@@ -148,10 +148,11 @@ model Article {
   quotes          Json?
 
   // Relacionamentos
-  authorId        String
+  authorId        String?
+  authorNameSnapshot String?  // Nome do autor congelado quando o usuário é deletado
   authorCargo     String?   // Cargo exibido como "autor deste artigo" (fallback: author.position)
   categoryId      String
-  author          User          @relation(fields: [authorId], references: [id])
+  author          User?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
   category        Category      @relation(fields: [categoryId], references: [id])
   tags            ArticleTag[]
   images          ArticleImage[]

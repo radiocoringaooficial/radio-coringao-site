@@ -69,7 +69,7 @@ export function ArticleContent({ article, topStories, nextMatch, slug }: Article
           excerpt: a.excerpt || "",
           category: a.category?.name || "",
           categorySlug: a.category?.slug || "",
-          author: a.author?.name || "",
+          author: a.author?.name || a.authorNameSnapshot || "",
           authorAvatar: a.author?.avatar || "",
           authorPosition: a.authorCargo || a.author?.position || "",
           imageUrl: a.coverImage || "",

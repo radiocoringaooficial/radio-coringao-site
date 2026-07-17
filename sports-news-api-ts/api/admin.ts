@@ -687,15 +687,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role });
       }
       if (method === 'DELETE') {
-        try {
-          await db.user.delete({ where: { id } });
-          return res.status(204).end();
-        } catch (err: any) {
-          if (err?.code === 'P2003') {
-            return res.status(409).json({ error: 'Não é possível excluir este usuário porque ele é autor de artigos existentes. Transfira os artigos para outro autor ou desative o usuário em vez de excluí-lo.' });
-          }
-          throw err;
-        }
+        // Buscar nome do usuário pra snapshot antes de deletar
+        const userToDelete = await db.user.findUnique({ where: { id }, select: { id: true, name: true } });
+        if (!userToDelete) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+        // Preencher authorNameSnapshot nos artigos onde ele é autor (só nos que ainda não têm)
+        await db.article.updateMany({
+          where: { authorId: id, authorNameSnapshot: null },
+          data: { authorNameSnapshot: userToDelete.name },
+        });
+
+        // Deletar usuário — authorId será zerado automaticamente (SetNull)
+        await db.user.delete({ where: { id } });
+        return res.status(204).end();
       }
     }
 

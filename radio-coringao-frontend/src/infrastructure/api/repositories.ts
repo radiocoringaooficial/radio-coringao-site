@@ -19,11 +19,12 @@ import { httpClient, clubeClient } from "@/infrastructure/api/http-client";
 
 // Transform API article to match expected format
 function transformArticle(apiArticle: any): NewsArticle {
+  const authorName = apiArticle.author?.name || apiArticle.authorNameSnapshot || apiArticle.author || '';
   return {
     ...apiArticle,
     category: apiArticle.category?.name || apiArticle.category || '',
     categorySlug: apiArticle.category?.slug || apiArticle.categorySlug || '',
-    author: apiArticle.author?.name || apiArticle.author || '',
+    author: authorName,
     authorAvatar: apiArticle.author?.avatar || apiArticle.authorAvatar || '',
     authorPosition: apiArticle.authorCargo || apiArticle.author?.position || apiArticle.authorRole || '',
     imageUrl: apiArticle.coverImage || apiArticle.imageUrl || null,

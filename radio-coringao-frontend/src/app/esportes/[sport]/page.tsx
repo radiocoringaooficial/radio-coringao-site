@@ -277,7 +277,7 @@ export default async function SportPage({ params }: Props) {
     excerpt: article.excerpt || article.summary || "",
     category: article.category?.name || category.name,
     categorySlug: article.category?.slug || sport,
-    author: article.author?.name || "Redação",
+    author: article.author?.name || article.authorNameSnapshot || "Redação",
     authorAvatar: "",
     imageUrl: article.featuredImage || article.coverImage || "",
     imageAlt: article.title,

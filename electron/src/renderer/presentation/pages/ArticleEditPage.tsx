@@ -146,6 +146,14 @@ export function ArticleEditPage() {
     coverImageAlt: '', coverImageCredit: '',
     scheduledAt: '', authorCargo: '',
   });
+
+  // Limpar scheduledAt quando status vira PUBLISHED
+  const isPublished = form.status === 'PUBLISHED';
+  useEffect(() => {
+    if (isPublished && form.scheduledAt) {
+      setForm((prev) => ({ ...prev, scheduledAt: '' }));
+    }
+  }, [isPublished]);
   const [initialForm, setInitialForm] = useState<typeof form | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [jobTitles, setJobTitles] = useState<{ id: string; name: string }[]>([]);
@@ -311,7 +319,10 @@ export function ArticleEditPage() {
           <div className="card space-y-4">
             <h3 className="font-headline text-label-sm font-bold text-on-surface">Publicação</h3>
             <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Status</label>
-              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="select-field">
+              <select value={form.status} onChange={(e) => {
+                const newStatus = e.target.value;
+                setForm((prev) => ({ ...prev, status: newStatus, scheduledAt: newStatus === 'PUBLISHED' ? '' : prev.scheduledAt }));
+              }} className="select-field">
                 <option value="DRAFT">Rascunho</option><option value="REVIEW">Revisão</option><option value="PUBLISHED">Publicado</option>
               </select>
             </div>
@@ -319,14 +330,17 @@ export function ArticleEditPage() {
             {/* Agendamento */}
             <div className="border-t border-outline-variant/30 pt-4">
               <div className="flex items-center gap-2 mb-1.5">
-                <CalendarClock size={14} className="text-on-surface-variant" />
-                <label className="font-headline text-label-sm font-bold text-on-surface">Agendamento</label>
+                <CalendarClock size={14} className={isPublished ? 'text-on-surface-variant/40' : 'text-on-surface-variant'} />
+                <label className={`font-headline text-label-sm font-bold ${isPublished ? 'text-on-surface-variant/40' : 'text-on-surface'}`}>Agendamento</label>
               </div>
-              <p className="text-[10px] text-on-surface-variant mb-2">Agendar para publicação automática no futuro.</p>
+              <p className="text-[10px] text-on-surface-variant mb-2">
+                {isPublished ? 'Agendamento não disponível para artigos já publicados.' : 'Agendar para publicação automática no futuro.'}
+              </p>
               <input
                 type="datetime-local"
                 value={form.scheduledAt}
                 min={nowLocal}
+                disabled={isPublished}
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val && val <= nowLocal) {
@@ -335,7 +349,7 @@ export function ArticleEditPage() {
                   }
                   setForm({ ...form, scheduledAt: val });
                 }}
-                className="input-field text-sm"
+                className={`input-field text-sm ${isPublished ? 'opacity-40 cursor-not-allowed' : ''}`}
               />
               {form.scheduledAt && new Date(form.scheduledAt) > new Date() && form.status !== 'PUBLISHED' && (
                 <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 p-2">
@@ -350,7 +364,7 @@ export function ArticleEditPage() {
                   </div>
                 </div>
               )}
-              {form.scheduledAt && (
+              {form.scheduledAt && !isPublished && (
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, scheduledAt: '' })}

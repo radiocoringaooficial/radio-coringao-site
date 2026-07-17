@@ -37,7 +37,8 @@ interface ApiArticle {
   isBreaking: boolean;
   publishedAt: string;
   viewCount: number;
-  author: { name: string; avatar?: string };
+  author: { name: string; avatar?: string } | null;
+  authorNameSnapshot?: string;
   category: { name: string; slug: string };
 }
 
@@ -50,7 +51,7 @@ function mapApiArticle(article: ApiArticle): NewsArticle {
     content: (article as any).content || "",
     category: article.category?.name || "",
     categorySlug: article.category?.slug || "",
-    author: article.author?.name || "",
+    author: article.author?.name || article.authorNameSnapshot || "",
     authorAvatar: article.author?.avatar || "",
     imageUrl: article.coverImage || "",
     imageAlt: article.coverImageAlt || article.title,
