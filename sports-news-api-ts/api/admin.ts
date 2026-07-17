@@ -660,8 +660,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const hashed = await bcrypt.default.hash(fields.password, 12);
         const cargos = fields.cargos ? (typeof fields.cargos === 'string' ? fields.cargos.split(',').map((s: string) => s.trim()).filter(Boolean) : fields.cargos) : [];
         const isActive = fields.isActive !== undefined ? (fields.isActive === true || fields.isActive === 'true') : true;
-        const newUser = await db.user.create({ data: { name: fields.name, email: fields.email, password: hashed, role: fields.role || 'JORNALISTA', position: fields.position, cargos, avatar: avatarUrl, isActive } });
-        return res.status(201).json({ id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role });
+        try {
+          const newUser = await db.user.create({ data: { name: fields.name, email: fields.email, password: hashed, role: fields.role || 'JORNALISTA', position: fields.position, cargos, avatar: avatarUrl, isActive } });
+          return res.status(201).json({ id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role });
+        } catch (err: any) {
+          if (err?.code === 'P2002') {
+            const field = err?.meta?.target?.includes('email') ? 'e-mail' : 'campo';
+            return res.status(409).json({ error: `Já existe um usuário com esse ${field}.` });
+          }
+          throw err;
+        }
       }
     }
 
@@ -687,14 +695,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role });
       }
       if (method === 'DELETE') {
-        // Buscar nome do usuário pra snapshot antes de deletar
-        const userToDelete = await db.user.findUnique({ where: { id }, select: { id: true, name: true } });
+        // Buscar dados do usuário pra snapshot antes de deletar
+        const userToDelete = await db.user.findUnique({ where: { id }, select: { id: true, name: true, avatar: true, position: true } });
         if (!userToDelete) return res.status(404).json({ error: 'Usuário não encontrado' });
 
-        // Preencher authorNameSnapshot nos artigos onde ele é autor (só nos que ainda não têm)
+        // Preencher snapshots nos artigos onde ele é autor (só nos que ainda não têm cada campo)
         await db.article.updateMany({
           where: { authorId: id, authorNameSnapshot: null },
           data: { authorNameSnapshot: userToDelete.name },
+        });
+        await db.article.updateMany({
+          where: { authorId: id, authorAvatarSnapshot: null },
+          data: { authorAvatarSnapshot: userToDelete.avatar },
+        });
+        // Preencher authorCargo só se ainda não estiver definido no artigo
+        await db.article.updateMany({
+          where: { authorId: id, authorCargo: null },
+          data: { authorCargo: userToDelete.position },
         });
 
         // Deletar usuário — authorId será zerado automaticamente (SetNull)
