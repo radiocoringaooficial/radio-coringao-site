@@ -112,6 +112,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // ─── DEBUG: apply live stream migration (temporário, sem auth) ──
+    if (urlPath === '/debug-apply-migration') {
+      try {
+        const db = await getPrisma();
+        await db.$executeRawUnsafe(`ALTER TABLE "site_settings" ADD COLUMN IF NOT EXISTS "liveStreamUrl" TEXT`);
+        await db.$executeRawUnsafe(`ALTER TABLE "site_settings" ADD COLUMN IF NOT EXISTS "liveStreamActive" BOOLEAN NOT NULL DEFAULT false`);
+        const check = await db.$queryRaw`SELECT column_name FROM information_schema.columns WHERE table_name = 'site_settings' AND column_name IN ('liveStreamUrl', 'liveStreamActive')`;
+        return res.status(200).json({ fixApplied: true, columns: check });
+      } catch (e: any) {
+        return res.status(500).json({ error: e.message });
+      }
+    }
+
     // All admin routes require auth
     let user: any;
     try { user = verifyToken(req); } catch { return res.status(401).json({ error: 'Token inválido' }); }
@@ -739,6 +752,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const updateData: any = {};
         for (const [key, val] of Object.entries(req.body)) {
           if (val !== undefined) updateData[key] = val;
+        }
+        // Validar URL do YouTube se liveStreamUrl vier preenchido
+        if (updateData.liveStreamUrl && updateData.liveStreamUrl.trim()) {
+          const url = updateData.liveStreamUrl.trim();
+          const isYouTube = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/live\/)/.test(url);
+          if (!isYouTube) {
+            return res.status(400).json({ error: 'URL inválida. Use um link do YouTube (youtube.com/watch, youtu.be ou youtube.com/live).' });
+          }
+          updateData.liveStreamUrl = url;
         }
         const settings = await db.siteSettings.update({ where: { id: 'main' }, data: updateData });
         return res.status(200).json(settings);

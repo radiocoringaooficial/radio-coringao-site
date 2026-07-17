@@ -299,6 +299,8 @@ model SiteSettings {
   footerText       String?
   copyrightText    String?
   biography        String?
+  liveStreamUrl    String?   // URL do YouTube da transmissão ao vivo
+  liveStreamActive Boolean   @default(false)  // liga/desliga a exibição
   updatedAt        DateTime @updatedAt
 
   @@map("site_settings")
