@@ -54,7 +54,7 @@ export function ArticleContent({ article, topStories, nextMatch, slug }: Article
 
   // Registra visualização no servidor (IP real do visitante, não do SSR)
   useEffect(() => {
-    fetch(`${API_URL.replace('/api', '')}/api/articles/view/${encodeURIComponent(slug)}`).catch(() => {});
+    fetch(`${API_URL.replace('/api', '')}/api/articles/view/${encodeURIComponent(slug)}`, { method: 'POST' }).catch(() => {});
   }, [slug]);
 
   useEffect(() => {
