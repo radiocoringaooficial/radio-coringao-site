@@ -278,9 +278,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       try {
         await db.articleView.create({ data: { articleId: article.id, ipHash, userAgent: ua.slice(0, 255), viewBucket: bucket } });
-        await db.article.update({ where: { id: article.id }, data: { viewCount: { increment: 1 } } });
+        const updated = await db.article.update({ where: { id: article.id }, data: { viewCount: { increment: 1 } } });
+        console.log('[view] OK for', slug, '- new viewCount:', updated.viewCount);
       } catch (err: any) {
-        // P2002 = duplicate view today, ignore; log everything else
+        // P2002 = duplicate view today (dedup working), ignore silently
         if (err?.code !== 'P2002') console.error('[view] Error tracking view for', slug, err?.message);
       }
       return res.status(200).json({ ok: true });
