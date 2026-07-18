@@ -112,31 +112,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // ─── DEBUG: apply advertise fields migration + seed ──────────
-    if (urlPath === '/debug-apply-migration') {
-      try {
-        const db = await getPrisma();
-        await db.$executeRawUnsafe(`ALTER TABLE "site_settings" ADD COLUMN IF NOT EXISTS "advertiseIntro" TEXT`);
-        await db.$executeRawUnsafe(`ALTER TABLE "site_settings" ADD COLUMN IF NOT EXISTS "advertiseBullets" TEXT[] DEFAULT '{}'`);
-        await db.$executeRawUnsafe(`ALTER TABLE "site_settings" ADD COLUMN IF NOT EXISTS "advertiseEmail" TEXT`);
-        await db.$executeRawUnsafe(`ALTER TABLE "site_settings" ADD COLUMN IF NOT EXISTS "advertisePhone" TEXT`);
-        // Seed default values
-        await db.siteSettings.update({
-          where: { id: 'main' },
-          data: {
-            advertiseIntro: 'O Rádio Coringão é o maior portal de notícias do Corinthians, com milhares de visitas diárias de torcedores fiéis. Sua marca terá visibilidade junto ao público mais apaixonado do futebol brasileiro.',
-            advertiseBullets: ['Mais de 500 mil visitas mensais', 'Público engajado e fiel ao Corinthians', 'Segmentação por categorias de interesse', 'Relatórios de performance detalhados'],
-            advertiseEmail: 'radioncoringaocontato@gmail.com',
-            advertisePhone: '(11) 99999-9999',
-          },
-        });
-        const check = await db.$queryRaw`SELECT column_name FROM information_schema.columns WHERE table_name = 'site_settings' AND column_name IN ('advertiseIntro', 'advertiseBullets', 'advertiseEmail', 'advertisePhone')`;
-        return res.status(200).json({ fixApplied: true, columns: check });
-      } catch (e: any) {
-        return res.status(500).json({ error: e.message });
-      }
-    }
-
     // All admin routes require auth
     let user: any;
     try { user = verifyToken(req); } catch { return res.status(401).json({ error: 'Token inválido' }); }
