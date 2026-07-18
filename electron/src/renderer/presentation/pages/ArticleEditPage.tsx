@@ -178,7 +178,8 @@ export function ArticleEditPage() {
         if (a.scheduledAt) {
           const d = new Date(a.scheduledAt);
           if (!isNaN(d.getTime())) {
-            scheduledAtStr = d.toISOString().slice(0, 16);
+            const pad = (n: number) => String(n).padStart(2, '0');
+            scheduledAtStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
           }
         }
         const loaded = {
