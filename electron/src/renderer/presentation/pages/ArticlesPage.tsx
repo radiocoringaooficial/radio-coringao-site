@@ -111,10 +111,10 @@ export function ArticlesPage() {
         <div className="card overflow-x-auto mb-4">
           <table className="w-full table-fixed">
             <thead><tr className="border-b border-outline-variant">
-              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[40%]">Artigo</th>
-              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[20%]">Categoria</th>
-              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[20%]">Status</th>
-              <th className="text-right py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[20%]">Ações</th>
+              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[45%]">Artigo</th>
+              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[25%]">Categoria</th>
+              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[12%]">Status</th>
+              <th className="text-right py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[18%]">Ações</th>
             </tr></thead>
             <tbody>
               {articles.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-on-surface-variant">Nenhum artigo.</td></tr>}
@@ -128,7 +128,7 @@ export function ArticlesPage() {
                   </td>
                   <td className="py-3 px-3"><span className="badge bg-surface-container text-on-surface-variant max-w-[130px] truncate block px-3 py-1">{a.category?.name || '-'}</span></td>
                   <td className="py-3 px-3">
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-0.5 items-start">
                       <span className={`badge ${STATUS_COLORS[a.status] || ''} px-3 py-1`}>{STATUS_LABELS[a.status] || a.status}</span>
                       {a.scheduledAt && new Date(a.scheduledAt) > new Date() && (
                         <span className="text-[9px] text-amber-600 flex items-center gap-1">
@@ -176,9 +176,9 @@ export function ArticlesPage() {
           <div className="card overflow-x-auto">
             <table className="w-full table-fixed">
               <thead><tr className="border-b border-outline-variant">
-                <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[40%]">Artigo</th>
+                <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[45%]">Artigo</th>
                 <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[25%]">Categoria</th>
-                <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[20%]">Autor</th>
+                <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[15%]">Autor</th>
                 <th className="text-right py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[15%]">Ações</th>
               </tr></thead>
               <tbody>
