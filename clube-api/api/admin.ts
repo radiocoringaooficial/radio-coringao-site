@@ -155,7 +155,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // ─── COMPETITIONS ──────────────────────────────────────────
     if (url === '/competicoes' || url === '/competicoes/') {
       if (method === 'GET') {
-        const competitions = await db.competition.findMany({ orderBy: { createdAt: 'desc' }, include: { category: true } });
+        const competitions = await db.competition.findMany({ orderBy: [{ season: 'desc' }, { name: 'asc' }], include: { category: true } });
         return res.status(200).json(competitions);
       }
       if (method === 'POST') {
