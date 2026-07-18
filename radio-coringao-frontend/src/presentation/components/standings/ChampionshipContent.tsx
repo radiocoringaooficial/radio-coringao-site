@@ -11,8 +11,8 @@ interface ChampionshipContentProps {
 function TeamLogo({ name, logo }: { name: string; logo?: string | null }) {
   if (logo) {
     return (
-      <div className="h-7 w-7 shrink-0 rounded-full bg-surface-container flex items-center justify-center overflow-hidden border border-outline-variant">
-        <img src={logo} alt={name} className="h-6 w-6 object-contain" />
+      <div className="h-7 w-7 shrink-0 flex items-center justify-center">
+        <img src={logo} alt={name} className="h-7 w-7 object-contain" />
       </div>
     );
   }
