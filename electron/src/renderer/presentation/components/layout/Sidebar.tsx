@@ -4,7 +4,7 @@ import { useUIStore } from '@/presentation/stores/ui-store';
 import {
   LayoutDashboard, FileText, Tag, Menu, Trophy, Calendar, Users, Settings, Link,
   Shield, FolderOpen, Swords, Target, Gamepad2, BarChart3, UserCheck, ArrowLeftRight, Banknote,
-  LogOut, ChevronLeft, ChevronRight, Radio,
+  LogOut, ChevronLeft, ChevronRight, Radio, Megaphone,
 } from 'lucide-react';
 
 interface NavSection {
@@ -28,6 +28,7 @@ const navSections: NavSection[] = [
       { label: 'Menu', path: '/menu', icon: <Menu size={18} /> },
       { label: 'Patrocinadores', path: '/patrocinadores', icon: <Trophy size={18} /> },
       { label: 'Links do Rodapé', path: '/links-rodape', icon: <Link size={18} /> },
+      { label: 'Anuncie Conosco', path: '/anuncie-conosco', icon: <Megaphone size={18} /> },
     ],
   },
   {
