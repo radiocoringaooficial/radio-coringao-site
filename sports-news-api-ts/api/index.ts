@@ -286,20 +286,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ ok: true });
     }
 
-    // DEBUG: compare viewCount vs articleView count for all articles
-    if (url === '/api/debug-view-reconcile') {
-      const articles = await db.article.findMany({ select: { id: true, title: true, viewCount: true } });
+    // DEBUG: reset and reconcile all viewCounts
+    if (url === '/api/debug-reset-views') {
+      // 1. Zero all viewCounts
+      await db.article.updateMany({ data: { viewCount: 0 } });
+      // 2. Recalculate from articleView counts
       const counts = await db.articleView.groupBy({ by: ['articleId'], _count: { id: true } });
-      const countMap = new Map(counts.map((r: any) => [r.articleId, r._count.id]));
-      let mismatched = 0;
-      let totalDiff = 0;
-      const results = articles.map((a: any) => {
-        const real = countMap.get(a.id) || 0;
-        const diff = real - a.viewCount;
-        if (diff !== 0) { mismatched++; totalDiff += diff; }
-        return { title: a.title?.slice(0, 40), saved: a.viewCount, real, diff };
-      }).filter((r: any) => r.diff !== 0);
-      return res.status(200).json({ totalArticles: articles.length, mismatched, totalDiff, mismatches: results });
+      let updated = 0;
+      for (const row of counts) {
+        await db.article.update({ where: { id: row.articleId }, data: { viewCount: row._count.id } });
+        updated++;
+      }
+      return res.status(200).json({ ok: true, articlesRecalculated: updated });
     }
 
     // Default
