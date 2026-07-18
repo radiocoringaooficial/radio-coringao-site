@@ -23,6 +23,8 @@ export function OpponentsPage() {
   const [saving, setSaving] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['__none__']));
   const [search, setSearch] = useState('');
+  const [sectionPages, setSectionPages] = useState<Record<string, number>>({});
+  const SECTION_LIMIT = 10;
   const toast = useToastStore((s) => s.addToast);
 
   const isDirty = initialForm !== null && (
@@ -76,7 +78,9 @@ export function OpponentsPage() {
       }
     }
 
-    return Object.values(groups).filter((g) => g.all.length > 0);
+    return Object.values(groups)
+      .filter((g) => g.all.length > 0)
+      .map((g) => ({ ...g, all: [...g.all].sort((a: any, b: any) => a.name.localeCompare(b.name, 'pt-BR')) }));
   }, [items, categories]);
 
   const toggleGroup = (id: string) => {
@@ -191,25 +195,40 @@ export function OpponentsPage() {
                   <span className="badge bg-surface-container text-on-surface-variant text-[10px]">{group.all.length} adversário{group.all.length !== 1 ? 's' : ''}</span>
                 </button>
 
-                {isExpanded && (
-                  <div className="border-t border-outline-variant/50 pt-3 pb-1 px-1 fade-in">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                      {group.all.map((o) => (
-                        <div key={o.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-container-low/50 transition-colors group/item border border-outline-variant/30">
-                          {o.logoUrl ? <img src={o.logoUrl} alt={o.name} className="w-10 h-10 rounded-xl object-contain shrink-0" /> : <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-xs shrink-0">{o.shortName?.charAt(0) || o.name.charAt(0)}</div>}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-body text-xs font-bold text-on-surface truncate">{o.name}</p>
-                            {o.city && <p className="text-[10px] text-on-surface-variant">{o.city}</p>}
+                {isExpanded && (() => {
+                  const key = `opp-${group.parent.id}`;
+                  const page = sectionPages[key] || 1;
+                  const totalPages = Math.ceil(group.all.length / SECTION_LIMIT);
+                  const paged = group.all.slice((page - 1) * SECTION_LIMIT, page * SECTION_LIMIT);
+                  return (
+                    <div className="border-t border-outline-variant/50 pt-3 pb-1 px-1 fade-in">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {paged.map((o) => (
+                          <div key={o.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-container-low/50 transition-colors group/item border border-outline-variant/30">
+                            {o.logoUrl ? <img src={o.logoUrl} alt={o.name} className="w-10 h-10 rounded-xl object-contain shrink-0" /> : <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-xs shrink-0">{o.shortName?.charAt(0) || o.name.charAt(0)}</div>}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-body text-xs font-bold text-on-surface truncate">{o.name}</p>
+                              {o.city && <p className="text-[10px] text-on-surface-variant">{o.city}</p>}
+                            </div>
+                            <div className="flex gap-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0">
+                              <button onClick={() => openEdit(o)} className="p-1 rounded hover:bg-surface-container-low text-on-surface-variant"><Pencil size={12} /></button>
+                              <button onClick={() => handleDelete(o.id)} className="p-1 rounded hover:bg-gray-100 text-gray-500"><Trash2 size={12} /></button>
+                            </div>
                           </div>
-                          <div className="flex gap-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity shrink-0">
-                            <button onClick={() => openEdit(o)} className="p-1 rounded hover:bg-surface-container-low text-on-surface-variant"><Pencil size={12} /></button>
-                            <button onClick={() => handleDelete(o.id)} className="p-1 rounded hover:bg-gray-100 text-gray-500"><Trash2 size={12} /></button>
+                        ))}
+                      </div>
+                      {group.all.length > SECTION_LIMIT && (
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-[9px] text-on-surface-variant">{page} de {totalPages}</span>
+                          <div className="flex gap-1.5">
+                            <button onClick={() => setSectionPages({ ...sectionPages, [key]: Math.max(1, page - 1) })} disabled={page === 1} className="p-1 rounded hover:bg-surface-container-low disabled:opacity-30"><ChevronLeft size={12} /></button>
+                            <button onClick={() => setSectionPages({ ...sectionPages, [key]: Math.min(totalPages, page + 1) })} disabled={page >= totalPages} className="p-1 rounded hover:bg-surface-container-low disabled:opacity-30"><ChevronRight size={12} /></button>
                           </div>
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             );
           })}

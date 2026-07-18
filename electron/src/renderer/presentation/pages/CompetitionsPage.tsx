@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { clubeApi } from '@/infrastructure/api/client';
-import { Plus, Pencil, Trash2, Table2, ChevronDown, ChevronRight, Save, LayoutGrid, LayoutList, X, Shield, Users, Loader2, Trophy, Ban } from 'lucide-react';
+import { Plus, Pencil, Trash2, Table2, ChevronDown, ChevronRight, ChevronLeft, Save, LayoutGrid, LayoutList, X, Shield, Users, Loader2, Trophy, Ban } from 'lucide-react';
 import { Modal } from '@/presentation/components/ui/Modal';
 import { Skeleton, TableSkeleton } from '@/presentation/components/ui/Skeleton';
 import { useToastStore } from '@/presentation/stores/toast-store';
@@ -550,6 +550,8 @@ export function CompetitionsPage() {
   const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [sectionPages, setSectionPages] = useState<Record<string, number>>({});
+  const SECTION_LIMIT = 10;
   const [addingPhase, setAddingPhase] = useState(false);
   const [newPhaseName, setNewPhaseName] = useState('');
   const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
@@ -597,7 +599,15 @@ export function CompetitionsPage() {
       }
     }
 
-    return Object.values(groups).filter((g) => g.competitions.length > 0);
+    return Object.values(groups)
+      .filter((g) => g.competitions.length > 0)
+      .map((g) => ({
+        ...g,
+        competitions: [...g.competitions].sort((a: any, b: any) => {
+          const seasonCmp = (b.season || '').localeCompare(a.season || '');
+          return seasonCmp !== 0 ? seasonCmp : a.name.localeCompare(b.name, 'pt-BR');
+        }),
+      }));
   }, [competitions, categories]);
 
   const filtered = filterCategory === 'all' ? grouped : grouped.filter((g) => g.parent.id === filterCategory);
@@ -719,9 +729,14 @@ export function CompetitionsPage() {
                   <span className="badge bg-surface-container text-on-surface-variant text-[10px]">{group.competitions.length} competiç{group.competitions.length !== 1 ? 'ões' : 'ão'}</span>
                 </button>
 
-                {isCatExpanded && (
-                  <div className="border-t border-outline-variant/50 pt-3 pb-1 px-1 fade-in space-y-2">
-                    {group.competitions.map((c, i) => {
+                {isCatExpanded && (() => {
+                  const key = `comp-${group.parent.id}`;
+                  const page = sectionPages[key] || 1;
+                  const totalPages = Math.ceil(group.competitions.length / SECTION_LIMIT);
+                  const paged = group.competitions.slice((page - 1) * SECTION_LIMIT, page * SECTION_LIMIT);
+                  return (
+                    <div className="border-t border-outline-variant/50 pt-3 pb-1 px-1 fade-in space-y-2">
+                      {paged.map((c, i) => {
                       const isExpanded = expanded === c.id;
                       return (
                         <div key={c.id} className="slide-up" style={{ animationDelay: `${i * 20}ms` }}>
@@ -863,8 +878,18 @@ export function CompetitionsPage() {
                         </div>
                       );
                     })}
-                  </div>
-                )}
+                      {group.competitions.length > SECTION_LIMIT && (
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-[9px] text-on-surface-variant">{page} de {totalPages}</span>
+                          <div className="flex gap-1.5">
+                            <button onClick={() => setSectionPages({ ...sectionPages, [key]: Math.max(1, page - 1) })} disabled={page === 1} className="p-1 rounded hover:bg-surface-container-low disabled:opacity-30"><ChevronLeft size={12} /></button>
+                            <button onClick={() => setSectionPages({ ...sectionPages, [key]: Math.min(totalPages, page + 1) })} disabled={page >= totalPages} className="p-1 rounded hover:bg-surface-container-low disabled:opacity-30"><ChevronRight size={12} /></button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Partidas da Competição */}
                 {compMatches.length > 0 && (

@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { clubeApi } from '@/infrastructure/api/client';
-import { Plus, Pencil, Trash2, Shield, Loader2, Users, ChevronRight, ChevronDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, Shield, Loader2, Users, ChevronRight, ChevronDown, ChevronLeft } from 'lucide-react';
 import { Modal } from '@/presentation/components/ui/Modal';
 import { ImageUpload } from '@/presentation/components/ui/ImageUpload';
 import { Skeleton } from '@/presentation/components/ui/Skeleton';
@@ -25,6 +25,8 @@ export function SquadPage() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [sectionPages, setSectionPages] = useState<Record<string, number>>({});
+  const SECTION_LIMIT = 10;
   const toast = useToastStore((s) => s.addToast);
 
   const isDirty = !editing && photoFile ? true : (initialForm !== null && JSON.stringify(form) !== JSON.stringify(initialForm));
@@ -125,7 +127,7 @@ export function SquadPage() {
     }
     for (const leaf of leafCategories) {
       const players = byId[leaf.id];
-      if (players && players.length > 0) sections.push({ leaf, players });
+      if (players && players.length > 0) sections.push({ leaf, players: [...players].sort((a: any, b: any) => a.name.localeCompare(b.name, 'pt-BR')) });
     }
     return sections;
   }, [items, leafCategories]);
@@ -201,30 +203,47 @@ export function SquadPage() {
                     </div>
                     <span className="badge bg-surface-container text-on-surface-variant text-[10px]">{players.length} jogador{players.length !== 1 ? 'es' : ''}</span>
                   </button>
-                  {isExpanded && (
-                    <div className="border-t border-outline-variant/50 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-3 fade-in">
-                      {players.map((item) => (
-                        <div key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-low/50 transition-colors group/player">
-                          {item.photoUrl ? <img src={item.photoUrl} alt="" className="w-10 h-10 rounded-full object-cover border border-outline-variant shrink-0" /> :
-                            <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center shrink-0"><Shield size={14} className="text-on-surface-variant/30" /></div>}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              <p className="font-body text-xs font-bold text-on-surface truncate">{item.name}</p>
-                              {item.shirtNumber && <span className="text-[9px] font-headline font-bold text-primary">#{item.shirtNumber}</span>}
+                  {isExpanded && (() => {
+                    const key = `squad-all-${leaf.id}`;
+                    const page = sectionPages[key] || 1;
+                    const totalPages = Math.ceil(players.length / SECTION_LIMIT);
+                    const paged = players.slice((page - 1) * SECTION_LIMIT, page * SECTION_LIMIT);
+                    return (
+                      <div className="border-t border-outline-variant/50 pt-3 pb-1 px-3 fade-in">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                          {paged.map((item) => (
+                            <div key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-low/50 transition-colors group/player">
+                              {item.photoUrl ? <img src={item.photoUrl} alt="" className="w-10 h-10 rounded-full object-cover border border-outline-variant shrink-0" /> :
+                                <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center shrink-0"><Shield size={14} className="text-on-surface-variant/30" /></div>}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="font-body text-xs font-bold text-on-surface truncate">{item.name}</p>
+                                  {item.shirtNumber && <span className="text-[9px] font-headline font-bold text-primary">#{item.shirtNumber}</span>}
+                                </div>
+                                {item.position && <p className="text-[9px] text-on-surface-variant">{item.position}</p>}
+                                <span className={`inline-block text-[8px] font-bold px-1 py-0.5 rounded mt-0.5 ${item.isActive ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>{item.isActive ? 'Ativo' : 'Inativo'}</span>
+                              </div>
+                              <div className="flex gap-0.5 opacity-0 group-hover/player:opacity-100 transition-opacity shrink-0">
+                                <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-1 rounded hover:bg-surface-container-low text-on-surface-variant"><Pencil size={12} /></button>
+                                <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} disabled={deletingId === item.id} className="p-1 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-50">
+                                  {deletingId === item.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                                </button>
+                              </div>
                             </div>
-                            {item.position && <p className="text-[9px] text-on-surface-variant">{item.position}</p>}
-                            <span className={`inline-block text-[8px] font-bold px-1 py-0.5 rounded mt-0.5 ${item.isActive ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>{item.isActive ? 'Ativo' : 'Inativo'}</span>
-                          </div>
-                          <div className="flex gap-0.5 opacity-0 group-hover/player:opacity-100 transition-opacity shrink-0">
-                            <button onClick={(e) => { e.stopPropagation(); openEdit(item); }} className="p-1 rounded hover:bg-surface-container-low text-on-surface-variant"><Pencil size={12} /></button>
-                            <button onClick={(e) => { e.stopPropagation(); handleDelete(item.id); }} disabled={deletingId === item.id} className="p-1 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-50">
-                              {deletingId === item.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                            </button>
-                          </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        {players.length > SECTION_LIMIT && (
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-[9px] text-on-surface-variant">{page} de {totalPages}</span>
+                            <div className="flex gap-1.5">
+                              <button onClick={() => setSectionPages({ ...sectionPages, [key]: Math.max(1, page - 1) })} disabled={page === 1} className="p-1 rounded hover:bg-surface-container-low disabled:opacity-30"><ChevronLeft size={12} /></button>
+                              <button onClick={() => setSectionPages({ ...sectionPages, [key]: Math.min(totalPages, page + 1) })} disabled={page >= totalPages} className="p-1 rounded hover:bg-surface-container-low disabled:opacity-30"><ChevronRight size={12} /></button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })
@@ -247,30 +266,54 @@ export function SquadPage() {
                 );
               })()}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-3">
-                {filteredPlayers.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-low/50 transition-colors group/player">
-                    {item.photoUrl ? <img src={item.photoUrl} alt="" className="w-10 h-10 rounded-full object-cover border border-outline-variant shrink-0" /> :
-                      <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center shrink-0"><Shield size={14} className="text-on-surface-variant/30" /></div>}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <p className="font-body text-xs font-bold text-on-surface truncate">{item.name}</p>
-                        {item.shirtNumber && <span className="text-[9px] font-headline font-bold text-primary">#{item.shirtNumber}</span>}
-                      </div>
-                      {item.position && <p className="text-[9px] text-on-surface-variant">{item.position}</p>}
-                      <span className={`inline-block text-[8px] font-bold px-1 py-0.5 rounded mt-0.5 ${item.isActive ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>{item.isActive ? 'Ativo' : 'Inativo'}</span>
-                    </div>
-                    <div className="flex gap-0.5 opacity-0 group-hover/player:opacity-100 transition-opacity shrink-0">
-                      <button onClick={() => openEdit(item)} className="p-1 rounded hover:bg-surface-container-low text-on-surface-variant"><Pencil size={12} /></button>
-                      <button onClick={() => handleDelete(item.id)} disabled={deletingId === item.id} className="p-1 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-50">
-                        {deletingId === item.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                      </button>
+                {(() => {
+                  const key = `squad-filter-${filterCategory}`;
+                  const page = sectionPages[key] || 1;
+                  const totalPages = Math.ceil(filteredPlayers.length / SECTION_LIMIT);
+                  const paged = filteredPlayers.slice((page - 1) * SECTION_LIMIT, page * SECTION_LIMIT);
+                  return (
+                    <>
+                      {paged.map((item) => (
+                        <div key={item.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-container-low/50 transition-colors group/player">
+                          {item.photoUrl ? <img src={item.photoUrl} alt="" className="w-10 h-10 rounded-full object-cover border border-outline-variant shrink-0" /> :
+                            <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center shrink-0"><Shield size={14} className="text-on-surface-variant/30" /></div>}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-body text-xs font-bold text-on-surface truncate">{item.name}</p>
+                              {item.shirtNumber && <span className="text-[9px] font-headline font-bold text-primary">#{item.shirtNumber}</span>}
+                            </div>
+                            {item.position && <p className="text-[9px] text-on-surface-variant">{item.position}</p>}
+                            <span className={`inline-block text-[8px] font-bold px-1 py-0.5 rounded mt-0.5 ${item.isActive ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>{item.isActive ? 'Ativo' : 'Inativo'}</span>
+                          </div>
+                          <div className="flex gap-0.5 opacity-0 group-hover/player:opacity-100 transition-opacity shrink-0">
+                            <button onClick={() => openEdit(item)} className="p-1 rounded hover:bg-surface-container-low text-on-surface-variant"><Pencil size={12} /></button>
+                            <button onClick={() => handleDelete(item.id)} disabled={deletingId === item.id} className="p-1 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-50">
+                              {deletingId === item.id ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {filteredPlayers.length === 0 && (
+                        <p className="col-span-full text-on-surface-variant text-sm py-8 text-center">Nenhum jogador nesta categoria.</p>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+              {filteredPlayers.length > SECTION_LIMIT && (() => {
+                const key = `squad-filter-${filterCategory}`;
+                const page = sectionPages[key] || 1;
+                const totalPages = Math.ceil(filteredPlayers.length / SECTION_LIMIT);
+                return (
+                  <div className="flex items-center justify-between px-3 pb-2">
+                    <span className="text-[9px] text-on-surface-variant">{page} de {totalPages}</span>
+                    <div className="flex gap-1.5">
+                      <button onClick={() => setSectionPages({ ...sectionPages, [key]: Math.max(1, page - 1) })} disabled={page === 1} className="p-1 rounded hover:bg-surface-container-low disabled:opacity-30"><ChevronLeft size={12} /></button>
+                      <button onClick={() => setSectionPages({ ...sectionPages, [key]: Math.min(totalPages, page + 1) })} disabled={page >= totalPages} className="p-1 rounded hover:bg-surface-container-low disabled:opacity-30"><ChevronRight size={12} /></button>
                     </div>
                   </div>
-                ))}
-                {filteredPlayers.length === 0 && (
-                  <p className="col-span-full text-on-surface-variant text-sm py-8 text-center">Nenhum jogador nesta categoria.</p>
-                )}
-              </div>
+                );
+              })()}
             </div>
           )}
         </div>
