@@ -286,6 +286,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ ok: true });
     }
 
+    // DEBUG: check view tracking for an article
+    if (url.startsWith('/api/debug-views/')) {
+      const debugSlug = url.replace('/api/debug-views/', '');
+      const article = await db.article.findUnique({ where: { slug: debugSlug }, select: { id: true, viewCount: true, title: true } });
+      if (!article) return res.status(404).json({ error: 'Article not found' });
+      const viewCount = await db.articleView.count({ where: { articleId: article.id } });
+      const recentViews = await db.articleView.findMany({ where: { articleId: article.id }, orderBy: { viewedAt: 'desc' }, take: 5, select: { ipHash: true, viewBucket: true, viewedAt: true } });
+      return res.status(200).json({ articleId: article.id, title: article.title, viewCountField: article.viewCount, articleViewRows: viewCount, recentViews });
+    }
+
     // Default
     return res.status(404).json({ error: 'Route not found' });
   } catch (err: any) {
