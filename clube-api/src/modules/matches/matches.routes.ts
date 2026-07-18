@@ -146,6 +146,7 @@ export async function matchesAdminRoutes(app: FastifyInstance): Promise<void> {
       prisma.match.findMany({ where, include: matchInclude, orderBy: { date: 'desc' }, skip, take }),
       prisma.match.count({ where }),
     ]);
+    reply.header('Cache-Control', 'no-store');
     return reply.send({ data, total, page: p, limit: take, totalPages: Math.ceil(total / take) });
   });
 
