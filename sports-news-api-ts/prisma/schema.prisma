@@ -301,6 +301,10 @@ model SiteSettings {
   biography        String?
   liveStreamUrl    String?   // URL do YouTube da transmissão ao vivo
   liveStreamActive Boolean   @default(false)  // liga/desliga a exibição
+  advertiseIntro   String?   // parágrafo "Por que anunciar..."
+  advertiseBullets String[]  @default([])     // lista de bullets
+  advertiseEmail   String?
+  advertisePhone   String?
   updatedAt        DateTime @updatedAt
 
   @@map("site_settings")
