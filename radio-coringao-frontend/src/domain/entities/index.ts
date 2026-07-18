@@ -28,6 +28,7 @@ export interface NextMatch {
   venue: string;
   competition: string;
   hasTickets: boolean;
+  ticketUrl?: string | null;
   round?: string | null;
 }
 

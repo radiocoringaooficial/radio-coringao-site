@@ -30,7 +30,7 @@ function TeamLogo({ name, logo }: { name: string; logo?: string | null }) {
 }
 
 export function NextMatchCard(props: NextMatchCardProps) {
-  const { homeTeam, awayTeam, date, time, venue, hasTickets, competition, category, title, dots, activeDot, cardIndex = 0, homeTeamLogo, awayTeamLogo, round } =
+  const { homeTeam, awayTeam, date, time, venue, hasTickets, ticketUrl, competition, category, title, dots, activeDot, cardIndex = 0, homeTeamLogo, awayTeamLogo, round } =
     props;
 
   const competitionColors = [
@@ -98,14 +98,16 @@ export function NextMatchCard(props: NextMatchCardProps) {
               <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold text-white/80 uppercase tracking-wider">{round}</span>
             </div>
           )}
-          <Link
-            href="https://www.fieltorcedor.com.br/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full rounded-md border border-white/20 bg-white/10 py-3 text-center font-label-sm text-label-sm uppercase font-bold text-white transition-all duration-200 hover:bg-white hover:text-primary"
-          >
-            Ingressos
-          </Link>
+          {ticketUrl && (
+            <Link
+              href={ticketUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full rounded-md border border-white/20 bg-white/10 py-3 text-center font-label-sm text-label-sm uppercase font-bold text-white transition-all duration-200 hover:bg-white hover:text-primary"
+            >
+              Ingressos
+            </Link>
+          )}
         </div>
       </div>
 
