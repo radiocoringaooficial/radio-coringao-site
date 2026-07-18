@@ -288,7 +288,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json({ data, total, page, limit, totalPages: Math.ceil(total / limit) });
       }
       if (method === 'POST') {
-        const match = await db.match.create({ data: { competitionId: req.body.competitionId, opponentId: req.body.opponentId, date: req.body.date, venue: req.body.venue, isHome: req.body.isHome ?? true, status: req.body.status || 'SCHEDULED', homeScore: req.body.homeScore, awayScore: req.body.awayScore, round: req.body.round, season: req.body.season || '2026' } });
+        const match = await db.match.create({ data: {
+          competitionId: req.body.competitionId,
+          opponentId: req.body.opponentId,
+          date: req.body.date,
+          venue: req.body.venue?.trim() ?? null,
+          isHome: req.body.isHome ?? true,
+          status: req.body.status || 'SCHEDULED',
+          homeScore: req.body.homeScore !== undefined ? Number(req.body.homeScore) : null,
+          awayScore: req.body.awayScore !== undefined ? Number(req.body.awayScore) : null,
+          round: req.body.round?.trim() ?? null,
+          season: req.body.season || String(new Date(req.body.date).getFullYear()),
+          ticketUrl: req.body.ticketUrl?.trim() || null,
+          homePossession: req.body.homePossession !== undefined ? Number(req.body.homePossession) : null,
+          awayPossession: req.body.awayPossession !== undefined ? Number(req.body.awayPossession) : null,
+          homeShots: req.body.homeShots !== undefined ? Number(req.body.homeShots) : null,
+          awayShots: req.body.awayShots !== undefined ? Number(req.body.awayShots) : null,
+          homeOnTarget: req.body.homeOnTarget !== undefined ? Number(req.body.homeOnTarget) : null,
+          awayOnTarget: req.body.awayOnTarget !== undefined ? Number(req.body.awayOnTarget) : null,
+          homeCorners: req.body.homeCorners !== undefined ? Number(req.body.homeCorners) : null,
+          awayCorners: req.body.awayCorners !== undefined ? Number(req.body.awayCorners) : null,
+        } });
         return res.status(201).json(match);
       }
     }
