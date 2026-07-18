@@ -111,23 +111,23 @@ export function ArticlesPage() {
         <div className="card overflow-x-auto mb-4">
           <table className="w-full">
             <thead><tr className="border-b border-outline-variant">
-              <th className="text-left py-3 px-4 font-headline text-label-sm font-bold text-on-surface-variant">Artigo</th>
-              <th className="text-left py-3 px-4 font-headline text-label-sm font-bold text-on-surface-variant">Categoria</th>
-              <th className="text-left py-3 px-4 font-headline text-label-sm font-bold text-on-surface-variant">Status</th>
-              <th className="text-right py-3 px-4 font-headline text-label-sm font-bold text-on-surface-variant">Ações</th>
+              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Artigo</th>
+              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Categoria</th>
+              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Status</th>
+              <th className="text-right py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Ações</th>
             </tr></thead>
             <tbody>
               {articles.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-on-surface-variant">Nenhum artigo.</td></tr>}
               {articles.map((a) => (
                 <tr key={a.id} className="table-row">
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-3">
                     <div className="flex items-center gap-3">
                       {a.coverImage ? <img src={a.coverImage} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" /> : <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center shrink-0"><FileText size={16} className="text-on-surface-variant" /></div>}
-                      <div className="min-w-0"><p className="font-body text-sm font-medium truncate">{a.title}</p><p className="text-xs text-on-surface-variant">{a.author?.name || a.authorNameSnapshot || ''}</p></div>
+                      <div className="min-w-0 max-w-[260px]"><p className="font-body text-sm font-medium truncate">{a.title}</p><p className="text-xs text-on-surface-variant">{a.author?.name || a.authorNameSnapshot || ''}</p></div>
                     </div>
                   </td>
-                  <td className="py-3 px-4"><span className="badge bg-surface-container text-on-surface-variant">{a.category?.name || '-'}</span></td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-3"><span className="badge bg-surface-container text-on-surface-variant max-w-[130px] truncate block">{a.category?.name || '-'}</span></td>
+                  <td className="py-3 px-3">
                     <div className="flex flex-col gap-0.5">
                       <span className={`badge ${STATUS_COLORS[a.status] || ''}`}>{STATUS_LABELS[a.status] || a.status}</span>
                       {a.scheduledAt && new Date(a.scheduledAt) > new Date() && (
@@ -137,7 +137,7 @@ export function ArticlesPage() {
                       )}
                     </div>
                   </td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-3">
                     <div className="flex justify-end gap-1">
                       <Link to={`/materias/${a.id}`} className="p-1.5 rounded hover:bg-blue-50 hover:text-blue-600 transition-colors text-on-surface-variant" title="Editar"><Pencil size={16} /></Link>
                       <button onClick={() => handleArchive(a.id)} className="p-1.5 rounded hover:bg-yellow-50 hover:text-yellow-700 transition-colors text-gray-500" title="Arquivar"><Archive size={16} /></button>
@@ -176,23 +176,23 @@ export function ArticlesPage() {
           <div className="card overflow-x-auto">
             <table className="w-full">
               <thead><tr className="border-b border-outline-variant">
-                <th className="text-left py-3 px-4 font-headline text-label-sm font-bold text-on-surface-variant">Artigo</th>
-                <th className="text-left py-3 px-4 font-headline text-label-sm font-bold text-on-surface-variant">Categoria</th>
-                <th className="text-left py-3 px-4 font-headline text-label-sm font-bold text-on-surface-variant">Autor</th>
-                <th className="text-right py-3 px-4 font-headline text-label-sm font-bold text-on-surface-variant">Ações</th>
+                <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Artigo</th>
+                <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Categoria</th>
+                <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Autor</th>
+                <th className="text-right py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Ações</th>
               </tr></thead>
               <tbody>
                 {archived.map((a) => (
                   <tr key={a.id} className="table-row">
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-3">
                       <div className="flex items-center gap-3">
                         {a.coverImage ? <img src={a.coverImage} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" /> : <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center shrink-0"><FileText size={16} className="text-on-surface-variant" /></div>}
-                        <div className="min-w-0"><p className="font-body text-sm font-medium truncate">{a.title}</p><p className="text-xs text-on-surface-variant">{a.slug || ''}</p></div>
+                        <div className="min-w-0 max-w-[260px]"><p className="font-body text-sm font-medium truncate">{a.title}</p><p className="text-xs text-on-surface-variant">{a.slug || ''}</p></div>
                       </div>
                     </td>
-                    <td className="py-3 px-4"><span className="badge bg-surface-container text-on-surface-variant">{a.category?.name || '-'}</span></td>
-                    <td className="py-3 px-4"><span className="text-sm text-on-surface-variant">{a.author?.name || '-'}</span></td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-3"><span className="badge bg-surface-container text-on-surface-variant max-w-[130px] truncate block">{a.category?.name || '-'}</span></td>
+                    <td className="py-3 px-3"><span className="text-sm text-on-surface-variant">{a.author?.name || '-'}</span></td>
+                    <td className="py-3 px-3">
                       <div className="flex justify-end gap-1">
                         <Link to={`/materias/${a.id}`} className="p-1.5 rounded hover:bg-surface-container-low" title="Editar"><Pencil size={14} /></Link>
                         <button onClick={() => handleUnarchive(a.id)} className="p-1.5 rounded hover:bg-blue-50 text-blue-600" title="Desarquivar"><RotateCcw size={14} /></button>
