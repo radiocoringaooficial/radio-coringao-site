@@ -294,7 +294,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!article) return res.status(404).json({ error: 'Article not found' });
       const viewCount = await db.articleView.count({ where: { articleId: article.id } });
       const recentViews = await db.articleView.findMany({ where: { articleId: article.id }, orderBy: { viewedAt: 'desc' }, take: 5, select: { ipHash: true, viewBucket: true, viewedAt: true } });
-      return res.status(200).json({ articleId: article.id, title: article.title, viewCountField: article.viewCount, articleViewRows: viewCount, recentViews });
+
+      // Test: try to increment viewCount manually
+      let incrementResult = 'not tested';
+      try {
+        const testUpdate = await db.article.update({ where: { id: article.id }, data: { viewCount: { increment: 1 } } });
+        incrementResult = `OK - new viewCount: ${testUpdate.viewCount}`;
+        // Revert
+        await db.article.update({ where: { id: article.id }, data: { viewCount: { decrement: 1 } } });
+      } catch (e: any) {
+        incrementResult = `FAILED: ${e.message}`;
+      }
+
+      return res.status(200).json({ articleId: article.id, title: article.title, viewCountField: article.viewCount, articleViewRows: viewCount, recentViews, incrementTest: incrementResult });
     }
 
     // Default
