@@ -692,7 +692,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           data.password = await bcrypt.default.hash(fields.password, 12);
         }
         const updated = await db.user.update({ where: { id }, data });
-        return res.status(200).json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role });
+        return res.status(200).json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role, avatar: updated.avatar, position: updated.position });
       }
       if (method === 'DELETE') {
         // Buscar dados do usuário pra snapshot antes de deletar

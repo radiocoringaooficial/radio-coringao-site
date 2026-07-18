@@ -102,14 +102,15 @@ export function UsersPage() {
     try {
       setSaving(true);
       if (editing) {
-        await newsApi.patch(`/admin/users/${editing.id}`, { name: form.name, email: form.email, role: form.role, position: form.position || null });
+        let updatedUser: any = null;
+        updatedUser = await newsApi.patch(`/admin/users/${editing.id}`, { name: form.name, email: form.email, role: form.role, position: form.position || null });
         if (form.password.trim()) {
           await newsApi.patch(`/admin/users/${editing.id}/password`, { newPassword: form.password });
         }
         if (avatarFile) {
           const fd = new FormData();
           fd.append('avatar', avatarFile);
-          await newsApi.patch(`/admin/users/${editing.id}`, fd);
+          updatedUser = await newsApi.patch(`/admin/users/${editing.id}`, fd);
         }
         if (editing.id === currentUser?.id) {
           updateAuthUser({
@@ -117,6 +118,7 @@ export function UsersPage() {
             email: form.email,
             role: form.role,
             position: form.position || undefined,
+            avatar: updatedUser?.avatar ?? currentUser?.avatar,
           });
         }
       } else {
