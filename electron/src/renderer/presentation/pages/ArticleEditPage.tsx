@@ -144,14 +144,13 @@ export function ArticleEditPage() {
     title: '', subtitle: '', content: '', excerpt: '', categoryId: '', status: 'DRAFT', type: 'NEWS',
     isFeatured: false, order: '0',
     coverImageAlt: '', coverImageCredit: '',
-    scheduledAt: '', authorCargo: '',
+    scheduledAt: '',
   });
 
   const [initialForm, setInitialForm] = useState<typeof form | null>(null);
   // Agendamento só trava se o artigo JÁ estava publicado quando carregou
   const wasAlreadyPublished = !isNew && initialForm?.status === 'PUBLISHED';
   const [categories, setCategories] = useState<any[]>([]);
-  const [jobTitles, setJobTitles] = useState<{ id: string; name: string }[]>([]);
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState('');
   const [saving, setSaving] = useState(false);
@@ -172,11 +171,6 @@ export function ArticleEditPage() {
       }
       setCategories(parents);
     }).catch(() => {});
-    // Fetch job titles for author cargo dropdown
-    newsApi.get('/admin/job-titles').then((data) => {
-      const titles = Array.isArray(data) ? data.map((t: any) => ({ id: t.id, name: t.name })) : [];
-      setJobTitles(titles);
-    }).catch(() => {});
     if (id) {
       setLoading(true);
       newsApi.get(`/admin/articles/${id}`).then((a) => {
@@ -192,7 +186,7 @@ export function ArticleEditPage() {
           categoryId: a.categoryId || '', status: a.status || 'DRAFT', type: a.type || 'NEWS',
           isFeatured: a.isFeatured || false,
           order: String(a.order || 0), coverImageAlt: a.coverImageAlt || '', coverImageCredit: a.coverImageCredit || '',
-          scheduledAt: scheduledAtStr, authorCargo: a.authorCargo || '',
+          scheduledAt: scheduledAtStr,
         };
         setForm(loaded);
         setInitialForm({ ...loaded });
@@ -243,7 +237,6 @@ export function ArticleEditPage() {
       fd.append('scheduledAt', '');
     }
     if (coverImage) fd.append('coverImage', coverImage);
-    fd.append('authorCargo', form.authorCargo);
     try {
       if (isNew) await newsApi.post('/admin/materias', fd);
       else await newsApi.patch(`/admin/articles/${id}`, fd);
@@ -372,13 +365,6 @@ export function ArticleEditPage() {
 
             <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Categoria *</label>
               <CategoryDropdown value={form.categoryId} onChange={(id) => setForm({ ...form, categoryId: id })} categories={categories} />
-            </div>
-            <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Cargo do autor neste artigo</label>
-              <select value={form.authorCargo} onChange={(e) => setForm({ ...form, authorCargo: e.target.value })} className="select-field">
-                <option value="">Nenhum</option>
-                {jobTitles.map((t) => <option key={t.id} value={t.name}>{t.name}</option>)}
-              </select>
-              <p className="text-[10px] text-on-surface-variant mt-1">Se vazio, usa o cargo exibível do perfil.</p>
             </div>
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.isFeatured} onChange={(e) => {
