@@ -1,24 +1,7 @@
 {
-  "version": 2,
   "installCommand": "npm install && npx prisma generate",
-  "builds": [
-    {
-      "src": "api/index.ts",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "api/admin.ts",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/admin/(.*)",
-      "dest": "api/admin.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "api/index.ts"
-    }
+  "rewrites": [
+    { "source": "/api/admin/(.*)", "destination": "/api/admin" },
+    { "source": "/(.*)", "destination": "/api/index" }
   ]
 }
