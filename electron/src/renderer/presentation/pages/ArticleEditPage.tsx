@@ -219,19 +219,21 @@ export function ArticleEditPage() {
       }
     }
     setSaving(true);
+    const hasFutureSchedule = form.scheduledAt && new Date(form.scheduledAt) > new Date();
+    const effectiveStatus = (hasFutureSchedule && form.status === 'PUBLISHED') ? 'DRAFT' : form.status;
     const fd = new FormData();
     fd.append('title', form.title);
     fd.append('subtitle', form.subtitle);
     fd.append('content', form.content);
     fd.append('excerpt', form.excerpt);
     fd.append('categoryId', form.categoryId);
-    fd.append('status', form.status);
+    fd.append('status', effectiveStatus);
     fd.append('type', form.type);
     fd.append('isFeatured', String(form.isFeatured));
     fd.append('order', form.order);
     fd.append('coverImageAlt', form.coverImageAlt);
     fd.append('coverImageCredit', form.coverImageCredit);
-    if (form.scheduledAt && form.status !== 'PUBLISHED') {
+    if (form.scheduledAt && effectiveStatus !== 'PUBLISHED') {
       fd.append('scheduledAt', new Date(form.scheduledAt).toISOString());
     } else {
       fd.append('scheduledAt', '');
@@ -240,7 +242,14 @@ export function ArticleEditPage() {
     try {
       if (isNew) await newsApi.post('/admin/materias', fd);
       else await newsApi.patch(`/admin/articles/${id}`, fd);
-      toast('Salvo com sucesso!', 'success');
+      if (hasFutureSchedule && form.status === 'PUBLISHED') {
+        const d = new Date(form.scheduledAt);
+        const dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+        const timeStr = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        toast(`Artigo agendado para publicação em ${dateStr} às ${timeStr}. O status ficará como Rascunho até lá.`, 'info');
+      } else {
+        toast('Salvo com sucesso!', 'success');
+      }
       setTimeout(() => navigate('/materias'), 1000);
     } catch (e: any) { toast('Erro: ' + e.message, 'error'); }
     setSaving(false);
