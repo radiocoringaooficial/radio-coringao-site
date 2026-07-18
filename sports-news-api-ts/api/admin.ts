@@ -262,8 +262,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (orderVal > 0) {
           const conflicting = await db.article.findFirst({ where: { order: orderVal, isFeatured: true, status: 'PUBLISHED', id: { not: '' } }, select: { id: true, title: true } });
           if (conflicting) {
-            console.warn(`[ORDER CONFLICT] Posição #${orderVal} ocupada por "${conflicting.title}" (${conflicting.id}). Bloqueado.`);
-            return res.status(409).json({ error: `Posição #${orderVal} já ocupada por "${conflicting.title}". Remova a posição desse artigo primeiro.` });
+            await db.article.update({ where: { id: conflicting.id }, data: { order: 0, isFeatured: false } });
+            console.log(`[ORDER SWAP] Posição #${orderVal} tirada de "${conflicting.title}" (${conflicting.id}) para o artigo atual.`);
           }
         }
         const article = await db.article.create({ data: { title: fields.title, subtitle: fields.subtitle ? sanitizePlainText(fields.subtitle) : null, slug: fields.slug || fields.title?.toLowerCase().replace(/[^a-z0-9]+/g, '-'), content: fields.content || '', excerpt: fields.excerpt, status: fields.status || 'DRAFT', type: fields.type || 'NEWS', isFeatured: fields.isFeatured === 'true', isBreaking: fields.isBreaking === 'true', authorId: user.id, authorCargo: fields.authorCargo || null, categoryId: fields.categoryId, coverImage: coverImageUrl, scheduledAt: fields.scheduledAt || null, publishedAt: fields.status === 'PUBLISHED' ? new Date() : null, order: orderVal } });
@@ -289,8 +289,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (orderVal > 0 && fields.isFeatured === 'true') {
           const conflicting = await db.article.findFirst({ where: { order: orderVal, isFeatured: true, status: 'PUBLISHED', id: { not: id } }, select: { id: true, title: true } });
           if (conflicting) {
-            console.warn(`[ORDER CONFLICT] Posição #${orderVal} ocupada por "${conflicting.title}" (${conflicting.id}). Bloqueado.`);
-            return res.status(409).json({ error: `Posição #${orderVal} já ocupada por "${conflicting.title}". Remova a posição desse artigo primeiro.` });
+            await db.article.update({ where: { id: conflicting.id }, data: { order: 0, isFeatured: false } });
+            console.log(`[ORDER SWAP] Posição #${orderVal} tirada de "${conflicting.title}" (${conflicting.id}) para o artigo atual.`);
           }
         }
         const updateData: Record<string, any> = {};
@@ -364,8 +364,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (orderVal > 0 && fields.isFeatured === 'true') {
           const conflicting = await db.article.findFirst({ where: { order: orderVal, isFeatured: true, status: 'PUBLISHED', id: { not: id } }, select: { id: true, title: true } });
           if (conflicting) {
-            console.warn(`[ORDER CONFLICT] Posição #${orderVal} ocupada por "${conflicting.title}" (${conflicting.id}). Bloqueado.`);
-            return res.status(409).json({ error: `Posição #${orderVal} já ocupada por "${conflicting.title}". Remova a posição desse artigo primeiro.` });
+            await db.article.update({ where: { id: conflicting.id }, data: { order: 0, isFeatured: false } });
+            console.log(`[ORDER SWAP] Posição #${orderVal} tirada de "${conflicting.title}" (${conflicting.id}) para o artigo atual.`);
           }
         }
         const updateData: Record<string, any> = {};
