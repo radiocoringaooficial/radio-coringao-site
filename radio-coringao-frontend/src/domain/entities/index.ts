@@ -12,6 +12,7 @@ export interface NewsArticle {
   imageUrl: string;
   imageAlt: string;
   publishedAt: string;
+  updatedAt?: string;
   slug: string;
   isBreaking: boolean;
   isLive: boolean;

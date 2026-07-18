@@ -68,6 +68,7 @@ export default async function NoticiaPage({ params }: Props) {
     image: article.imageUrl || `${SITE_URL}/logo-seo.png`,
     url: articleUrl,
     datePublished: article.publishedAt,
+    dateModified: article.updatedAt || article.publishedAt,
     author: {
       "@type": "Person",
       name: article.author,
