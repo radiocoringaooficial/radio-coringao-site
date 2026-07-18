@@ -147,9 +147,9 @@ export function ArticleEditPage() {
     scheduledAt: '', authorCargo: '',
   });
 
+  const [initialForm, setInitialForm] = useState<typeof form | null>(null);
   // Agendamento só trava se o artigo JÁ estava publicado quando carregou
   const wasAlreadyPublished = !isNew && initialForm?.status === 'PUBLISHED';
-  const [initialForm, setInitialForm] = useState<typeof form | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [jobTitles, setJobTitles] = useState<{ id: string; name: string }[]>([]);
   const [coverImage, setCoverImage] = useState<File | null>(null);
