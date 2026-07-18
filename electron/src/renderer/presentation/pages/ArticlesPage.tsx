@@ -129,7 +129,12 @@ export function ArticlesPage() {
                   <td className="py-3 px-3"><span className="badge bg-surface-container text-on-surface-variant truncate max-w-full px-3 py-1">{a.category?.name || '-'}</span></td>
                   <td className="py-3 px-3">
                     <div className="flex flex-col gap-0.5 items-start">
-                      <span className={`badge ${STATUS_COLORS[a.status] || ''} px-3 py-1`}>{STATUS_LABELS[a.status] || a.status}</span>
+                      {(() => {
+                        const isScheduled = a.status === 'DRAFT' && a.scheduledAt && new Date(a.scheduledAt) > new Date();
+                        const label = isScheduled ? 'Agendado' : (STATUS_LABELS[a.status] || a.status);
+                        const color = isScheduled ? 'bg-blue-50 text-blue-700' : (STATUS_COLORS[a.status] || '');
+                        return <span className={`badge ${color} px-3 py-1`}>{label}</span>;
+                      })()}
                       {a.scheduledAt && new Date(a.scheduledAt) > new Date() && (
                         <span className="text-[9px] text-amber-600 flex items-center gap-1">
                           📅 {new Date(a.scheduledAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} às {new Date(a.scheduledAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}

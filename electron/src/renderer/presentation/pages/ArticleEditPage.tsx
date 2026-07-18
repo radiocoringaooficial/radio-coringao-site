@@ -317,12 +317,25 @@ export function ArticleEditPage() {
           <div className="card space-y-4">
             <h3 className="font-headline text-label-sm font-bold text-on-surface">Publicação</h3>
             <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Status</label>
-              <select value={form.status} onChange={(e) => {
-                const newStatus = e.target.value;
-                setForm((prev) => ({ ...prev, status: newStatus, scheduledAt: newStatus === 'PUBLISHED' ? '' : prev.scheduledAt }));
-              }} className="select-field">
-                <option value="DRAFT">Rascunho</option><option value="REVIEW">Revisão</option><option value="PUBLISHED">Publicado</option>
-              </select>
+              {(() => {
+                const isScheduled = form.status === 'DRAFT' && form.scheduledAt && new Date(form.scheduledAt) > new Date();
+                if (isScheduled) {
+                  return (
+                    <div className="flex items-center gap-2">
+                      <span className="badge bg-blue-50 text-blue-700 px-3 py-1">Agendado</span>
+                      <span className="text-[10px] text-on-surface-variant">Publicação automática agendada</span>
+                    </div>
+                  );
+                }
+                return (
+                  <select value={form.status} onChange={(e) => {
+                    const newStatus = e.target.value;
+                    setForm((prev) => ({ ...prev, status: newStatus, scheduledAt: newStatus === 'PUBLISHED' ? '' : prev.scheduledAt }));
+                  }} className="select-field">
+                    <option value="DRAFT">Rascunho</option><option value="REVIEW">Revisão</option><option value="PUBLISHED">Publicado</option>
+                  </select>
+                );
+              })()}
             </div>
 
             {/* Agendamento */}
