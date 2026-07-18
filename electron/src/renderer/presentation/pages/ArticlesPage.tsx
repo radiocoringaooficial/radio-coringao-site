@@ -109,12 +109,12 @@ export function ArticlesPage() {
 
       {loading ? <TableSkeleton rows={5} cols={4} /> : (
         <div className="card overflow-x-auto mb-4">
-          <table className="w-full">
+          <table className="w-full table-fixed">
             <thead><tr className="border-b border-outline-variant">
-              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Artigo</th>
-              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Categoria</th>
-              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Status</th>
-              <th className="text-right py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Ações</th>
+              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[40%]">Artigo</th>
+              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[20%]">Categoria</th>
+              <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[20%]">Status</th>
+              <th className="text-right py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[20%]">Ações</th>
             </tr></thead>
             <tbody>
               {articles.length === 0 && <tr><td colSpan={4} className="py-8 text-center text-on-surface-variant">Nenhum artigo.</td></tr>}
@@ -123,13 +123,13 @@ export function ArticlesPage() {
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-3">
                       {a.coverImage ? <img src={a.coverImage} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" /> : <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center shrink-0"><FileText size={16} className="text-on-surface-variant" /></div>}
-                      <div className="min-w-0 max-w-[260px]"><p className="font-body text-sm font-medium truncate">{a.title}</p><p className="text-xs text-on-surface-variant">{a.author?.name || a.authorNameSnapshot || ''}</p></div>
+                      <div className="min-w-0"><p className="font-body text-sm font-medium truncate">{a.title}</p><p className="text-xs text-on-surface-variant">{a.author?.name || a.authorNameSnapshot || ''}</p></div>
                     </div>
                   </td>
-                  <td className="py-3 px-3"><span className="badge bg-surface-container text-on-surface-variant max-w-[130px] truncate block">{a.category?.name || '-'}</span></td>
+                  <td className="py-3 px-3"><span className="badge bg-surface-container text-on-surface-variant max-w-[130px] truncate block px-3 py-1">{a.category?.name || '-'}</span></td>
                   <td className="py-3 px-3">
                     <div className="flex flex-col gap-0.5">
-                      <span className={`badge ${STATUS_COLORS[a.status] || ''}`}>{STATUS_LABELS[a.status] || a.status}</span>
+                      <span className={`badge ${STATUS_COLORS[a.status] || ''} px-3 py-1`}>{STATUS_LABELS[a.status] || a.status}</span>
                       {a.scheduledAt && new Date(a.scheduledAt) > new Date() && (
                         <span className="text-[9px] text-amber-600 flex items-center gap-1">
                           📅 {new Date(a.scheduledAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} às {new Date(a.scheduledAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
@@ -174,12 +174,12 @@ export function ArticlesPage() {
         {archivedExpanded && !archivedLoading && archived.length === 0 && <div className="card p-8 text-center text-on-surface-variant text-sm">Nenhum artigo arquivado.</div>}
         {archivedExpanded && !archivedLoading && archived.length > 0 && (
           <div className="card overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full table-fixed">
               <thead><tr className="border-b border-outline-variant">
-                <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Artigo</th>
-                <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Categoria</th>
-                <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Autor</th>
-                <th className="text-right py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant">Ações</th>
+                <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[40%]">Artigo</th>
+                <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[25%]">Categoria</th>
+                <th className="text-left py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[20%]">Autor</th>
+                <th className="text-right py-3 px-3 font-headline text-label-sm font-bold text-on-surface-variant w-[15%]">Ações</th>
               </tr></thead>
               <tbody>
                 {archived.map((a) => (
@@ -187,10 +187,10 @@ export function ArticlesPage() {
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-3">
                         {a.coverImage ? <img src={a.coverImage} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" /> : <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center shrink-0"><FileText size={16} className="text-on-surface-variant" /></div>}
-                        <div className="min-w-0 max-w-[260px]"><p className="font-body text-sm font-medium truncate">{a.title}</p><p className="text-xs text-on-surface-variant">{a.slug || ''}</p></div>
+                        <div className="min-w-0"><p className="font-body text-sm font-medium truncate">{a.title}</p><p className="text-xs text-on-surface-variant">{a.slug || ''}</p></div>
                       </div>
                     </td>
-                    <td className="py-3 px-3"><span className="badge bg-surface-container text-on-surface-variant max-w-[130px] truncate block">{a.category?.name || '-'}</span></td>
+                    <td className="py-3 px-3"><span className="badge bg-surface-container text-on-surface-variant max-w-[130px] truncate block px-3 py-1">{a.category?.name || '-'}</span></td>
                     <td className="py-3 px-3"><span className="text-sm text-on-surface-variant">{a.author?.name || '-'}</span></td>
                     <td className="py-3 px-3">
                       <div className="flex justify-end gap-1">
