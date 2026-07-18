@@ -1,48 +1,11 @@
 {
-  "version": 2,
-  "installCommand": "npm install && npx prisma generate",
-  "builds": [
-    {
-      "src": "api/index.ts",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "api/admin.ts",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "api/cron/publish-scheduled.ts",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "api/test.ts",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "api/test2.ts",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/admin/(.*)",
-      "dest": "api/admin.ts"
-    },
-    {
-      "src": "/api/cron/(.*)",
-      "dest": "api/cron/publish-scheduled.ts"
-    },
-    {
-      "src": "/api/test2",
-      "dest": "api/test2.ts"
-    },
-    {
-      "src": "/api/test",
-      "dest": "api/test.ts"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "api/index.ts"
-    }
+  "installCommand": "npm install --include=dev && npx prisma generate && npx prisma migrate deploy",
+  "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/api/admin/(.*)", "destination": "/api/admin" },
+    { "source": "/api/cron/(.*)", "destination": "/api/cron/publish-scheduled" },
+    { "source": "/api/test2", "destination": "/api/test2" },
+    { "source": "/api/test", "destination": "/api/test" },
+    { "source": "/(.*)", "destination": "/api/index" }
   ]
 }
