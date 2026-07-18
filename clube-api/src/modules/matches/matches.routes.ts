@@ -228,6 +228,11 @@ export async function matchesAdminRoutes(app: FastifyInstance): Promise<void> {
       });
     }
 
+    // Validação de URL de ingressos
+    if (body.ticketUrl && body.ticketUrl.trim() && !/^https?:\/\//.test(body.ticketUrl.trim())) {
+      return reply.code(400).send({ error: 'Link de ingressos deve ser uma URL válida (começando com http:// ou https://).' });
+    }
+
     const match = await prisma.match.create({
       data: {
         competitionId: body.competitionId,
@@ -248,6 +253,7 @@ export async function matchesAdminRoutes(app: FastifyInstance): Promise<void> {
         awayOnTarget: body.awayOnTarget !== undefined ? Number(body.awayOnTarget) : null,
         homeCorners: body.homeCorners !== undefined ? Number(body.homeCorners) : null,
         awayCorners: body.awayCorners !== undefined ? Number(body.awayCorners) : null,
+        ticketUrl: body.ticketUrl?.trim() || null,
       },
       include: matchInclude,
     });
@@ -349,6 +355,11 @@ export async function matchesAdminRoutes(app: FastifyInstance): Promise<void> {
       }
     }
 
+    // Validação de URL de ingressos
+    if (body.ticketUrl && body.ticketUrl.trim() && !/^https?:\/\//.test(body.ticketUrl.trim())) {
+      return reply.code(400).send({ error: 'Link de ingressos deve ser uma URL válida (começando com http:// ou https://).' });
+    }
+
     const match = await prisma.match.update({
       where: { id },
       data: {
@@ -390,6 +401,7 @@ export async function matchesAdminRoutes(app: FastifyInstance): Promise<void> {
         ...(body.awayCorners !== undefined && {
           awayCorners: body.awayCorners === null ? null : Number(body.awayCorners),
         }),
+        ...(body.ticketUrl !== undefined && { ticketUrl: body.ticketUrl?.trim() || null }),
       },
       include: matchInclude,
     });
