@@ -130,7 +130,7 @@ export function ArticlesPage() {
                   <td className="py-3 px-3">
                     <div className="flex flex-col gap-0.5 items-start">
                       {(() => {
-                        const isScheduled = a.status === 'DRAFT' && a.scheduledAt && new Date(a.scheduledAt) > new Date();
+                        const isScheduled = a.status === 'DRAFT' && !!a.scheduledAt;
                         const label = isScheduled ? 'Agendado' : (STATUS_LABELS[a.status] || a.status);
                         const color = isScheduled ? 'bg-blue-50 text-blue-700' : (STATUS_COLORS[a.status] || '');
                         return <span className={`badge ${color} px-3 py-1`}>{label}</span>;

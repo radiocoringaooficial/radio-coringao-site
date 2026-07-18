@@ -318,7 +318,7 @@ export function ArticleEditPage() {
             <h3 className="font-headline text-label-sm font-bold text-on-surface">Publicação</h3>
             <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Status</label>
               {(() => {
-                const isScheduled = form.status === 'DRAFT' && form.scheduledAt && new Date(form.scheduledAt) > new Date();
+                const isScheduled = form.status === 'DRAFT' && !!form.scheduledAt;
                 if (isScheduled) {
                   return (
                     <div className="flex items-center gap-2">
