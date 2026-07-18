@@ -11,10 +11,14 @@ export function Header() {
           <p className="text-sm font-headline font-bold text-on-surface">{user?.name}</p>
           <p className="text-xs font-body text-on-surface-variant">{user?.role}</p>
         </div>
-        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-          <span className="text-xs font-headline font-bold text-white">
-            {user?.name?.charAt(0) || 'A'}
-          </span>
+        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
+          {user?.avatar ? (
+            <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-xs font-headline font-bold text-white">
+              {user?.name?.charAt(0) || 'A'}
+            </span>
+          )}
         </div>
       </div>
     </header>

@@ -119,7 +119,16 @@ export function Sidebar() {
       {/* User + Logout */}
       <div className="p-3 border-t border-white/10">
         {!collapsed && user && (
-          <p className="text-xs text-white/50 truncate mb-2 font-body">{user.name}</p>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center overflow-hidden shrink-0">
+              {user.avatar ? (
+                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-[9px] font-headline font-bold text-white/70">{user.name?.charAt(0) || 'A'}</span>
+              )}
+            </div>
+            <p className="text-xs text-white/50 truncate font-body">{user.name}</p>
+          </div>
         )}
         <button
           onClick={handleLogout}
