@@ -1,8 +1,10 @@
 // src/modules/articles/public/articles-public.routes.ts
 //
-// Rotas públicas /articles/* — mantidas apenas para backward compatibility.
-// O frontend consome /news/* (registrado em news-public.routes.ts).
-// A única rota exclusiva aqui é /articles/trending (sem equivalente em /news).
+// ⚠️ CÓDIGO MORTO EM PRODUÇÃO — O Fastify (src/app.ts) NÃO é deployado
+// no Vercel. Todas as rotas públicas rodam via api/index.ts (serverless).
+// A lógica de view tracking deste arquivo foi movida para api/index.ts.
+// Este arquivo existe apenas para referência histórica e possíveis
+// testes locais com o servidor Fastify.
 import type { FastifyInstance } from 'fastify';
 import { articlePublicController } from '../../../shared/container';
 import { trendingQuerySchema } from '../articles.schema';

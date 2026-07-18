@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createHash } from 'crypto';
 
 let prisma: any = null;
 
@@ -251,22 +252,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ test: 'ok' });
     }
 
-    // Register article view (by IP hash + day bucket)
-    // Register article view via GET /api/articles/view/:slug
+    // Register article view via POST /api/articles/view/:slug
     const viewMatch = url.match(/^\/api\/articles\/view\/([^?]+)$/);
-    if (viewMatch && method === 'GET') {
+    if (viewMatch && method === 'POST') {
       const slug = viewMatch[1];
       const article = await db.article.findUnique({ where: { slug }, select: { id: true } });
       if (!article) return res.status(200).json({ ok: true, skip: true });
-      const ip = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown';
-      const ipHash = Buffer.from(String(ip)).toString('base64').slice(0, 16);
+
+      // Bot filter — skip tracking for known bots/crawlers
       const ua = req.headers['user-agent'] || '';
+      const isBot = /bot|spider|crawl|slurp|facebookexternalhit|whatsapp|telegrambot|twitterbot|googlebot|bingbot/i.test(ua);
+      if (isBot) return res.status(200).json({ ok: true, skip: true });
+
+      // IP hash: SHA-256 + salt, first IP from x-forwarded-for
+      const SALT = process.env.JWT_SECRET || 'sports-news-fallback-salt';
+      const forwarded = req.headers['x-forwarded-for'];
+      const rawIp = (typeof forwarded === 'string' && forwarded.trim())
+        ? forwarded.split(',')[0].trim()
+        : req.headers['x-real-ip'] || req.socket?.remoteAddress || 'unknown';
+      const ipHash = createHash('sha256').update(`${rawIp}:${SALT}`).digest('hex');
+
+      // UTC day bucket
       const now = new Date();
-      const bucket = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const bucket = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+
       try {
-        await db.articleView.create({ data: { articleId: article.id, ipHash, userAgent: ua, viewBucket: bucket } });
+        await db.articleView.create({ data: { articleId: article.id, ipHash, userAgent: ua.slice(0, 255), viewBucket: bucket } });
         await db.article.update({ where: { id: article.id }, data: { viewCount: { increment: 1 } } });
-      } catch {}
+      } catch (err: any) {
+        // P2002 = duplicate view today, ignore; log everything else
+        if (err?.code !== 'P2002') console.error('[view] Error tracking view for', slug, err?.message);
+      }
       return res.status(200).json({ ok: true });
     }
 
