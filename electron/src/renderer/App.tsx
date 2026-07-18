@@ -23,6 +23,7 @@ import { OpponentsPage } from './presentation/pages/OpponentsPage';
 import { MatchesPage } from './presentation/pages/MatchesPage';
 import { SquadPage } from './presentation/pages/SquadPage';
 import { MovementsPage } from './presentation/pages/MovementsPage';
+import { AoVivoPage } from './presentation/pages/AoVivoPage';
 import { DashboardArticlesMonthPage } from './presentation/pages/dashboard/DashboardArticlesMonthPage';
 import { DashboardArticlesYearPage } from './presentation/pages/dashboard/DashboardArticlesYearPage';
 import { DashboardViewsMonthPage } from './presentation/pages/dashboard/DashboardViewsMonthPage';
@@ -75,6 +76,7 @@ export default function App() {
                   <Route path="/partidas" element={<MatchesPage />} />
                   <Route path="/elenco" element={<SquadPage />} />
                   <Route path="/movimentacoes" element={<MovementsPage />} />
+                  <Route path="/ao-vivo" element={<AoVivoPage />} />
                   <Route path="/dashboard/materias-month" element={<DashboardArticlesMonthPage />} />
                   <Route path="/dashboard/materias-year" element={<DashboardArticlesYearPage />} />
                   <Route path="/dashboard/views-month" element={<DashboardViewsMonthPage />} />
