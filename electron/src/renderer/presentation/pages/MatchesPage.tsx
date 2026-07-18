@@ -189,7 +189,7 @@ export function MatchesPage() {
   const [total, setTotal] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState({ date: '', venue: '', status: 'SCHEDULED', competitionId: '', opponentId: '', homeScore: '', awayScore: '', round: '', categoryId: '', season: String(new Date().getFullYear()) });
+  const [form, setForm] = useState({ date: '', venue: '', status: 'SCHEDULED', competitionId: '', opponentId: '', homeScore: '', awayScore: '', round: '', categoryId: '', season: String(new Date().getFullYear()), ticketUrl: '' });
   const [initialForm, setInitialForm] = useState<typeof form | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [sectionPages, setSectionPages] = useState<Record<string, number>>({});
@@ -215,10 +215,11 @@ export function MatchesPage() {
         clubeApi.get(`/admin/partidas?page=${page}&limit=50`).catch((e) => { console.error('partidas err:', e); return { data: [], total: 0 }; }),
         clubeApi.get('/adversarios').catch(() => []),
         clubeApi.get('/admin/competicoes').catch(() => []),
-        clubeApi.get('/categorias').catch(() => []),
+        clubeApi.get('/categorias/flat').catch(() => []),
         clubeApi.get('/team').catch(() => ({})),
       ]);
       const mData = Array.isArray(m) ? m : m?.data || [];
+      console.log('[LOAD] matches recebidos:', JSON.stringify(mData.map((m: any) => ({ id: m.id, ticketUrl: m.ticketUrl }))));
       setMatches(mData);
       setTotal(m?.total || mData.length);
       setOpponents(Array.isArray(o) ? o : o?.data || []);
@@ -258,12 +259,13 @@ export function MatchesPage() {
     return '';
   };
 
-  const openNew = () => { setEditing(null); const f = { date: '', venue: '', status: 'SCHEDULED', competitionId: '', opponentId: '', homeScore: '', awayScore: '', round: '', categoryId: '', season: String(new Date().getFullYear()) }; setForm(f); setInitialForm({ ...f }); setModalOpen(true); };
+  const openNew = () => { setEditing(null); const f = { date: '', venue: '', status: 'SCHEDULED', competitionId: '', opponentId: '', homeScore: '', awayScore: '', round: '', categoryId: '', season: String(new Date().getFullYear()), ticketUrl: '' }; setForm(f); setInitialForm({ ...f }); setModalOpen(true); };
   const openEdit = (m: any) => {
+    console.log('[OPEN EDIT] recebido:', JSON.stringify(m));
     setEditing(m);
     const comp = competitions.find((c) => c.id === m.competitionId);
     const catId = comp?.categoryId || '';
-    const f = { date: m.date ? new Date(m.date).toISOString().slice(0, 16) : '', venue: m.venue || '', status: m.status || 'SCHEDULED', competitionId: m.competitionId || '', opponentId: m.opponentId || '', homeScore: m.homeScore != null ? String(m.homeScore) : '', awayScore: m.awayScore != null ? String(m.awayScore) : '', round: m.round || '', categoryId: catId, season: m.season || String(new Date(m.date).getFullYear()) };
+    const f = { date: m.date ? new Date(m.date).toISOString().slice(0, 16) : '', venue: m.venue || '', status: m.status || 'SCHEDULED', competitionId: m.competitionId || '', opponentId: m.opponentId || '', homeScore: m.homeScore != null ? String(m.homeScore) : '', awayScore: m.awayScore != null ? String(m.awayScore) : '', round: m.round || '', categoryId: catId, season: m.season || String(new Date(m.date).getFullYear()), ticketUrl: m.ticketUrl || '' };
     setForm(f);
     setInitialForm({ ...f });
     setModalOpen(true);
@@ -276,7 +278,7 @@ export function MatchesPage() {
     if (!form.opponentId) { toast('Selecione um adversário.', 'error'); return; }
     setSaving(true);
     try {
-      const data: any = { date: new Date(form.date).toISOString(), venue: form.venue || null, status: form.status, opponentId: form.opponentId, competitionId: form.competitionId || undefined, isHome: true, round: form.round || null, season: form.season };
+      const data: any = { date: new Date(form.date).toISOString(), venue: form.venue || null, status: form.status, opponentId: form.opponentId, competitionId: form.competitionId || undefined, isHome: true, round: form.round || null, season: form.season, ticketUrl: form.ticketUrl?.trim() || null };
       if (form.status === 'FINISHED' || form.status === 'IN_PLAY') {
         data.homeScore = form.homeScore ? Number(form.homeScore) : 0;
         data.awayScore = form.awayScore ? Number(form.awayScore) : 0;
@@ -498,6 +500,9 @@ export function MatchesPage() {
           </div>
           <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Local</label>
             <input value={form.venue} onChange={(e) => setForm({ ...form, venue: e.target.value })} className="input-field" placeholder="Ex: Neo Química Arena" />
+          </div>
+          <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Link de Ingressos</label>
+            <input value={form.ticketUrl} onChange={(e) => setForm({ ...form, ticketUrl: e.target.value })} className="input-field" placeholder="https://www.fieltorcedor.com.br/..." />
           </div>
           <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Adversário *</label>
             <OpponentSelect value={form.opponentId} onChange={(id) => setForm({ ...form, opponentId: id })} />

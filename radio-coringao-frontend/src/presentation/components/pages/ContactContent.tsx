@@ -35,7 +35,7 @@ export function ContactContent() {
                 </div>
                 <div>
                   <h3 className="font-headline-md text-headline-md text-primary">Telefone</h3>
-                  <p className="text-[13px] text-on-surface-variant">(11) 99999-9999</p>
+                  <p className="text-[13px] text-on-surface-variant">(11) 96064-7414</p>
                 </div>
               </div>
             </div>
