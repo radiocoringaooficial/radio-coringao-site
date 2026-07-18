@@ -1,0 +1,16 @@
+name: Publish Scheduled Articles
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call publish-scheduled endpoint
+        run: |
+          curl -s -f -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://radiocoringao-news.vercel.app/api/cron/publish-scheduled
