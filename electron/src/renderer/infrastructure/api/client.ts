@@ -37,7 +37,7 @@ async function handleResponse(res: Response): Promise<any> {
 
 async function apiGet(base: string, path: string): Promise<any> {
   try {
-    const res = await fetch(`${base}${path}`, { headers: getAuthHeaders() });
+    const res = await fetch(`${base}${path}`, { headers: getAuthHeaders(), cache: 'no-store' });
     return await handleResponse(res);
   } catch (e: any) {
     if (e.name === 'TypeError' && e.message.includes('fetch')) {
