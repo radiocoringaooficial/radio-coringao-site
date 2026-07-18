@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install && npx prisma generate",
+  "installCommand": "npm install --include=dev && npx prisma generate",
   "rewrites": [
     { "source": "/api/admin/(.*)", "destination": "/api/admin" },
     { "source": "/(.*)", "destination": "/api/index" }
