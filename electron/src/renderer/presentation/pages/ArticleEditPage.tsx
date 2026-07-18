@@ -147,13 +147,8 @@ export function ArticleEditPage() {
     scheduledAt: '', authorCargo: '',
   });
 
-  // Limpar scheduledAt quando status vira PUBLISHED
-  const isPublished = form.status === 'PUBLISHED';
-  useEffect(() => {
-    if (isPublished && form.scheduledAt) {
-      setForm((prev) => ({ ...prev, scheduledAt: '' }));
-    }
-  }, [isPublished]);
+  // Agendamento só trava se o artigo JÁ estava publicado quando carregou
+  const wasAlreadyPublished = !isNew && initialForm?.status === 'PUBLISHED';
   const [initialForm, setInitialForm] = useState<typeof form | null>(null);
   const [categories, setCategories] = useState<any[]>([]);
   const [jobTitles, setJobTitles] = useState<{ id: string; name: string }[]>([]);
@@ -242,7 +237,7 @@ export function ArticleEditPage() {
     fd.append('order', form.order);
     fd.append('coverImageAlt', form.coverImageAlt);
     fd.append('coverImageCredit', form.coverImageCredit);
-    if (form.scheduledAt) {
+    if (form.scheduledAt && form.status !== 'PUBLISHED') {
       fd.append('scheduledAt', new Date(form.scheduledAt).toISOString());
     } else {
       fd.append('scheduledAt', '');
@@ -330,17 +325,17 @@ export function ArticleEditPage() {
             {/* Agendamento */}
             <div className="border-t border-outline-variant/30 pt-4">
               <div className="flex items-center gap-2 mb-1.5">
-                <CalendarClock size={14} className={isPublished ? 'text-on-surface-variant/40' : 'text-on-surface-variant'} />
-                <label className={`font-headline text-label-sm font-bold ${isPublished ? 'text-on-surface-variant/40' : 'text-on-surface'}`}>Agendamento</label>
+                <CalendarClock size={14} className={wasAlreadyPublished ? 'text-on-surface-variant/40' : 'text-on-surface-variant'} />
+                <label className={`font-headline text-label-sm font-bold ${wasAlreadyPublished ? 'text-on-surface-variant/40' : 'text-on-surface'}`}>Agendamento</label>
               </div>
               <p className="text-[10px] text-on-surface-variant mb-2">
-                {isPublished ? 'Agendamento não disponível para artigos já publicados.' : 'Agendar para publicação automática no futuro.'}
+                {wasAlreadyPublished ? 'Agendamento não disponível para artigos já publicados.' : 'Agendar para publicação automática no futuro.'}
               </p>
               <input
                 type="datetime-local"
                 value={form.scheduledAt}
                 min={nowLocal}
-                disabled={isPublished}
+                disabled={wasAlreadyPublished}
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val && val <= nowLocal) {
@@ -349,7 +344,7 @@ export function ArticleEditPage() {
                   }
                   setForm({ ...form, scheduledAt: val });
                 }}
-                className={`input-field text-sm ${isPublished ? 'opacity-40 cursor-not-allowed' : ''}`}
+                className={`input-field text-sm ${wasAlreadyPublished ? 'opacity-40 cursor-not-allowed' : ''}`}
               />
               {form.scheduledAt && new Date(form.scheduledAt) > new Date() && form.status !== 'PUBLISHED' && (
                 <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 p-2">
@@ -364,7 +359,7 @@ export function ArticleEditPage() {
                   </div>
                 </div>
               )}
-              {form.scheduledAt && !isPublished && (
+              {form.scheduledAt && !wasAlreadyPublished && (
                 <button
                   type="button"
                   onClick={() => setForm({ ...form, scheduledAt: '' })}
