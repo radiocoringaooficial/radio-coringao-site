@@ -42,7 +42,7 @@ export function JobsContent() {
               </div>
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-[20px] text-secondary">phone</span>
-                <span className="font-body-md text-primary font-bold">(11) 99999-9999</span>
+                <span className="font-body-md text-primary font-bold">(11) 96064-7414</span>
               </div>
             </div>
           </section>
