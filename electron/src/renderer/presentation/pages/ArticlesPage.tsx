@@ -126,7 +126,7 @@ export function ArticlesPage() {
                       <div className="min-w-0"><p className="font-body text-sm font-medium truncate">{a.title}</p><p className="text-xs text-on-surface-variant">{a.author?.name || a.authorNameSnapshot || ''}</p></div>
                     </div>
                   </td>
-                  <td className="py-3 px-3"><span className="badge bg-surface-container text-on-surface-variant max-w-[130px] truncate block px-3 py-1">{a.category?.name || '-'}</span></td>
+                  <td className="py-3 px-3"><span className="badge bg-surface-container text-on-surface-variant truncate max-w-full px-3 py-1">{a.category?.name || '-'}</span></td>
                   <td className="py-3 px-3">
                     <div className="flex flex-col gap-0.5 items-start">
                       <span className={`badge ${STATUS_COLORS[a.status] || ''} px-3 py-1`}>{STATUS_LABELS[a.status] || a.status}</span>
@@ -190,7 +190,7 @@ export function ArticlesPage() {
                         <div className="min-w-0"><p className="font-body text-sm font-medium truncate">{a.title}</p><p className="text-xs text-on-surface-variant">{a.slug || ''}</p></div>
                       </div>
                     </td>
-                    <td className="py-3 px-3"><span className="badge bg-surface-container text-on-surface-variant max-w-[130px] truncate block px-3 py-1">{a.category?.name || '-'}</span></td>
+                    <td className="py-3 px-3"><span className="badge bg-surface-container text-on-surface-variant truncate max-w-full px-3 py-1">{a.category?.name || '-'}</span></td>
                     <td className="py-3 px-3"><span className="text-sm text-on-surface-variant">{a.author?.name || '-'}</span></td>
                     <td className="py-3 px-3">
                       <div className="flex justify-end gap-1">
