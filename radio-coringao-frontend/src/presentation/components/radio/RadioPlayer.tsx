@@ -42,16 +42,22 @@ export function RadioPlayer() {
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (error) {
+    if (playing) {
+      audio.pause();
+      return;
+    }
+    // Sempre setar src antes de play (primeira vez ou após erro)
+    if (!audio.src || audio.src === location.href || error) {
       audio.src = STREAM_URL;
       audio.load();
       setError(null);
     }
-    if (playing) {
-      audio.pause();
-    } else {
-      audio.play().catch(() => setError("Não foi possível conectar à transmissão."));
-    }
+    setLoading(true);
+    audio.play().catch((err) => {
+      console.error("Radio play error:", err);
+      setError("Não foi possível conectar à transmissão.");
+      setLoading(false);
+    });
   }, [playing, error]);
 
   const toggleMute = () => {
@@ -82,7 +88,12 @@ export function RadioPlayer() {
     const onPause = () => setPlaying(false);
     const onWaiting = () => setLoading(true);
     const onCanPlay = () => setLoading(false);
-    const onError = () => setError("Não foi possível conectar à transmissão.");
+    const onError = () => {
+      const mediaErr = audio.error;
+      console.error("Radio audio error:", mediaErr?.code, mediaErr?.message);
+      setError("Não foi possível conectar à transmissão.");
+      setLoading(false);
+    };
 
     audio.addEventListener("play", onPlay);
     audio.addEventListener("pause", onPause);
@@ -105,7 +116,7 @@ export function RadioPlayer() {
         {/* Capa + Info */}
         <div className="relative flex items-center gap-5 p-6">
           <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl shadow-lg">
-            <img src="/radio-logo.jpg" alt="Rádio Coringão" className="h-full w-full object-cover" />
+            <img src="/radio-logo.jpg" alt="Rádio Coringão" className="h-full w-full object-contain" />
             {playing && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
                 <Equalizer playing={playing} />
