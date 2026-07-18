@@ -277,27 +277,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const bucket = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
       try {
-        await db.articleView.create({ data: { articleId: article.id, ipHash, userAgent: ua.slice(0, 255), viewBucket: bucket } });
-        await db.article.update({ where: { id: article.id }, data: { viewCount: { increment: 1 } } });
+        await db.$transaction([
+          db.articleView.create({ data: { articleId: article.id, ipHash, userAgent: ua.slice(0, 255), viewBucket: bucket } }),
+          db.article.update({ where: { id: article.id }, data: { viewCount: { increment: 1 } } }),
+        ]);
       } catch (err: any) {
         // P2002 = duplicate view today (dedup working), ignore silently
         if (err?.code !== 'P2002') console.error('[view] Error tracking view for', slug, err?.message);
       }
       return res.status(200).json({ ok: true });
-    }
-
-    // DEBUG: reset and reconcile all viewCounts
-    if (url === '/api/debug-reset-views') {
-      // 1. Zero all viewCounts
-      await db.article.updateMany({ data: { viewCount: 0 } });
-      // 2. Recalculate from articleView counts
-      const counts = await db.articleView.groupBy({ by: ['articleId'], _count: { id: true } });
-      let updated = 0;
-      for (const row of counts) {
-        await db.article.update({ where: { id: row.articleId }, data: { viewCount: row._count.id } });
-        updated++;
-      }
-      return res.status(200).json({ ok: true, articlesRecalculated: updated });
     }
 
     // Default
