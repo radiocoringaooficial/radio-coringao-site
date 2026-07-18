@@ -57,7 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Editoriais
     if (url === '/api/noticias/editorial' || url.startsWith('/api/noticias/editorial?')) {
       const articles = await db.article.findMany({
-        where: { status: 'PUBLISHED', isFeatured: true, order: { gt: 0 } },
+        where: { status: 'PUBLISHED', isFeatured: true },
         orderBy: [{ order: 'asc' }, { publishedAt: 'desc' }],
         take: 50,
         include: { category: true, author: { select: { id: true, name: true, email: true, role: true, avatar: true, bio: true, position: true } } },
@@ -79,11 +79,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Preenche slots vazios com artigos sem posição
       for (let i = 0; i < slots.length; i++) {
         if (slots[i] === null && unpositioned.length > 0) {
-          slots[i] = unpositioned.shift()!;
+          const filler = unpositioned.shift()!;
+          slots[i] = { ...filler, order: i + 1 };
         }
       }
 
-      return res.status(200).json(slots);
+      return res.status(200).json(slots.filter(Boolean));
     }
 
     // Destaques da semana (must be BEFORE slug match)
