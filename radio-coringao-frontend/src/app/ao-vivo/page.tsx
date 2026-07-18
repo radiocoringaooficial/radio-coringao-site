@@ -66,7 +66,7 @@ export default async function AoVivoPage() {
         <div className="flex flex-col items-center justify-center rounded-xl border border-outline-variant bg-surface-container-lowest py-16">
           <Radio size={48} className="mb-4 text-on-surface-variant/30" />
           <p className="text-lg font-bold text-on-surface">Nenhuma transmissão ao vivo no momento</p>
-          <p className="mt-1 text-sm text-on-surface-variant">Acompanhe nuestras próximas transmissões!</p>
+          <p className="mt-1 text-sm text-on-surface-variant">Acompanhe nossas próximas transmissões!</p>
         </div>
       )}
     </div>
