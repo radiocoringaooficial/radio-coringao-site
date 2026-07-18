@@ -36,7 +36,8 @@ export async function newsPublicRoutes(app: FastifyInstance): Promise<void> {
     // Preenche slots vazios com artigos sem posição
     for (let i = 0; i < slots.length; i++) {
       if (slots[i] === null && unpositioned.length > 0) {
-        slots[i] = unpositioned.shift()!;
+        const filler = unpositioned.shift()!;
+        slots[i] = { ...filler, order: i + 1 };
       }
     }
 
