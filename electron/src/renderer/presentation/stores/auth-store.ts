@@ -37,9 +37,11 @@ export const useAuthStore = create<AuthState>()((set) => ({
     set({ token: null, user: null, isAuthenticated: false });
   },
   updateUser: (partial) =>
-    set((state) => ({
-      user: state.user ? { ...state.user, ...partial } : null,
-    })),
+    set((state) => {
+      const merged = state.user ? { ...state.user, ...partial } : null;
+      if (merged) sessionStorage.setItem('auth-user', JSON.stringify(merged));
+      return { user: merged };
+    }),
 }));
 
 // Check session on load

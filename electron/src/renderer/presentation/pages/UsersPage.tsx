@@ -6,6 +6,7 @@ import { ConfirmDialog } from '@/presentation/components/ui/ConfirmDialog';
 import { ImageUpload } from '@/presentation/components/ui/ImageUpload';
 import { TableSkeleton } from '@/presentation/components/ui/Skeleton';
 import { useToastStore } from '@/presentation/stores/toast-store';
+import { useAuthStore } from '@/presentation/stores/auth-store';
 import { confirm } from '@/presentation/stores/dialog-store';
 
 function OnlineStatus({ user }: { user: any }) {
@@ -47,6 +48,8 @@ export function UsersPage() {
   const [addingTitle, setAddingTitle] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
   const toast = useToastStore((s) => s.addToast);
+  const currentUser = useAuthStore((s) => s.user);
+  const updateAuthUser = useAuthStore((s) => s.updateUser);
 
   const isDirty = initialForm !== null && (
     JSON.stringify(form) !== JSON.stringify(initialForm) || avatarFile !== null
@@ -107,6 +110,14 @@ export function UsersPage() {
           const fd = new FormData();
           fd.append('avatar', avatarFile);
           await newsApi.patch(`/admin/users/${editing.id}`, fd);
+        }
+        if (editing.id === currentUser?.id) {
+          updateAuthUser({
+            name: form.name,
+            email: form.email,
+            role: form.role,
+            position: form.position || undefined,
+          });
         }
       } else {
         if (avatarFile) {
