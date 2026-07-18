@@ -3,6 +3,8 @@ import { Radio } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radiocoringao-news.vercel.app/api";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Ao Vivo | Rádio Coringão",
   description: "Acompanhe as transmissões ao vivo do Rádio Coringão.",
@@ -24,7 +26,7 @@ function getYoutubeId(url: string): string | null {
 
 async function getSettings() {
   try {
-    const res = await fetch(`${API_URL}/configuracoes`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API_URL}/configuracoes`, { cache: "no-store" });
     if (!res.ok) return null;
     return res.json();
   } catch {
