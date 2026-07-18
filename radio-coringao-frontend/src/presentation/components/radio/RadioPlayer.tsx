@@ -13,7 +13,7 @@ function Equalizer({ playing }: { playing: boolean }) {
         <div
           key={i}
           className={`w-[3px] rounded-full transition-all ${
-            playing ? "bg-primary animate-eq" : "bg-on-surface-variant/30 h-[6px]"
+            playing ? "bg-[#bc000c] animate-eq" : "bg-white/20 h-[6px]"
           }`}
           style={playing ? { animationDelay: `${i * 0.15}s` } : undefined}
         />
@@ -25,6 +25,48 @@ function Equalizer({ playing }: { playing: boolean }) {
         }
         .animate-eq {
           animation: eq 0.8s ease-in-out infinite;
+        }
+        .volume-slider {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 6px;
+          border-radius: 9999px;
+          background: linear-gradient(to right, #bc000c var(--vol, 80%), rgba(255,255,255,0.1) var(--vol, 80%));
+          outline: none;
+        }
+        .volume-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #ffffff;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+          cursor: pointer;
+          border: 2px solid #bc000c;
+          transition: transform 0.15s;
+        }
+        .volume-slider::-webkit-slider-thumb:hover {
+          transform: scale(1.2);
+        }
+        .volume-slider::-moz-range-thumb {
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #ffffff;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+          cursor: pointer;
+          border: 2px solid #bc000c;
+        }
+        .volume-slider::-moz-range-track {
+          height: 6px;
+          border-radius: 9999px;
+          background: rgba(255,255,255,0.1);
+        }
+        .volume-slider::-moz-range-progress {
+          height: 6px;
+          border-radius: 9999px;
+          background: #bc000c;
         }
       `}</style>
     </div>
@@ -46,7 +88,6 @@ export function RadioPlayer() {
       audio.pause();
       return;
     }
-    // Sempre setar src antes de play (primeira vez ou após erro)
     if (!audio.src || audio.src === location.href || error) {
       audio.src = STREAM_URL;
       audio.load();
@@ -110,15 +151,17 @@ export function RadioPlayer() {
     };
   }, []);
 
+  const volumePercent = (muted ? 0 : volume) * 100;
+
   return (
     <div className="mx-auto w-full max-w-md">
       <div className="overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1a1a] to-[#111] shadow-2xl">
         {/* Capa + Info */}
-        <div className="relative flex items-center gap-5 p-6">
-          <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl shadow-lg">
-            <img src="/radio-logo.jpg" alt="Rádio Coringão" className="h-full w-full object-contain" />
+        <div className="flex items-center gap-5 p-6">
+          <div className="relative h-28 w-28 shrink-0 rounded-xl overflow-hidden">
+            <img src="/radio-logo.png" alt="Rádio Coringão" className="h-full w-full object-contain" />
             {playing && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+              <div className="absolute inset-0 flex items-center justify-center">
                 <Equalizer playing={playing} />
               </div>
             )}
@@ -132,10 +175,10 @@ export function RadioPlayer() {
         </div>
 
         {/* Controles */}
-        <div className="flex items-center gap-4 border-t border-white/10 px-6 py-4">
+        <div className="flex items-center gap-5 border-t border-white/10 px-6 py-4">
           <button
             onClick={togglePlay}
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-lg transition-all hover:bg-primary/90 active:scale-95"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#bc000c] text-white shadow-lg transition-all hover:bg-[#a0000a] active:scale-95"
             aria-label={playing ? "Pausar" : "Tocar"}
           >
             {loading ? (
@@ -148,7 +191,7 @@ export function RadioPlayer() {
           </button>
 
           <div className="flex flex-1 items-center gap-3">
-            <button onClick={toggleMute} className="text-white/60 hover:text-white transition-colors" aria-label={muted ? "Ativar som" : "Silenciar"}>
+            <button onClick={toggleMute} className="text-white/60 hover:text-white transition-colors shrink-0" aria-label={muted ? "Ativar som" : "Silenciar"}>
               {muted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
             </button>
             <input
@@ -158,7 +201,8 @@ export function RadioPlayer() {
               step="0.01"
               value={muted ? 0 : volume}
               onChange={handleVolumeChange}
-              className="h-1 flex-1 cursor-pointer appearance-none rounded-full bg-white/20 accent-primary"
+              className="volume-slider flex-1"
+              style={{ "--vol": `${volumePercent}%` } as React.CSSProperties}
             />
           </div>
 
