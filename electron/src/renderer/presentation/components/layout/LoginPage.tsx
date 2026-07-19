@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/presentation/stores/auth-store';
 import { setAuthToken, SPORTS_NEWS } from '@/infrastructure/api/client';
-import { LogIn, Loader2 } from 'lucide-react';
+import { LogIn, Loader2, Eye, EyeOff } from 'lucide-react';
 
 export function LoginPage() {
   const [email, setEmail] = useState('admin@radiocoringao.com.br');
   const [password, setPassword] = useState('RadioCoringao@2026');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
 
@@ -63,7 +64,12 @@ export function LoginPage() {
             </div>
             <div>
               <label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Senha</label>
-              <input type="password" value={password} onChange={(e) => { setPassword(e.target.value); setError(''); }} className={`input-field ${error ? 'border-red-400 focus:ring-red-200 focus:border-red-400' : ''}`} required />
+              <div className="relative">
+                <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => { setPassword(e.target.value); setError(''); }} className={`input-field pr-10 ${error ? 'border-red-400 focus:ring-red-200 focus:border-red-400' : ''}`} required />
+                <button type="button" tabIndex={-1} aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'} onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors">
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
