@@ -454,17 +454,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ message: `Tabela atualizada com ${result.count} linhas.`, count: result.count });
     }
 
-    // ─── STANDINGS GET BY COMPETITION ───────────────────────────
-    const standingGetMatch = url.match(/^\/classificacoes\/([^/]+)$/);
-    if (standingGetMatch && method === 'GET') {
-      const competitionId = standingGetMatch[1];
-      const standings = await db.standingEntry.findMany({
-        where: { competitionId },
-        orderBy: { position: 'asc' },
-      });
-      return res.status(200).json(standings);
-    }
-
     // ─── STANDINGS DELETE ───────────────────────────────────────
     const standingDeleteMatch = url.match(/^\/classificacoes\/([^/]+)$/);
     if (standingDeleteMatch && method === 'DELETE') {
