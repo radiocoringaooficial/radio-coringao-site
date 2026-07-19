@@ -340,7 +340,6 @@ export function ArticleEditPage() {
 
             {/* Agendamento */}
             {(() => {
-              if (form.status === 'PUBLISHED') return null;
               const isScheduledAwaiting = form.status === 'DRAFT' && !!form.scheduledAt;
               if (isScheduledAwaiting) {
                 const d = new Date(form.scheduledAt);
