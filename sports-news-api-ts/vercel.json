@@ -7,8 +7,5 @@
     { "source": "/api/test2", "destination": "/api/test2" },
     { "source": "/api/test", "destination": "/api/test" },
     { "source": "/(.*)", "destination": "/api/index" }
-  ],
-  "crons": [
-    { "path": "/api/cron/publish-scheduled", "schedule": "*/5 * * * *" }
   ]
 }
