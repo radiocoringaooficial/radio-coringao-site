@@ -142,7 +142,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (url === '/api/classificacoes' || url.startsWith('/api/classificacoes?')) {
       const data = await db.standingEntry.findMany({ orderBy: { position: 'asc' } });
-      return res.status(200).json(data);
+      return res.status(200).json(data.map((r: any) => ({ ...r, goalDifference: (r.goalsFor ?? 0) - (r.goalsAgainst ?? 0) })));
     }
 
     const classifMatch = url.match(/^\/api\/classificacoes\/(?!category\/)([^?]+)$/);
@@ -158,7 +158,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       if (!comp) return res.status(200).json([]);
       const data = await db.standingEntry.findMany({ where: { competitionId: comp.id }, orderBy: { position: 'asc' } });
-      return res.status(200).json(data);
+      return res.status(200).json(data.map((r: any) => ({ ...r, goalDifference: (r.goalsFor ?? 0) - (r.goalsAgainst ?? 0) })));
     }
 
     // /api/classificacoes/category/:slug
@@ -170,7 +170,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const competitions = await db.competition.findMany({ where: { categoryId: cat.id } });
       const compIds = competitions.map((c: any) => c.id);
       const data = await db.standingEntry.findMany({ where: { competitionId: { in: compIds } }, orderBy: { position: 'asc' } });
-      return res.status(200).json(data);
+      return res.status(200).json(data.map((r: any) => ({ ...r, goalDifference: (r.goalsFor ?? 0) - (r.goalsAgainst ?? 0) })));
     }
 
     if (url === '/api/elenco' || url.startsWith('/api/elenco?')) {

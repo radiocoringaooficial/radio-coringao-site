@@ -171,12 +171,25 @@ export default async function SportPage({ params }: Props) {
       }
       return {
         category: category.name,
-        tables: Array.from(byComp.entries()).map(([id, standings]) => {
+        tables: Array.from(byComp.entries()).flatMap(([id, standings]) => {
           const comp = compMap.get(id);
-          return {
+          if (comp?.tableFormat === 'grouped') {
+            const byGroup = new Map<string, any[]>();
+            for (const s of standings) {
+              const g = s.groupName || 'Geral';
+              const arr = byGroup.get(g) || [];
+              arr.push(s);
+              byGroup.set(g, arr);
+            }
+            return Array.from(byGroup.entries()).map(([groupName, groupStandings]) => ({
+              competition: { id, name: `${comp.name} — ${groupName}`, season: comp?.season || "" },
+              standings: groupStandings,
+            }));
+          }
+          return [{
             competition: { id, name: comp?.name || standings[0]?.groupName || category.name, season: comp?.season || "" },
             standings,
-          };
+          }];
         }),
       };
     })

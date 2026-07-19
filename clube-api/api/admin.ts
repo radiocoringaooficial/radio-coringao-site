@@ -351,14 +351,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const standings = await db.standingEntry.findMany({
           orderBy: [{ competitionId: 'asc' }, { position: 'asc' }],
         });
-        return res.status(200).json(standings);
+        return res.status(200).json(standings.map((r: any) => ({ ...r, goalDifference: (r.goalsFor ?? 0) - (r.goalsAgainst ?? 0) })));
       }
       if (method === 'POST') {
         const { competitionId, rows } = req.body;
         if (competitionId && rows) {
           await db.standingEntry.deleteMany({ where: { competitionId } });
           for (const row of rows) {
-            await db.standingEntry.create({ data: { competitionId, ...row } });
+            await db.standingEntry.create({ data: { competitionId, ...row, goalDifference: (row.goalsFor ?? 0) - (row.goalsAgainst ?? 0) } });
           }
           return res.status(200).json({ ok: true });
         }
@@ -444,6 +444,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             lost: r.lost ?? 0,
             goalsFor: r.goalsFor ?? 0,
             goalsAgainst: r.goalsAgainst ?? 0,
+            goalDifference: (r.goalsFor ?? 0) - (r.goalsAgainst ?? 0),
             isOwnTeam: Boolean(r.isOwnTeam),
             form: r.form ?? null,
             zone: r.zone ?? 'NONE',
