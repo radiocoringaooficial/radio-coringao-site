@@ -194,6 +194,24 @@ interface SportTableData {
   standings: TableEntryData[];
 }
 
+interface SpecialMatchData {
+  id: string;
+  date: string;
+  status: string;
+  homeName: string;
+  awayName: string;
+  homeLogo?: string | null;
+  awayLogo?: string | null;
+  homeScore: number | null;
+  awayScore: number | null;
+}
+
+interface SpecialCompetitionData {
+  id: string;
+  name: string;
+  matches: SpecialMatchData[];
+}
+
 interface NewsArticleData {
   id: string;
   title: string;
@@ -236,6 +254,7 @@ interface SportsContentProps {
   recentResults: MatchResultData[];
   standings: TableEntryData[];
   tables?: SportTableData[];
+  specialCompetitions?: SpecialCompetitionData[];
   latestNews: NewsArticleData[];
   weekHighlights: NewsArticleData[];
   transfers?: TransferData[];
@@ -335,6 +354,7 @@ export function SportsContent({
   recentResults,
   standings,
   tables,
+  specialCompetitions = [],
   latestNews,
   weekHighlights,
   transfers = [],
@@ -507,6 +527,41 @@ export function SportsContent({
 
         {currentTab === "tabela" && (
           <div className="space-y-8">
+            {specialCompetitions.map((comp) => (
+              <div key={comp.id}>
+                <h3 className="mb-4 font-headline-md text-headline-md text-primary">{comp.name}</h3>
+                <div className="overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest divide-y divide-outline-variant/50">
+                  {comp.matches.map((m) => {
+                    const finished = m.status === "FINISHED";
+                    const d = new Date(m.date);
+                    return (
+                      <div key={m.id} className="flex items-center gap-3 px-4 py-4 hover:bg-surface-container-low/50 transition-colors">
+                        <div className="flex flex-col items-center gap-1.5 w-24 shrink-0">
+                          <TeamLogo name={m.homeName} size="lg" logo={m.homeLogo} />
+                          <span className="text-[11px] font-bold text-on-surface text-center leading-tight line-clamp-2">{m.homeName}</span>
+                        </div>
+                        <div className="flex-1 flex flex-col items-center gap-1 min-w-0">
+                          {finished ? (
+                            <span className="text-2xl font-headline font-extrabold text-on-surface tabular-nums">{m.homeScore} x {m.awayScore}</span>
+                          ) : (
+                            <span className="text-sm font-bold text-on-surface-variant">VS</span>
+                          )}
+                          <span className="text-[11px] text-on-surface-variant whitespace-nowrap">
+                            {d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} · {d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                          {!finished && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant">Agendado</span>}
+                        </div>
+                        <div className="flex flex-col items-center gap-1.5 w-24 shrink-0">
+                          <TeamLogo name={m.awayName} size="lg" logo={m.awayLogo} />
+                          <span className="text-[11px] font-bold text-on-surface text-center leading-tight line-clamp-2">{m.awayName}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
             {/* Main standings - only show if no additional tables */}
             {!tables && standings.length > 0 && (
               <div>

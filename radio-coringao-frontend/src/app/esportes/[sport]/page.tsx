@@ -148,20 +148,23 @@ export default async function SportPage({ params }: Props) {
     notFound();
   }
 
-  const [nextMatch, recentResults, standingsResponse, newsResponse, movementsResponse, squadResponse] = await Promise.all([
+  const [nextMatch, recentResults, standingsResponse, newsResponse, movementsResponse, squadResponse, specialCompetitionsRaw] = await Promise.all([
     clubeClient.get<Match[]>(`/partidas/next`, { params: { category: matchCategory, limit: "1" } }).catch(() => []),
     clubeClient.get<Match[]>(`/partidas/recent`, { params: { category: matchCategory, limit: "5" } }).catch(() => []),
     Promise.all([
       clubeClient.get<any[]>(`/classificacoes/category/${matchCategory}`).catch(() => []),
-      clubeClient.get<any[]>(`/competicoes`).catch(() => []),
+      clubeClient.get<any[]>(`/competicoes`, { params: { category: matchCategory } }).catch(() => []),
     ]).then(([entries, competitions]) => {
       if (!Array.isArray(entries)) return entries;
+      const NO_TABLE_FORMATS = new Set(['friendly', 'phases']);
       const compMap = new Map<string, any>();
       for (const c of competitions) {
         compMap.set(c.id, c);
       }
       const byComp = new Map<string, any[]>();
       for (const e of entries) {
+        const comp = compMap.get(e.competitionId);
+        if (!comp || NO_TABLE_FORMATS.has(comp.tableFormat)) continue;
         const arr = byComp.get(e.competitionId) || [];
         arr.push(e);
         byComp.set(e.competitionId, arr);
@@ -181,6 +184,24 @@ export default async function SportPage({ params }: Props) {
     httpClient.get<NewsArticle[]>(`/noticias`, { params: { category: SPORT_TO_NEWS_CATEGORY[sport] || sport, limit: "6" } }).catch(() => []),
     clubeClient.get<any>(`/movimentacoes/recent`, { params: { limit: "20", category: matchCategory } }).catch(() => []),
     clubeClient.get<any>(`/elenco`, { params: { category: matchCategory } }).catch(() => []),
+    clubeClient
+      .get<any[]>(`/competicoes`, { params: { category: matchCategory } })
+      .then(async (competitions) => {
+        const special = (Array.isArray(competitions) ? competitions : []).filter(
+          (c) => c.isParticipating && (c.tableFormat === 'friendly' || c.tableFormat === 'phases')
+        );
+        const withMatches = await Promise.all(
+          special.map(async (c) => {
+            const res = await clubeClient
+              .get<any>(`/partidas`, { params: { competitionId: c.id, limit: "50" } })
+              .catch(() => ({ data: [] }));
+            const matches = Array.isArray(res) ? res : res?.data || [];
+            return { id: c.id, name: c.name, tableFormat: c.tableFormat, matches };
+          })
+        );
+        return withMatches.filter((c) => c.matches.length > 0);
+      })
+      .catch(() => []),
   ]);
 
   const heroTitle = `${category.name} - Corinthians`;
@@ -332,6 +353,23 @@ export default async function SportPage({ params }: Props) {
       position: s.position || '',
     }));
 
+  const CORINTHIANS_NAME = "Corinthians";
+  const specialCompetitionsData = (Array.isArray(specialCompetitionsRaw) ? specialCompetitionsRaw : []).map((comp: any) => ({
+    id: comp.id,
+    name: comp.name,
+    matches: (comp.matches as Match[]).map((m) => ({
+      id: m.id,
+      date: m.date,
+      status: m.status,
+      homeName: m.isHome ? CORINTHIANS_NAME : m.opponent?.name || "?",
+      awayName: m.isHome ? m.opponent?.name || "?" : CORINTHIANS_NAME,
+      homeLogo: m.isHome ? CORINTHIANS_LOGO : m.opponent?.logoUrl || null,
+      awayLogo: m.isHome ? m.opponent?.logoUrl || null : CORINTHIANS_LOGO,
+      homeScore: m.homeScore,
+      awayScore: m.awayScore,
+    })),
+  }));
+
   return (
     <SportsContent
       name={category.name}
@@ -344,6 +382,7 @@ export default async function SportPage({ params }: Props) {
       recentResults={recentResultsData}
       standings={allStandings}
       tables={tables}
+      specialCompetitions={specialCompetitionsData}
       latestNews={latestNews}
       weekHighlights={weekHighlights}
       transfers={movementsData}
