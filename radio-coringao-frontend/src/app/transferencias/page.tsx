@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     siteName: "Rádio Coringão",
     images: [
       {
-        url: `${SITE_URL}/logo-seo.png`,
+        url: `${SITE_URL}/logo-preto-og.png`,
         width: 1200,
         height: 630,
         alt: "Transferências Corinthians",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     title: "Transferências | Rádio Coringão",
     description:
       "Confira todas as chegadas, saídas e empréstimos do Corinthians.",
-    images: [`${SITE_URL}/logo-seo.png`],
+    images: [`${SITE_URL}/logo-preto-og.png`],
   },
   alternates: {
     canonical: `${SITE_URL}/transferencias`,

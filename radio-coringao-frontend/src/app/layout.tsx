@@ -20,7 +20,7 @@ export const metadata: Metadata = {
       "Jornalismo independente, direto e apaixonado sobre o Sport Club Corinthians Paulista.",
     images: [
       {
-        url: "/logo-seo.png",
+        url: "/logo-preto-og.png",
         width: 1200,
         height: 630,
         alt: "Rádio Coringão - Portal de notícias do Corinthians",
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     title: "Rádio Coringão - O portal da Fiel",
     description:
       "Jornalismo independente, direto e apaixonado sobre o Sport Club Corinthians Paulista.",
-    images: ["/logo-seo.png"],
+    images: ["/logo-preto-og.png"],
   },
   icons: {
     icon: "/icon.png",
@@ -75,7 +75,7 @@ export default function RootLayout({
       name: "Rádio Coringão",
       logo: {
         "@type": "ImageObject",
-        url: `${SITE_URL}/logo-seo.png`,
+        url: `${SITE_URL}/logo-preto-og.png`,
       },
     },
     potentialAction: {

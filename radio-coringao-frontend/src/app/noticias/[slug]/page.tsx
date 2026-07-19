@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: "Rádio Coringão",
       images: [
         {
-          url: article.imageUrl || `${SITE_URL}/logo-seo.png`,
+          url: article.imageUrl || `${SITE_URL}/logo-preto-og.png`,
           width: 1200,
           height: 630,
           alt: article.imageAlt || article.title,
@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: "summary_large_image",
       title: article.title,
       description: article.excerpt,
-      images: [article.imageUrl || `${SITE_URL}/logo-seo.png`],
+      images: [article.imageUrl || `${SITE_URL}/logo-preto-og.png`],
     },
     alternates: {
       canonical: articleUrl,
@@ -65,7 +65,7 @@ export default async function NoticiaPage({ params }: Props) {
     "@type": "NewsArticle",
     headline: article.title,
     description: article.excerpt,
-    image: article.imageUrl || `${SITE_URL}/logo-seo.png`,
+    image: article.imageUrl || `${SITE_URL}/logo-preto-og.png`,
     url: articleUrl,
     datePublished: article.publishedAt,
     dateModified: article.updatedAt || article.publishedAt,
@@ -78,7 +78,7 @@ export default async function NoticiaPage({ params }: Props) {
       name: "Rádio Coringão",
       logo: {
         "@type": "ImageObject",
-        url: `${SITE_URL}/logo-seo.png`,
+        url: `${SITE_URL}/logo-preto-og.png`,
       },
     },
     mainEntityOfPage: {
