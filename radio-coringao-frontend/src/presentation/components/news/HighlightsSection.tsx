@@ -13,12 +13,12 @@ interface HighlightsProps {
 
 function HighlightCard({ article, large = false }: { article: NewsArticle; large?: boolean | string }) {
   const sizeClasses = large === "xl"
-    ? "min-h-[350px] sm:min-h-[400px]"
+    ? "h-[350px] sm:h-[400px]"
     : large === "lg"
-    ? "min-h-[280px] sm:min-h-[320px]"
+    ? "h-[280px] sm:h-[320px]"
     : large === "md" || large === true
-    ? "min-h-[260px]"
-    : "min-h-[180px] min-w-[240px]";
+    ? "h-[260px]"
+    : "h-[180px] min-w-[240px]";
 
   const textClasses = large === "xl"
     ? "text-[18px] sm:text-[20px]"
