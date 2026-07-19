@@ -2,8 +2,9 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import Image from '@tiptap/extension-image';
+import TiptapLink from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
-import { Bold, Italic, Strikethrough, Highlighter, List, ListOrdered, Quote, ImagePlus, Heading1, Heading2, Heading3, Code, Undo, Redo, Link, Loader2, X } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Highlighter, List, ListOrdered, Quote, ImagePlus, Heading1, Heading2, Heading3, Code, Undo, Redo, Link as LinkIcon, Loader2, X, Unlink } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import { newsApi } from '@/infrastructure/api/client';
 import { alert } from '@/presentation/stores/dialog-store';
@@ -83,6 +84,13 @@ function ToolbarButton({ onClick, active, children, title, disabled }: { onClick
   );
 }
 
+function ensureHttps(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
 export function RichTextEditor({ content, onChange, placeholder }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -95,12 +103,23 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
   // Link modal state
   const [linkModalOpen, setLinkModalOpen] = useState(false);
   const [linkValue, setLinkValue] = useState('');
+  const [editingLink, setEditingLink] = useState(false);
 
   const editor = useEditor({
     extensions: [
       StarterKit,
       Highlight,
       CustomImage.configure({ inline: false, allowBase64: true }),
+      TiptapLink.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
+        HTMLAttributes: {
+          target: '_blank',
+          rel: 'noopener noreferrer nofollow',
+          class: 'editor-link',
+        },
+      }),
       Placeholder.configure({ placeholder: placeholder || 'Escreva o conteúdo do artigo...' }),
     ],
     content,
@@ -154,17 +173,51 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     setCreditValue('');
   };
 
-  const addLink = () => {
-    setLinkValue('');
+  const openLinkModal = () => {
+    const isLink = editor.isActive('link');
+    if (isLink) {
+      const attrs = editor.getAttributes('link');
+      setLinkValue(attrs.href || '');
+      setEditingLink(true);
+    } else {
+      setLinkValue('');
+      setEditingLink(false);
+    }
     setLinkModalOpen(true);
   };
 
   const confirmLinkInsert = () => {
-    if (linkValue.trim()) {
-      editor.chain().focus().setLink({ href: linkValue.trim() }).run();
+    const url = ensureHttps(linkValue);
+    if (!url) {
+      setLinkModalOpen(false);
+      setLinkValue('');
+      return;
     }
+
+    const { from, to } = editor.state.selection;
+    const hasSelection = from !== to;
+
+    if (hasSelection) {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+    } else {
+      editor.chain().focus().insertContent({
+        type: 'text',
+        text: url,
+        marks: [{ type: 'link', attrs: { href: url } }],
+      }).run();
+    }
+    onChange(editor.getHTML());
     setLinkModalOpen(false);
     setLinkValue('');
+    setEditingLink(false);
+  };
+
+  const removeLink = () => {
+    editor.chain().focus().unsetLink().run();
+    onChange(editor.getHTML());
+    setLinkModalOpen(false);
+    setLinkValue('');
+    setEditingLink(false);
   };
 
   return (
@@ -210,8 +263,8 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <ToolbarButton onClick={() => fileInputRef.current?.click()} title="Inserir Imagem do Computador" disabled={uploading}>
           {uploading ? <Loader2 size={16} className="animate-spin" /> : <ImagePlus size={16} />}
         </ToolbarButton>
-        <ToolbarButton onClick={addLink} title="Inserir Link" disabled={uploading}>
-          <Link size={16} />
+        <ToolbarButton onClick={openLinkModal} active={editor.isActive('link')} title={editor.isActive('link') ? 'Editar Link' : 'Inserir Link'} disabled={uploading}>
+          <LinkIcon size={16} />
         </ToolbarButton>
         <div className="w-px h-5 bg-outline-variant mx-1" />
         <ToolbarButton onClick={() => editor.chain().focus().undo().run()} title="Desfazer" disabled={uploading}>
@@ -263,7 +316,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
           <div className="absolute inset-0 bg-black/50" onClick={() => setLinkModalOpen(false)} />
           <div className="relative bg-surface-container-lowest rounded-lg shadow-xl w-full max-w-sm">
             <div className="flex items-center justify-between p-4 border-b border-outline-variant">
-              <h3 className="font-headline text-sm font-bold text-on-surface">Inserir Link</h3>
+              <h3 className="font-headline text-sm font-bold text-on-surface">{editingLink ? 'Editar Link' : 'Inserir Link'}</h3>
               <button onClick={() => setLinkModalOpen(false)} className="p-1 rounded hover:bg-surface-container-low text-on-surface-variant"><X size={16} /></button>
             </div>
             <div className="p-4">
@@ -276,13 +329,20 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
                 autoFocus
                 onKeyDown={(e) => { if (e.key === 'Enter') confirmLinkInsert(); }}
               />
+              <p className="text-[10px] text-on-surface-variant mt-1.5">Se não houver texto selecionado, a URL será inserida como texto clicável.</p>
             </div>
             <div className="flex gap-2 p-4 border-t border-outline-variant">
-              <button onClick={() => setLinkModalOpen(false)} className="flex-1 px-3 py-2 rounded-lg text-xs font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">
+              {editingLink && (
+                <button onClick={removeLink} className="px-3 py-2 rounded-lg text-xs font-bold text-red-600 hover:bg-red-50 transition-colors flex items-center gap-1">
+                  <Unlink size={12} /> Remover
+                </button>
+              )}
+              <div className="flex-1" />
+              <button onClick={() => setLinkModalOpen(false)} className="px-3 py-2 rounded-lg text-xs font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">
                 Cancelar
               </button>
-              <button onClick={confirmLinkInsert} className="flex-1 px-3 py-2 rounded-lg text-xs font-bold bg-primary text-white hover:bg-primary/90 transition-colors">
-                Inserir Link
+              <button onClick={confirmLinkInsert} className="px-3 py-2 rounded-lg text-xs font-bold bg-primary text-white hover:bg-primary/90 transition-colors">
+                {editingLink ? 'Salvar' : 'Inserir'}
               </button>
             </div>
           </div>
