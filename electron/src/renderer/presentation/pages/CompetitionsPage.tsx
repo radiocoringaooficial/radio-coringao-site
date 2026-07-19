@@ -761,7 +761,7 @@ export function CompetitionsPage() {
                             </div>
                           </div>
 
-                          {isExpanded && !['phases', 'none', 'friendly'].includes(currentComp?.tableFormat) && (
+                          {isExpanded && !['none', 'friendly'].includes(currentComp?.tableFormat) && (
                             <div className="ml-8 mt-2 fade-in">
                               <div className="card p-0 overflow-hidden">
                                 <div className="flex items-center justify-between px-4 py-3 bg-surface-container-low border-b border-outline-variant">
@@ -875,6 +875,42 @@ export function CompetitionsPage() {
                               </div>
                             </div>
                           )}
+
+                          {/* Partidas da Competição */}
+                          {isExpanded && compMatches.length > 0 && (
+                            <div className="ml-8 mt-3 fade-in">
+                              <div className="card p-0 overflow-hidden">
+                                <div className="flex items-center gap-2 px-4 py-3 bg-surface-container-low border-b border-outline-variant">
+                                  <Trophy size={14} className="text-on-surface-variant" />
+                                  <span className="font-headline text-xs font-bold text-on-surface">Partidas</span>
+                                  <span className="text-[10px] text-on-surface-variant">· {compMatches.length} partida{compMatches.length !== 1 ? 's' : ''}</span>
+                                </div>
+                                <div className="divide-y divide-outline-variant/30">
+                                  {compMatches.map((m: any) => {
+                                    const opp = m.opponent;
+                                    const st = m.status === 'FINISHED' ? 'Finalizado' : m.status === 'SCHEDULED' ? 'Agendado' : m.status;
+                                    const d = new Date(m.date);
+                                    return (
+                                      <div key={m.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-low/50 transition-colors">
+                                        <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center shrink-0">
+                                          {opp?.logoUrl ? <img src={opp.logoUrl} alt="" className="w-6 h-6 object-contain" /> : <Shield size={12} className="text-on-surface-variant/40" />}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-xs font-bold text-on-surface truncate">{m.isHome ? 'Corinthians' : opp?.name || '?'} vs {m.isHome ? opp?.name || '?' : 'Corinthians'}</p>
+                                          <p className="text-[10px] text-on-surface-variant">{d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                                        </div>
+                                        {m.status === 'FINISHED' ? (
+                                          <span className="text-sm font-headline font-bold text-on-surface">{m.homeScore} x {m.awayScore}</span>
+                                        ) : (
+                                          <span className="text-[10px] text-on-surface-variant">{st}</span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
@@ -891,41 +927,6 @@ export function CompetitionsPage() {
                   );
                 })()}
 
-                {/* Partidas da Competição */}
-                {compMatches.length > 0 && (
-                  <div className="ml-8 mt-3 fade-in">
-                    <div className="card p-0 overflow-hidden">
-                      <div className="flex items-center gap-2 px-4 py-3 bg-surface-container-low border-b border-outline-variant">
-                        <Trophy size={14} className="text-on-surface-variant" />
-                        <span className="font-headline text-xs font-bold text-on-surface">Partidas</span>
-                        <span className="text-[10px] text-on-surface-variant">· {compMatches.length} partida{compMatches.length !== 1 ? 's' : ''}</span>
-                      </div>
-                      <div className="divide-y divide-outline-variant/30">
-                        {compMatches.map((m: any) => {
-                          const opp = m.opponent;
-                          const st = m.status === 'FINISHED' ? 'Finalizado' : m.status === 'SCHEDULED' ? 'Agendado' : m.status;
-                          const d = new Date(m.date);
-                          return (
-                            <div key={m.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-low/50 transition-colors">
-                              <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center shrink-0">
-                                {opp?.logoUrl ? <img src={opp.logoUrl} alt="" className="w-6 h-6 object-contain" /> : <Shield size={12} className="text-on-surface-variant/40" />}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold text-on-surface truncate">{m.isHome ? 'Corinthians' : opp?.name || '?'} vs {m.isHome ? opp?.name || '?' : 'Corinthians'}</p>
-                                <p className="text-[10px] text-on-surface-variant">{d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-                              </div>
-                              {m.status === 'FINISHED' ? (
-                                <span className="text-sm font-headline font-bold text-on-surface">{m.homeScore} x {m.awayScore}</span>
-                              ) : (
-                                <span className="text-[10px] text-on-surface-variant">{st}</span>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             );
           })
