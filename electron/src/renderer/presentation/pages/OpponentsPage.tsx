@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import type { Opponent } from '@/domain/entities/clube';
 import { Plus, Pencil, Trash2, MapPin, Building2, CalendarDays, ChevronLeft, ChevronRight, ChevronDown, Loader2, Search } from 'lucide-react';
 import { Modal } from '@/presentation/components/ui/Modal';
@@ -25,6 +25,7 @@ export function OpponentsPage() {
   const [search, setSearch] = useState('');
   const [sectionPages, setSectionPages] = useState<Record<string, number>>({});
   const SECTION_LIMIT = 10;
+  const searchSeq = useRef(0);
   const toast = useToastStore((s) => s.addToast);
 
   const isDirty = initialForm !== null && (
@@ -32,6 +33,7 @@ export function OpponentsPage() {
   );
 
   const load = async (searchTerm?: string) => {
+    const seq = ++searchSeq.current;
     try {
       setLoading(true);
       const q = searchTerm !== undefined ? searchTerm : search;
@@ -40,12 +42,14 @@ export function OpponentsPage() {
         clubeApi.get(url).catch(() => ({ data: [] })),
         clubeApi.get('/categorias/flat').catch(() => []),
       ]);
+      if (seq !== searchSeq.current) return;
       setItems(oppData?.data || (Array.isArray(oppData) ? oppData : []));
       setCategories(Array.isArray(catData) ? catData : []);
     } catch (err: any) {
+      if (seq !== searchSeq.current) return;
       toast('Erro ao carregar: ' + err.message, 'error');
     } finally {
-      setLoading(false);
+      if (seq === searchSeq.current) setLoading(false);
     }
   };
 
