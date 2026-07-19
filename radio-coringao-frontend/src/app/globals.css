@@ -247,7 +247,23 @@ body {
 .article-content img {
   max-width: 100%;
   border-radius: 8px;
+  margin: 0;
+}
+
+.article-content figure {
   margin: 1.5rem 0;
+}
+
+.article-content figure img {
+  margin: 0;
+}
+
+.article-content figcaption {
+  text-align: center;
+  font-size: 11px;
+  font-style: italic;
+  color: #888;
+  margin-top: 0.5rem;
 }
 
 .article-content mark {

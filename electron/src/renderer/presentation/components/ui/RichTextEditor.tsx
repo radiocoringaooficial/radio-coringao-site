@@ -65,7 +65,14 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
       });
 
       const data = await newsApi.post('/admin/articles/content-image', { image: base64 });
-      editor.chain().focus().setImage({ src: data.url }).run();
+      const credit = prompt('Crédito da foto (deixe em branco para pular):');
+      if (credit && credit.trim()) {
+        editor.chain().focus().insertContent(
+          `<figure><img src="${data.url}" alt="" /><figcaption>${credit.trim()}</figcaption></figure>`
+        ).run();
+      } else {
+        editor.chain().focus().setImage({ src: data.url }).run();
+      }
       onChange(editor.getHTML());
     } catch (err: any) {
       alert('Erro ao enviar imagem: ' + (err.message || 'Tente novamente'));
