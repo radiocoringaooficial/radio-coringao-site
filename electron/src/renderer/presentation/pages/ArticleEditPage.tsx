@@ -339,52 +339,77 @@ export function ArticleEditPage() {
             </div>
 
             {/* Agendamento */}
-            <div className="border-t border-outline-variant/30 pt-4">
-              <div className="flex items-center gap-2 mb-1.5">
-                <CalendarClock size={14} className={wasAlreadyPublished ? 'text-on-surface-variant/40' : 'text-on-surface-variant'} />
-                <label className={`font-headline text-label-sm font-bold ${wasAlreadyPublished ? 'text-on-surface-variant/40' : 'text-on-surface'}`}>Agendamento</label>
-              </div>
-              <p className="text-[10px] text-on-surface-variant mb-2">
-                {wasAlreadyPublished ? 'Agendamento não disponível para artigos já publicados.' : 'Agendar para publicação automática no futuro.'}
-              </p>
-              <input
-                type="datetime-local"
-                value={form.scheduledAt}
-                min={nowLocal}
-                disabled={wasAlreadyPublished}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val && val <= nowLocal) {
-                    toast('Selecione uma data e hora futuras.', 'error');
-                    return;
-                  }
-                  setForm({ ...form, scheduledAt: val });
-                }}
-                className={`input-field text-sm ${wasAlreadyPublished ? 'opacity-40 cursor-not-allowed' : ''}`}
-              />
-              {form.scheduledAt && new Date(form.scheduledAt) > new Date() && form.status !== 'PUBLISHED' && (
-                <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 p-2">
-                  <CalendarClock size={12} className="text-amber-600 shrink-0" />
-                  <div>
-                    <p className="text-[10px] font-bold text-amber-700">Artigo será publicado automaticamente</p>
-                    <p className="text-[9px] text-amber-600">
-                      {new Date(form.scheduledAt).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })}
-                      {' às '}
-                      {new Date(form.scheduledAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+            {(() => {
+              const isScheduledAwaiting = form.status === 'DRAFT' && !!form.scheduledAt;
+              if (isScheduledAwaiting) {
+                const d = new Date(form.scheduledAt);
+                const dateStr = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                const timeStr = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                return (
+                  <div className="border-t border-outline-variant/30 pt-4">
+                    <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                      <CalendarClock size={14} className="text-blue-600 shrink-0" />
+                      <div>
+                        <p className="text-[11px] font-bold text-blue-700">Publicação automática em andamento</p>
+                        <p className="text-[10px] text-blue-600 mt-0.5">
+                          Este artigo será publicado em até 5 minutos após o horário agendado ({dateStr} às {timeStr}). Atualize a página para conferir.
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, scheduledAt: '' })}
+                      className="mt-1.5 text-[10px] text-on-surface-variant hover:text-red-500 transition-colors"
+                    >
+                      Cancelar agendamento
+                    </button>
                   </div>
+                );
+              }
+              if (wasAlreadyPublished) {
+                return (
+                  <div className="border-t border-outline-variant/30 pt-4">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <CalendarClock size={14} className="text-on-surface-variant/40" />
+                      <label className="font-headline text-label-sm font-bold text-on-surface-variant/40">Agendamento</label>
+                    </div>
+                    <p className="text-[10px] text-on-surface-variant">Agendamento não disponível para artigos já publicados.</p>
+                  </div>
+                );
+              }
+              return (
+                <div className="border-t border-outline-variant/30 pt-4">
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <CalendarClock size={14} className="text-on-surface-variant" />
+                    <label className="font-headline text-label-sm font-bold text-on-surface">Agendamento</label>
+                  </div>
+                  <p className="text-[10px] text-on-surface-variant mb-2">Agendar para publicação automática no futuro.</p>
+                  <input
+                    type="datetime-local"
+                    value={form.scheduledAt}
+                    min={nowLocal}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val && val <= nowLocal) {
+                        toast('Selecione uma data e hora futuras.', 'error');
+                        return;
+                      }
+                      setForm({ ...form, scheduledAt: val });
+                    }}
+                    className="input-field text-sm"
+                  />
+                  {form.scheduledAt && (
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, scheduledAt: '' })}
+                      className="mt-1.5 text-[10px] text-on-surface-variant hover:text-red-500 transition-colors"
+                    >
+                      Remover agendamento
+                    </button>
+                  )}
                 </div>
-              )}
-              {form.scheduledAt && !wasAlreadyPublished && (
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, scheduledAt: '' })}
-                  className="mt-1.5 text-[10px] text-on-surface-variant hover:text-red-500 transition-colors"
-                >
-                  Remover agendamento
-                </button>
-              )}
-            </div>
+              );
+            })()}
 
             <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Categoria *</label>
               <CategoryDropdown value={form.categoryId} onChange={(id) => setForm({ ...form, categoryId: id })} categories={categories} />
