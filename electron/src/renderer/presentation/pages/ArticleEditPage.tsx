@@ -352,7 +352,7 @@ export function ArticleEditPage() {
                       <div>
                         <p className="text-[11px] font-bold text-blue-700">Publicação automática em andamento</p>
                         <p className="text-[10px] text-blue-600 mt-0.5">
-                          Este artigo será publicado em até 5 minutos após o horário agendado ({dateStr} às {timeStr}). Atualize a página para conferir.
+                          Este artigo será publicado em até 1 minuto após o horário agendado ({dateStr} às {timeStr}). Atualize a página para conferir.
                         </p>
                       </div>
                     </div>
