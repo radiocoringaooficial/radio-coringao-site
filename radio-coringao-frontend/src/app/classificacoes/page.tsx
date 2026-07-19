@@ -94,10 +94,44 @@ export default async function ClassificacoesPage() {
   const results = await Promise.all(
     categories.map(async (cat) => {
       try {
-        const res = await fetch(`${CLUBE_URL}/classificacoes/category/${cat.slug}`, { cache: "no-store" });
-        if (!res.ok) return { ...cat, tables: [] as TableData[] };
-        const data = await res.json();
-        return { ...cat, tables: (data.tables || []) as TableData[] };
+        const [classRes, compRes] = await Promise.all([
+          fetch(`${CLUBE_URL}/classificacoes/category/${cat.slug}`, { cache: "no-store" }),
+          fetch(`${CLUBE_URL}/competicoes?category=${cat.slug}`, { cache: "no-store" }),
+        ]);
+        if (!classRes.ok) return { ...cat, tables: [] as TableData[] };
+        const entries = await classRes.json();
+        if (!Array.isArray(entries)) return { ...cat, tables: (entries.tables || []) as TableData[] };
+        const competitions = compRes.ok ? await compRes.json() : [];
+        const compMap = new Map<string, any>();
+        for (const c of competitions) compMap.set(c.id, c);
+        const NO_TABLE_FORMATS = new Set(['friendly', 'phases']);
+        const byComp = new Map<string, any[]>();
+        for (const e of entries) {
+          const comp = compMap.get(e.competitionId);
+          if (!comp || NO_TABLE_FORMATS.has(comp.tableFormat)) continue;
+          const arr = byComp.get(e.competitionId) || [];
+          arr.push(e);
+          byComp.set(e.competitionId, arr);
+        }
+        const tables: TableData[] = [];
+        for (const [id, standings] of byComp) {
+          const comp = compMap.get(id);
+          if (comp?.tableFormat === 'grouped') {
+            const byGroup = new Map<string, any[]>();
+            for (const s of standings) {
+              const g = s.groupName || 'Geral';
+              const arr = byGroup.get(g) || [];
+              arr.push(s);
+              byGroup.set(g, arr);
+            }
+            for (const [groupName, groupStandings] of byGroup) {
+              tables.push({ competition: { id, name: `${comp.name} — ${groupName}`, season: comp.season || "" }, standings: groupStandings });
+            }
+          } else {
+            tables.push({ competition: { id, name: comp?.name || cat.label, season: comp?.season || "" }, standings });
+          }
+        }
+        return { ...cat, tables };
       } catch {
         return { ...cat, tables: [] as TableData[] };
       }
