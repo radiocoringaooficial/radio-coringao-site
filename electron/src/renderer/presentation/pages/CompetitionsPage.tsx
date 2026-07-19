@@ -846,7 +846,7 @@ export function CompetitionsPage() {
                                 <span className="badge bg-surface-container text-on-surface-variant text-[10px]">{c.season}</span>
                                 <span className="badge bg-surface-container text-on-surface-variant text-[10px] flex items-center gap-1">{c.tableFormat === 'grouped' ? <><LayoutGrid size={10} /> Grupos</> : c.tableFormat === 'friendly' ? <><Users size={10} /> Amistoso</> : c.tableFormat === 'none' ? <><Ban size={10} /> Sem Tabela</> : c.tableFormat === 'phases' ? <><Trophy size={10} /> Fases</> : <><LayoutList size={10} /> Única</>}</span>
                               </div>
-                              {c.status && <p className="text-xs text-on-surface-variant mt-0.5">{c.status}</p>}
+                              {c.status && c.tableFormat !== 'friendly' && <p className="text-xs text-on-surface-variant mt-0.5">{c.status}</p>}
                             </div>
                             <span className={`badge text-[10px] ${c.isParticipating ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-500'}`}>{c.isParticipating ? 'Participa' : 'Não participa'}</span>
                             <div className="flex items-center gap-0.5">
@@ -921,8 +921,13 @@ export function CompetitionsPage() {
                                                     return (
                                                       <div key={oppId} className="border border-outline-variant/50 rounded-lg overflow-hidden">
                                                         <div className="flex items-center gap-3 px-3 py-2 bg-surface-container-low/50">
-                                                          <div className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center shrink-0">
-                                                            {opp?.logoUrl ? <img src={opp.logoUrl} alt="" className="w-4 h-4 object-contain" /> : <Shield size={10} className="text-on-surface-variant/40" />}
+                                                          <div className="flex items-center -space-x-1.5 shrink-0">
+                                                            <div className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface z-10">
+                                                              {team?.logoUrl ? <img src={team.logoUrl} alt="" className="w-4 h-4 object-contain" /> : <Shield size={10} className="text-on-surface-variant/40" />}
+                                                            </div>
+                                                            <div className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface">
+                                                              {opp?.logoUrl ? <img src={opp.logoUrl} alt="" className="w-4 h-4 object-contain" /> : <Shield size={10} className="text-on-surface-variant/40" />}
+                                                            </div>
                                                           </div>
                                                           <span className="font-bold text-xs text-on-surface flex-1">Corinthians vs {opp?.name || '?'}</span>
                                                           {aggDecided && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${totalA > totalB ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{totalA > totalB ? 'Corinthians' : opp?.name} classificado</span>}
@@ -1021,8 +1026,21 @@ export function CompetitionsPage() {
                                     const d = new Date(m.date);
                                     return (
                                       <div key={m.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-low/50 transition-colors">
-                                        <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center shrink-0">
-                                          {opp?.logoUrl ? <img src={opp.logoUrl} alt="" className="w-6 h-6 object-contain" /> : <Shield size={12} className="text-on-surface-variant/40" />}
+                                        <div className="flex items-center -space-x-2 shrink-0">
+                                          <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface z-10">
+                                            {(m.isHome ? team?.logoUrl : opp?.logoUrl) ? (
+                                              <img src={m.isHome ? team?.logoUrl : opp?.logoUrl} alt="" className="w-6 h-6 object-contain" />
+                                            ) : (
+                                              <Shield size={12} className="text-on-surface-variant/40" />
+                                            )}
+                                          </div>
+                                          <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface">
+                                            {(m.isHome ? opp?.logoUrl : team?.logoUrl) ? (
+                                              <img src={m.isHome ? opp?.logoUrl : team?.logoUrl} alt="" className="w-6 h-6 object-contain" />
+                                            ) : (
+                                              <Shield size={12} className="text-on-surface-variant/40" />
+                                            )}
+                                          </div>
                                         </div>
                                         <div className="flex-1 min-w-0">
                                           <p className="text-xs font-bold text-on-surface truncate">{m.isHome ? 'Corinthians' : opp?.name || '?'} vs {m.isHome ? opp?.name || '?' : 'Corinthians'}</p>
