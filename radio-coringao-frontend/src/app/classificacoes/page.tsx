@@ -124,7 +124,8 @@ export default async function ClassificacoesPage() {
               arr.push(s);
               byGroup.set(g, arr);
             }
-            for (const [groupName, groupStandings] of byGroup) {
+            const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+            for (const [groupName, groupStandings] of Array.from(byGroup.entries()).sort((a, b) => collator.compare(a[0], b[0]))) {
               tables.push({ competition: { id, name: `${comp.name} — ${groupName}`, season: comp.season || "" }, standings: groupStandings });
             }
           } else {

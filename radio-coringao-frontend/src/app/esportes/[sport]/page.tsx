@@ -181,7 +181,8 @@ export default async function SportPage({ params }: Props) {
               arr.push(s);
               byGroup.set(g, arr);
             }
-            return Array.from(byGroup.entries()).map(([groupName, groupStandings]) => ({
+            const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+            return Array.from(byGroup.entries()).sort((a, b) => collator.compare(a[0], b[0])).map(([groupName, groupStandings]) => ({
               competition: { id, name: `${comp.name} — ${groupName}`, season: comp?.season || "" },
               standings: groupStandings,
             }));
