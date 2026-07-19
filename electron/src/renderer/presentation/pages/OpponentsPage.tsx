@@ -98,6 +98,12 @@ export function OpponentsPage() {
   const expandAll = () => setExpandedGroups(new Set(grouped.map((g) => g.parent.id)));
   const collapseAll = () => setExpandedGroups(new Set());
 
+  useEffect(() => {
+    if (search.trim()) {
+      setExpandedGroups(new Set(grouped.map((g) => g.parent.id)));
+    }
+  }, [search, grouped]);
+
   const openNew = () => {
     setEditing(null);
     setLogoFile(null);
