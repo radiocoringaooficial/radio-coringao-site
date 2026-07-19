@@ -8,13 +8,33 @@ import { LatestNews } from "@/presentation/components/news/LatestNews";
 import { ClassificationCarousel } from "@/presentation/components/classification/ClassificationCarousel";
 import { HighlightsSection } from "@/presentation/components/news/HighlightsSection";
 
+function mulberry32(seed: number) {
+  let s = seed | 0;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function getDailySeed(): number {
+  const dateStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = ((hash << 5) - hash + dateStr.charCodeAt(i)) | 0;
+  }
+  return hash;
+}
+
 function buildTopRead(weekHighlights: any[], latestNews: any[], limit = 5) {
   const base = weekHighlights.slice(0, limit);
   if (base.length >= limit) return base;
   const usedIds = new Set(base.map((a) => a.id));
   const remaining = latestNews.filter((a) => !usedIds.has(a.id));
+  const rng = mulberry32(getDailySeed());
   for (let i = remaining.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(rng() * (i + 1));
     [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
   }
   return [...base, ...remaining.slice(0, limit - base.length)];
