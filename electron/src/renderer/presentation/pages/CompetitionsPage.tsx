@@ -922,11 +922,11 @@ export function CompetitionsPage() {
                                                       <div key={oppId} className="border border-outline-variant/50 rounded-lg overflow-hidden">
                                                         <div className="flex items-center gap-3 px-3 py-2 bg-surface-container-low/50">
                                                           <div className="flex items-center -space-x-1.5 shrink-0">
-                                                            <div className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface z-10">
-                                                              {team?.logoUrl ? <img src={team.logoUrl} alt="" className="w-4 h-4 object-contain" /> : <Shield size={10} className="text-on-surface-variant/40" />}
+                                                            <div className="w-6 h-6 flex items-center justify-center z-10">
+                                                              {team?.logoUrl ? <img src={team.logoUrl} alt="" className="w-6 h-6 object-contain" /> : <Shield size={10} className="text-on-surface-variant/40" />}
                                                             </div>
-                                                            <div className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface">
-                                                              {opp?.logoUrl ? <img src={opp.logoUrl} alt="" className="w-4 h-4 object-contain" /> : <Shield size={10} className="text-on-surface-variant/40" />}
+                                                            <div className="w-6 h-6 flex items-center justify-center">
+                                                              {opp?.logoUrl ? <img src={opp.logoUrl} alt="" className="w-6 h-6 object-contain" /> : <Shield size={10} className="text-on-surface-variant/40" />}
                                                             </div>
                                                           </div>
                                                           <span className="font-bold text-xs text-on-surface flex-1">Corinthians vs {opp?.name || '?'}</span>
@@ -1027,16 +1027,16 @@ export function CompetitionsPage() {
                                     return (
                                       <div key={m.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-low/50 transition-colors">
                                         <div className="flex items-center -space-x-2 shrink-0">
-                                          <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface z-10">
+                                          <div className="w-8 h-8 flex items-center justify-center z-10">
                                             {(m.isHome ? team?.logoUrl : opp?.logoUrl) ? (
-                                              <img src={m.isHome ? team?.logoUrl : opp?.logoUrl} alt="" className="w-6 h-6 object-contain" />
+                                              <img src={m.isHome ? team?.logoUrl : opp?.logoUrl} alt="" className="w-8 h-8 object-contain" />
                                             ) : (
                                               <Shield size={12} className="text-on-surface-variant/40" />
                                             )}
                                           </div>
-                                          <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center ring-2 ring-surface">
+                                          <div className="w-8 h-8 flex items-center justify-center">
                                             {(m.isHome ? opp?.logoUrl : team?.logoUrl) ? (
-                                              <img src={m.isHome ? opp?.logoUrl : team?.logoUrl} alt="" className="w-6 h-6 object-contain" />
+                                              <img src={m.isHome ? opp?.logoUrl : team?.logoUrl} alt="" className="w-8 h-8 object-contain" />
                                             ) : (
                                               <Shield size={12} className="text-on-surface-variant/40" />
                                             )}
