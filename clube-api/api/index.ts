@@ -120,6 +120,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json(data);
     }
 
+    // GET /api/partidas/next-feminino
+    if (url === '/api/partidas/next-feminino' || url.startsWith('/api/partidas/next-feminino?')) {
+      const match = await db.match.findFirst({
+        where: { isArchived: false, status: 'SCHEDULED', date: { gte: new Date() }, competition: { category: { gender: 'FEMALE' } } },
+        orderBy: { date: 'asc' },
+        include: { opponent: { select: { id: true, name: true, logoUrl: true } }, competition: { select: { id: true, name: true, category: { select: { slug: true } } } } },
+      });
+      return res.status(200).json(match ?? null);
+    }
+
+    // GET /api/partidas/next-basquete
+    if (url === '/api/partidas/next-basquete' || url.startsWith('/api/partidas/next-basquete?')) {
+      const match = await db.match.findFirst({
+        where: { isArchived: false, status: 'SCHEDULED', date: { gte: new Date() }, competition: { category: { modality: 'BASKETBALL' } } },
+        orderBy: { date: 'asc' },
+        include: { opponent: { select: { id: true, name: true, logoUrl: true } }, competition: { select: { id: true, name: true, category: { select: { slug: true } } } } },
+      });
+      return res.status(200).json(match ?? null);
+    }
+
     if (url === '/api/partidas/recent' || url.startsWith('/api/partidas/recent?')) {
       const urlObj = new URL(url, 'http://localhost');
       const category = urlObj.searchParams.get('category');
@@ -219,7 +239,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const urlObj = new URL(url, 'http://localhost');
       const limit = parseInt(urlObj.searchParams.get('limit') || '10');
       const category = urlObj.searchParams.get('category');
-      const where: any = {};
+      const where: any = { isArchived: false };
       if (category) {
         where.OR = [
           { category: { slug: category } },
