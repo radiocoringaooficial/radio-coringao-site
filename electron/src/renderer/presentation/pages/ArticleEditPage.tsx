@@ -187,7 +187,7 @@ export function ArticleEditPage() {
           categoryId: a.categoryId || '', status: a.status || 'DRAFT', type: a.type || 'NEWS',
           isFeatured: a.isFeatured || false,
           order: String(a.order || 0), coverImageAlt: a.coverImageAlt || '', coverImageCredit: a.coverImageCredit || '',
-          scheduledAt: scheduledAtStr,
+          scheduledAt: a.status === 'PUBLISHED' ? '' : scheduledAtStr,
         };
         setForm(loaded);
         setInitialForm({ ...loaded });
@@ -213,7 +213,7 @@ export function ArticleEditPage() {
       toast('Imagem de capa é obrigatória para publicar.', 'error');
       return;
     }
-    if (form.scheduledAt) {
+    if (form.scheduledAt && !wasAlreadyPublished) {
       if (form.scheduledAt <= nowLocal) {
         toast('A data de agendamento deve ser no futuro.', 'error');
         return;
