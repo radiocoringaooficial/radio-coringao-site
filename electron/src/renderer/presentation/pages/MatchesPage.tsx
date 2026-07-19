@@ -571,6 +571,7 @@ export function MatchesPage() {
                   const label = `${i + 1}ª Rodada`;
                   return <option key={i + 1} value={label}>{label}</option>;
                 })}
+                <option value="Fase de Grupos">Fase de Grupos</option>
                 <option value="Oitavas de Final">Oitavas de Final</option>
                 <option value="Quartas de Final">Quartas de Final</option>
                 <option value="Semifinal">Semifinal</option>

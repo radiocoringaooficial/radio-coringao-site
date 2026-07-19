@@ -864,29 +864,36 @@ export function CompetitionsPage() {
                                   <div className="flex items-center gap-2">
                                     <Table2 size={14} className="text-on-surface-variant" />
                                     <span className="font-headline text-xs font-bold text-on-surface">
-                                      {isGrouped ? `${groups.length} Grupos` : 'Tabela Única'}
+                                      {currentComp?.tableFormat === 'phases' ? `Fases · ${compMatches.length} partidas` : isGrouped ? `${groups.length} Grupos` : 'Tabela Única'}
                                     </span>
-                                    <span className="text-[10px] text-on-surface-variant">· {standings.length} times</span>
+                                    {currentComp?.tableFormat !== 'phases' && <span className="text-[10px] text-on-surface-variant">· {standings.length} times</span>}
                                   </div>
-                                  <button onClick={saveStandings} disabled={savingStandings || !isStandingsDirty} className="px-3 py-1.5 rounded-lg text-[11px] font-headline font-bold bg-primary text-white hover:bg-primary/90 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                                    {savingStandings ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} {savingStandings ? 'Salvando...' : 'Salvar Classificação'}
-                                  </button>
+                                  {currentComp?.tableFormat !== 'phases' && (
+                                    <button onClick={saveStandings} disabled={savingStandings || !isStandingsDirty} className="px-3 py-1.5 rounded-lg text-[11px] font-headline font-bold bg-primary text-white hover:bg-primary/90 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                      {savingStandings ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />} {savingStandings ? 'Salvando...' : 'Salvar Classificação'}
+                                    </button>
+                                  )}
                                 </div>
-                                {standingsLoading ? (
+                                {(currentComp?.tableFormat === 'phases' ? compMatchesLoading : standingsLoading) ? (
                                   <TableSkeleton rows={5} cols={6} />
                                 ) : currentComp?.tableFormat === 'phases' ? (
-                                  /* Sistema de Fases - agrupa por rodada (groupName) */
+                                  /* Sistema de Fases - deriva rounds de compMatches */
                                   <div>
                                     {(() => {
-                                      let rounds = [...new Set(standings.filter((s) => s.groupName).map((s) => s.groupName))];
+                                      let rounds = [...new Set(compMatches.map((m: any) => m.round).filter(Boolean))];
                                       if (currentComp?.status && PHASE_NAMES.includes(currentComp.status) && !rounds.includes(currentComp.status)) {
                                         rounds = [...rounds, currentComp.status];
                                       }
                                       if (rounds.length === 0) {
-                                        return <div className="px-4 py-6 text-center text-on-surface-variant text-xs">Nenhuma fase adicionada. Use "Adicionar Fase" para começar.</div>;
+                                        return <div className="px-4 py-6 text-center text-on-surface-variant text-xs">Nenhuma partida registrada para esta competição. Cadastre em Partidas.</div>;
                                       }
                                       return rounds.map((round) => {
-                                        const roundItems = standings.filter((s) => s.groupName === round);
+                                        const roundMatches = compMatches.filter((m: any) => m.round === round);
+                                        const byOpponent = new Map<string, any[]>();
+                                        roundMatches.forEach((m: any) => {
+                                          const key = m.opponentId || m.opponent?.id || 'sem-adversario';
+                                          byOpponent.set(key, [...(byOpponent.get(key) || []), m]);
+                                        });
                                         const rExpanded = expandedGroups.has(round!);
                                         return (
                                           <div key={round} className="border-b border-outline-variant last:border-b-0">
@@ -896,46 +903,70 @@ export function CompetitionsPage() {
                                                 <ChevronRight size={14} className={`text-on-surface-variant transition-transform ${rExpanded ? 'rotate-90' : ''}`} />
                                                 <Trophy size={14} className="text-primary" />
                                                 <span className="font-headline text-xs font-bold text-primary uppercase tracking-wider">{round}</span>
-                                                <span className="text-[10px] text-on-surface-variant">({Math.ceil(roundItems.length / 2)} confrontos)</span>
-                                              </div>
-                                              <div onClick={(e) => e.stopPropagation()}>
-                                                <button onClick={() => addStandingRow(round!, 2)} disabled={roundItems.length + 1 >= MAX_PER_GROUP}
-                                                  className={`py-1 px-2 text-[9px] font-headline font-bold transition-all flex items-center justify-center gap-1 ${roundItems.length >= MAX_PER_GROUP ? 'text-on-surface-variant/30 cursor-not-allowed' : 'text-primary hover:bg-primary/5 border border-dashed border-primary/30 hover:border-primary/60 rounded-lg'}`}>
-                                                  <Plus size={10} /> Confronto
-                                                </button>
+                                                <span className="text-[10px] text-on-surface-variant">({byOpponent.size} confrontos)</span>
                                               </div>
                                             </button>
                                             {rExpanded && (
-                                              <div className="fade-in">
-                                                {renderConfrontos(roundItems)}
+                                              <div className="fade-in p-3 space-y-3">
+                                                {byOpponent.size === 0 ? (
+                                                  <p className="text-[10px] text-on-surface-variant text-center py-2">Nenhuma partida registrada para esta fase ainda.</p>
+                                                ) : (
+                                                  Array.from(byOpponent.entries()).map(([oppId, matches]) => {
+                                                    const opp = matches[0]?.opponent;
+                                                    const allFinished = matches.every((m: any) => m.status === 'FINISHED');
+                                                    const totalA = matches.reduce((sum: number, m: any) => sum + (m.isHome ? (m.homeScore ?? 0) : (m.awayScore ?? 0)), 0);
+                                                    const totalB = matches.reduce((sum: number, m: any) => sum + (m.isHome ? (m.awayScore ?? 0) : (m.homeScore ?? 0)), 0);
+                                                    const aggDecided = allFinished && matches.length > 0 && totalA !== totalB;
+                                                    const aggTie = allFinished && matches.length > 0 && totalA === totalB;
+                                                    return (
+                                                      <div key={oppId} className="border border-outline-variant/50 rounded-lg overflow-hidden">
+                                                        <div className="flex items-center gap-3 px-3 py-2 bg-surface-container-low/50">
+                                                          <div className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center shrink-0">
+                                                            {opp?.logoUrl ? <img src={opp.logoUrl} alt="" className="w-4 h-4 object-contain" /> : <Shield size={10} className="text-on-surface-variant/40" />}
+                                                          </div>
+                                                          <span className="font-bold text-xs text-on-surface flex-1">Corinthians vs {opp?.name || '?'}</span>
+                                                          {aggDecided && <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${totalA > totalB ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{totalA > totalB ? 'Corinthians' : opp?.name} classificado</span>}
+                                                          {aggTie && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">Empate no agregado</span>}
+                                                        </div>
+                                                        <div className="divide-y divide-outline-variant/30">
+                                                          {matches.map((m: any) => {
+                                                            const d = new Date(m.date);
+                                                            const finished = m.status === 'FINISHED';
+                                                            const label = matches.length > 1 ? (m.isHome ? 'Ida' : 'Volta') : '';
+                                                            return (
+                                                              <div key={m.id} className="flex items-center gap-3 px-3 py-2">
+                                                                <div className="flex-1 min-w-0">
+                                                                  <div className="flex items-center gap-2">
+                                                                    <span className="text-[10px] text-on-surface-variant">{d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}</span>
+                                                                    {label && <span className="text-[9px] font-bold text-primary">{label}</span>}
+                                                                  </div>
+                                                                  <p className="text-[10px] text-on-surface-variant">{m.isHome ? 'Corinthians' : opp?.name || '?'} vs {m.isHome ? opp?.name || '?' : 'Corinthians'}</p>
+                                                                </div>
+                                                                {finished ? (
+                                                                  <span className="text-sm font-headline font-bold text-on-surface">{m.homeScore} x {m.awayScore}</span>
+                                                                ) : (
+                                                                  <span className="text-[10px] text-on-surface-variant">Agendado</span>
+                                                                )}
+                                                              </div>
+                                                            );
+                                                          })}
+                                                          {allFinished && matches.length > 1 && (
+                                                            <div className="flex items-center justify-between px-3 py-2 bg-surface-container-low/30">
+                                                              <span className="text-[10px] font-bold text-on-surface-variant">Agregado</span>
+                                                              <span className="text-sm font-headline font-bold text-on-surface">{totalA} x {totalB}</span>
+                                                            </div>
+                                                          )}
+                                                        </div>
+                                                      </div>
+                                                    );
+                                                  })
+                                                )}
                                               </div>
                                             )}
                                           </div>
                                         );
                                       });
                                     })()}
-                                    <div className="px-4 py-3">
-                                      {addingPhase ? (
-                                        <div className="flex items-center gap-2">
-                                          <select value={newPhaseName} onChange={(e) => setNewPhaseName(e.target.value)} className="input-field flex-1 text-xs">
-                                            <option value="">Selecione a fase...</option>
-                                            {PHASE_NAMES.filter((p) => !standings.some((s) => s.groupName === p) && p !== currentComp?.status).map((p) => <option key={p} value={p}>{p}</option>)}
-                                          </select>
-                                          <button onClick={() => {
-                                            if (newPhaseName.trim()) {
-                                              addStandingRow(newPhaseName.trim());
-                                              setExpandedGroups(new Set([...expandedGroups, newPhaseName.trim()]));
-                                              setAddingPhase(false); setNewPhaseName('');
-                                            }
-                                          }} className="btn-secondary text-[10px] px-3 py-1.5 shrink-0"><Save size={10} /></button>
-                                          <button onClick={() => { setAddingPhase(false); setNewPhaseName(''); }} className="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant shrink-0"><X size={12} /></button>
-                                        </div>
-                                      ) : (
-                                        <button onClick={() => setAddingPhase(true)} className="w-full py-2.5 px-4 text-[10px] font-headline font-bold text-primary hover:bg-primary/5 border border-dashed border-primary/30 hover:border-primary/60 rounded-lg transition-all flex items-center justify-center gap-1.5">
-                                          <Plus size={12} /> Adicionar nova fase
-                                        </button>
-                                      )}
-                                    </div>
                                   </div>
                                 ) : isGrouped && groups.length > 0 ? (
                                   <div>
