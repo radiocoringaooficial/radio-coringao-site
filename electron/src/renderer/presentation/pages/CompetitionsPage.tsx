@@ -833,7 +833,7 @@ export function CompetitionsPage() {
                                           <button onClick={() => { setAddingPhase(false); setNewPhaseName(''); }} className="p-1.5 rounded hover:bg-surface-container-low text-on-surface-variant shrink-0"><X size={12} /></button>
                                         </div>
                                       ) : (
-                                        <button onClick={() => { setAddingPhase(true); setNewPhaseName(currentComp?.status || ''); }} className="w-full py-2.5 px-4 text-[10px] font-headline font-bold text-primary hover:bg-primary/5 border border-dashed border-primary/30 hover:border-primary/60 rounded-lg transition-all flex items-center justify-center gap-1.5">
+                                        <button onClick={() => setAddingPhase(true)} className="w-full py-2.5 px-4 text-[10px] font-headline font-bold text-primary hover:bg-primary/5 border border-dashed border-primary/30 hover:border-primary/60 rounded-lg transition-all flex items-center justify-center gap-1.5">
                                           <Plus size={12} /> Adicionar nova fase
                                         </button>
                                       )}
