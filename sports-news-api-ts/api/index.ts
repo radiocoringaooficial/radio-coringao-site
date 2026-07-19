@@ -90,49 +90,79 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Destaques da semana (must be BEFORE slug match)
     if (url === '/api/noticias/highlights/week' || url.startsWith('/api/noticias/highlights/week?')) {
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      const weekViewCounts = await db.articleView.groupBy({
-        by: ['articleId'],
-        where: { viewedAt: { gte: weekAgo } },
-        _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
-        take: 10,
+      const includeArgs = { category: true, author: { select: { id: true, name: true, email: true, role: true, avatar: true, bio: true, position: true } } };
+
+      let articles = await db.article.findMany({
+        where: { status: 'PUBLISHED', publishedAt: { gte: weekAgo } },
+        orderBy: { publishedAt: 'desc' },
+        take: 50,
+        include: includeArgs,
       });
-      const weekIds = weekViewCounts.map((r: any) => r.articleId);
-      const weekArticles = weekIds.length
-        ? await db.article.findMany({
-            where: { id: { in: weekIds }, status: 'PUBLISHED' },
-            include: { category: true, author: { select: { id: true, name: true, email: true, role: true, avatar: true, bio: true, position: true } } },
-          })
-        : [];
-      const weekCountMap = new Map(weekViewCounts.map((r: any) => [r.articleId, r._count.id]));
-      const weekResult = weekArticles
-        .map((a: any) => ({ ...a, viewCount: weekCountMap.get(a.id) || 0 }))
-        .sort((a: any, b: any) => b.viewCount - a.viewCount);
-      return res.status(200).json(weekResult);
+
+      // Fallback: se nenhum artigo na janela, usa os mais recentes
+      if (articles.length === 0) {
+        articles = await db.article.findMany({
+          where: { status: 'PUBLISHED' },
+          orderBy: { publishedAt: 'desc' },
+          take: 10,
+          include: includeArgs,
+        });
+      }
+
+      // Busca viewCount total (histórico) para cada artigo
+      const articleIds = articles.map((a: any) => a.id);
+      const viewCounts = articleIds.length ? await db.articleView.groupBy({
+        by: ['articleId'],
+        where: { articleId: { in: articleIds } },
+        _count: { id: true },
+      }) : [];
+      const viewCountMap = new Map(viewCounts.map((r: any) => [r.articleId, r._count.id]));
+
+      const result = articles
+        .map((a: any) => ({ ...a, viewCount: viewCountMap.get(a.id) || 0 }))
+        .sort((a: any, b: any) => b.viewCount - a.viewCount || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+        .slice(0, 10);
+
+      return res.status(200).json(result);
     }
 
     // Destaques do mês
     if (url === '/api/noticias/highlights/month' || url.startsWith('/api/noticias/highlights/month?')) {
       const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-      const monthViewCounts = await db.articleView.groupBy({
-        by: ['articleId'],
-        where: { viewedAt: { gte: monthAgo } },
-        _count: { id: true },
-        orderBy: { _count: { id: 'desc' } },
-        take: 10,
+      const includeArgs = { category: true, author: { select: { id: true, name: true, email: true, role: true, avatar: true, bio: true, position: true } } };
+
+      let articles = await db.article.findMany({
+        where: { status: 'PUBLISHED', publishedAt: { gte: monthAgo } },
+        orderBy: { publishedAt: 'desc' },
+        take: 50,
+        include: includeArgs,
       });
-      const monthIds = monthViewCounts.map((r: any) => r.articleId);
-      const monthArticles = monthIds.length
-        ? await db.article.findMany({
-            where: { id: { in: monthIds }, status: 'PUBLISHED' },
-            include: { category: true, author: { select: { id: true, name: true, email: true, role: true, avatar: true, bio: true, position: true } } },
-          })
-        : [];
-      const monthCountMap = new Map(monthViewCounts.map((r: any) => [r.articleId, r._count.id]));
-      const monthResult = monthArticles
-        .map((a: any) => ({ ...a, viewCount: monthCountMap.get(a.id) || 0 }))
-        .sort((a: any, b: any) => b.viewCount - a.viewCount);
-      return res.status(200).json(monthResult);
+
+      // Fallback: se nenhum artigo na janela, usa os mais recentes
+      if (articles.length === 0) {
+        articles = await db.article.findMany({
+          where: { status: 'PUBLISHED' },
+          orderBy: { publishedAt: 'desc' },
+          take: 10,
+          include: includeArgs,
+        });
+      }
+
+      // Busca viewCount total (histórico) para cada artigo
+      const articleIds = articles.map((a: any) => a.id);
+      const viewCounts = articleIds.length ? await db.articleView.groupBy({
+        by: ['articleId'],
+        where: { articleId: { in: articleIds } },
+        _count: { id: true },
+      }) : [];
+      const viewCountMap = new Map(viewCounts.map((r: any) => [r.articleId, r._count.id]));
+
+      const result = articles
+        .map((a: any) => ({ ...a, viewCount: viewCountMap.get(a.id) || 0 }))
+        .sort((a: any, b: any) => b.viewCount - a.viewCount || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+        .slice(0, 10);
+
+      return res.status(200).json(result);
     }
 
     // Últimas notícias

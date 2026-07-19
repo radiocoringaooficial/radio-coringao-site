@@ -48,117 +48,84 @@ export async function newsPublicRoutes(app: FastifyInstance): Promise<void> {
   // GET /news/latest — últimas notícias publicadas
   app.get('/noticias/latest', articlePublicController.list);
 
-  // GET /news/highlights/week — destaques da semana (mais lidos por IP único)
+  // GET /news/highlights/week — destaques da semana (publicados nos últimos 7 dias, ordenados por views totais)
   app.get('/noticias/highlights/week', async (_request, reply) => {
-    const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const includeArgs = {
       author: { select: { id: true, name: true, avatar: true, role: true, position: true } },
       category: { select: { id: true, name: true, slug: true, color: true } },
     } as const;
 
-    // Busca artigos com mais leitores únicos (via article_views)
-    const topByViews = await prisma.$queryRaw<{ id: string; uniqueReaders: bigint }[]>`
-      SELECT av."articleId" as id, COUNT(DISTINCT av."ipHash")::int as "uniqueReaders"
-      FROM article_views av
-      INNER JOIN articles a ON a.id = av."articleId"
-      WHERE a.status = 'PUBLISHED'
-        AND a."publishedAt" >= ${weekAgo}
-        AND av."viewBucket" >= ${weekAgo}
-      GROUP BY av."articleId"
-      ORDER BY "uniqueReaders" DESC
-      LIMIT 10
-    `;
+    let articles: any[] = await prisma.article.findMany({
+      where: { status: 'PUBLISHED', publishedAt: { gte: weekAgo } },
+      orderBy: { publishedAt: 'desc' },
+      take: 50,
+      include: includeArgs,
+    });
 
-    let articles: any[] = [];
-
-    if (topByViews.length >= 3) {
-      // Tem views suficientes — usa a ordenação por leitores únicos
-      const ids = topByViews.map((r) => r.id);
-      const found = await prisma.article.findMany({
-        where: { id: { in: ids } },
+    if (articles.length === 0) {
+      articles = await prisma.article.findMany({
+        where: { status: 'PUBLISHED' },
+        orderBy: { publishedAt: 'desc' },
+        take: 10,
         include: includeArgs,
       });
-      const orderMap = new Map(ids.map((id, i) => [id, i]));
-      articles = found.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
-    } else {
-      // Poucas ou nenhuma view — seleciona aleatoriamente
-      articles = await prisma.$queryRaw<any[]>`
-        SELECT a.*
-        FROM articles a
-        WHERE a.status = 'PUBLISHED'
-          AND a."publishedAt" >= ${weekAgo}
-        ORDER BY RANDOM()
-        LIMIT 10
-      `;
-      // Busca os includes separadamente para artigos aleatórios
-      if (articles.length > 0) {
-        const randomIds = articles.map((a: any) => a.id);
-        const enriched = await prisma.article.findMany({
-          where: { id: { in: randomIds } },
-          include: includeArgs,
-        });
-        const enrichMap = new Map(enriched.map((e) => [e.id, e]));
-        articles = articles.map((a: any) => enrichMap.get(a.id) || a);
-      }
     }
 
-    return reply.send(articles);
+    const articleIds = articles.map((a: any) => a.id);
+    const viewCounts = articleIds.length ? await prisma.articleView.groupBy({
+      by: ['articleId'],
+      where: { articleId: { in: articleIds } },
+      _count: { id: true },
+    }) : [];
+    const viewCountMap = new Map(viewCounts.map((r: any) => [r.articleId, r._count.id]));
+
+    const result = articles
+      .map((a: any) => ({ ...a, viewCount: viewCountMap.get(a.id) || 0 }))
+      .sort((a: any, b: any) => b.viewCount - a.viewCount || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      .slice(0, 10);
+
+    return reply.send(result);
   });
 
-  // GET /news/highlights/month — destaques do mês (mais lidos por IP único)
+  // GET /news/highlights/month — destaques do mês (publicados nos últimos 30 dias, ordenados por views totais)
   app.get('/noticias/highlights/month', async (_request, reply) => {
-    const monthAgo = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const includeArgs = {
       author: { select: { id: true, name: true, avatar: true, role: true, position: true } },
       category: { select: { id: true, name: true, slug: true, color: true } },
     } as const;
 
-    const topByViews = await prisma.$queryRaw<{ id: string; uniqueReaders: bigint }[]>`
-      SELECT av."articleId" as id, COUNT(DISTINCT av."ipHash")::int as "uniqueReaders"
-      FROM article_views av
-      INNER JOIN articles a ON a.id = av."articleId"
-      WHERE a.status = 'PUBLISHED'
-        AND a."publishedAt" >= ${monthAgo}
-        AND av."viewBucket" >= ${monthAgo}
-      GROUP BY av."articleId"
-      ORDER BY "uniqueReaders" DESC
-      LIMIT 10
-    `;
+    let articles: any[] = await prisma.article.findMany({
+      where: { status: 'PUBLISHED', publishedAt: { gte: monthAgo } },
+      orderBy: { publishedAt: 'desc' },
+      take: 50,
+      include: includeArgs,
+    });
 
-    let articles: any[] = [];
-
-    if (topByViews.length >= 3) {
-      const ids = topByViews.map((r) => r.id);
-      const found = await prisma.article.findMany({
-        where: { id: { in: ids } },
+    if (articles.length === 0) {
+      articles = await prisma.article.findMany({
+        where: { status: 'PUBLISHED' },
+        orderBy: { publishedAt: 'desc' },
+        take: 10,
         include: includeArgs,
       });
-      const orderMap = new Map(ids.map((id, i) => [id, i]));
-      articles = found.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
-    } else {
-      articles = await prisma.$queryRaw<any[]>`
-        SELECT a.*
-        FROM articles a
-        WHERE a.status = 'PUBLISHED'
-          AND a."publishedAt" >= ${monthAgo}
-        ORDER BY RANDOM()
-        LIMIT 10
-      `;
-      if (articles.length > 0) {
-        const randomIds = articles.map((a: any) => a.id);
-        const enriched = await prisma.article.findMany({
-          where: { id: { in: randomIds } },
-          include: includeArgs,
-        });
-        const enrichMap = new Map(enriched.map((e) => [e.id, e]));
-        articles = articles.map((a: any) => enrichMap.get(a.id) || a);
-      }
     }
 
-    return reply.send(articles);
+    const articleIds = articles.map((a: any) => a.id);
+    const viewCounts = articleIds.length ? await prisma.articleView.groupBy({
+      by: ['articleId'],
+      where: { articleId: { in: articleIds } },
+      _count: { id: true },
+    }) : [];
+    const viewCountMap = new Map(viewCounts.map((r: any) => [r.articleId, r._count.id]));
+
+    const result = articles
+      .map((a: any) => ({ ...a, viewCount: viewCountMap.get(a.id) || 0 }))
+      .sort((a: any, b: any) => b.viewCount - a.viewCount || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      .slice(0, 10);
+
+    return reply.send(result);
   });
 
   // GET /news/search?q=... — busca por texto
