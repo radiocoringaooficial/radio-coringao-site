@@ -45,6 +45,8 @@ export interface IArticleAdminRepository {
   }>;
 
   // ── novas features ──────────────────────────────────────
+  /** Busca o artigo PUBLISHED que ocupa uma posição de destaque específica, excluindo um id opcional */
+  findFeaturedByOrder(order: number, excludeId?: string): Promise<Article | null>;
   /** Conta artigos com scheduledAt dentro do mês atual (ainda não publicados) */
   countScheduledThisMonth(): Promise<number>;
   /** Conta artigos com status DRAFT ou REVIEW (pendentes) */

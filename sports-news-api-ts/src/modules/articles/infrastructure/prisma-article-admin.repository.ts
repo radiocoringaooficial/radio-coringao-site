@@ -524,6 +524,17 @@ export class PrismaArticleAdminRepository implements IArticleAdminRepository {
    * mês" — incluindo casos-limite onde scheduledAt foi setado mas o
    * status ainda não mudou.
    */
+  async findFeaturedByOrder(order: number, excludeId?: string): Promise<any | null> {
+    return prisma.article.findFirst({
+      where: {
+        order,
+        isFeatured: true,
+        status: 'PUBLISHED',
+        id: excludeId ? { not: excludeId } : undefined,
+      },
+    });
+  }
+
   async countScheduledThisMonth(): Promise<number> {
     const now = new Date();
     const startOfMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0));

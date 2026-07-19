@@ -239,6 +239,22 @@ export class UpdateArticleUseCase {
       updateData.tagNames = input.tags.filter(t => t.trim() !== '');
     }
 
+    // ── Deslocamento automático de artigo em destaque ──
+    if (canPublish) {
+      const finalFeatured = updateData.isFeatured !== undefined ? updateData.isFeatured : (existing as any).isFeatured;
+      const finalOrder = updateData.order !== undefined ? updateData.order : (existing as any).order;
+      if (finalFeatured && finalOrder > 0) {
+        const displaced = await this.repo.findFeaturedByOrder(finalOrder, id);
+        if (displaced) {
+          await this.repo.update(displaced.id, { isFeatured: false } as any);
+          this.log.info(
+            { displacedId: displaced.id, order: finalOrder, title: (displaced as any).title },
+            'Artigo deslocado automaticamente do destaque por substituição na posição',
+          );
+        }
+      }
+    }
+
     let article: any;
     try {
       article = await this.repo.update(id, updateData);
