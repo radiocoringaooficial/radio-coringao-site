@@ -674,8 +674,9 @@ export function CompetitionsPage() {
         {pairs.map((pair, idx) => {
           const scoreA = pair.a.goalsFor ?? 0;
           const scoreB = pair.b?.goalsFor ?? null;
+          const hasAnyScore = scoreA !== 0 || (scoreB !== null && scoreB !== 0);
           const isDecided = pair.b && scoreB !== null && scoreA !== scoreB;
-          const isTie = pair.b && scoreB !== null && scoreA === scoreB;
+          const isTie = pair.b && scoreB !== null && scoreA === scoreB && hasAnyScore;
           const manualWinner = pair.a.won === 1 ? 'a' : pair.b?.won === 1 ? 'b' : null;
           const classified = manualWinner || (isDecided ? (scoreA > scoreB ? 'a' : 'b') : null);
           return (
