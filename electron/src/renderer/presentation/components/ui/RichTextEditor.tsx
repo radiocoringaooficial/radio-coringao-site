@@ -3,7 +3,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Highlight from '@tiptap/extension-highlight';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
-import { Bold, Italic, Strikethrough, Highlighter, List, ListOrdered, Quote, ImagePlus, Heading1, Heading2, Heading3, Code, Undo, Redo, Link, Loader2 } from 'lucide-react';
+import { Bold, Italic, Strikethrough, Highlighter, List, ListOrdered, Quote, ImagePlus, Heading1, Heading2, Heading3, Code, Undo, Redo, Link, Loader2, X } from 'lucide-react';
 import { useRef, useEffect, useState } from 'react';
 import { newsApi } from '@/infrastructure/api/client';
 import { alert } from '@/presentation/stores/dialog-store';
@@ -31,6 +31,15 @@ function ToolbarButton({ onClick, active, children, title, disabled }: { onClick
 export function RichTextEditor({ content, onChange, placeholder }: RichTextEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+
+  // Credit modal state
+  const [creditModalOpen, setCreditModalOpen] = useState(false);
+  const [creditValue, setCreditValue] = useState('');
+  const [pendingImageUrl, setPendingImageUrl] = useState('');
+
+  // Link modal state
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [linkValue, setLinkValue] = useState('');
 
   const editor = useEditor({
     extensions: [
@@ -65,15 +74,9 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
       });
 
       const data = await newsApi.post('/admin/articles/content-image', { image: base64 });
-      const credit = prompt('Crédito da foto (deixe em branco para pular):');
-      if (credit && credit.trim()) {
-        editor.chain().focus().insertContent(
-          `<figure><img src="${data.url}" alt="" /><figcaption>${credit.trim()}</figcaption></figure>`
-        ).run();
-      } else {
-        editor.chain().focus().setImage({ src: data.url }).run();
-      }
-      onChange(editor.getHTML());
+      setPendingImageUrl(data.url);
+      setCreditValue('');
+      setCreditModalOpen(true);
     } catch (err: any) {
       alert('Erro ao enviar imagem: ' + (err.message || 'Tente novamente'));
     }
@@ -81,9 +84,37 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     e.target.value = '';
   };
 
+  const confirmImageInsert = () => {
+    if (creditValue.trim()) {
+      editor.chain().focus().insertContent(
+        `<figure><img src="${pendingImageUrl}" alt="" /><figcaption>${creditValue.trim()}</figcaption></figure>`
+      ).run();
+    } else {
+      editor.chain().focus().setImage({ src: pendingImageUrl }).run();
+    }
+    onChange(editor.getHTML());
+    setCreditModalOpen(false);
+    setPendingImageUrl('');
+    setCreditValue('');
+  };
+
+  const cancelImageInsert = () => {
+    setCreditModalOpen(false);
+    setPendingImageUrl('');
+    setCreditValue('');
+  };
+
   const addLink = () => {
-    const url = prompt('URL do link:');
-    if (url) editor.chain().focus().setLink({ href: url }).run();
+    setLinkValue('');
+    setLinkModalOpen(true);
+  };
+
+  const confirmLinkInsert = () => {
+    if (linkValue.trim()) {
+      editor.chain().focus().setLink({ href: linkValue.trim() }).run();
+    }
+    setLinkModalOpen(false);
+    setLinkValue('');
   };
 
   return (
@@ -142,6 +173,71 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         {uploading && <span className="text-[10px] text-on-surface-variant ml-2">Enviando imagem...</span>}
       </div>
       <EditorContent editor={editor} />
+
+      {/* Credit Modal */}
+      {creditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={cancelImageInsert} />
+          <div className="relative bg-surface-container-lowest rounded-lg shadow-xl w-full max-w-sm">
+            <div className="flex items-center justify-between p-4 border-b border-outline-variant">
+              <h3 className="font-headline text-sm font-bold text-on-surface">Crédito da Foto</h3>
+              <button onClick={cancelImageInsert} className="p-1 rounded hover:bg-surface-container-low text-on-surface-variant"><X size={16} /></button>
+            </div>
+            <div className="p-4">
+              <input
+                type="text"
+                value={creditValue}
+                onChange={(e) => setCreditValue(e.target.value)}
+                placeholder="Ex: Foto: João Silva / Reprodução"
+                className="input-field text-sm w-full"
+                autoFocus
+                onKeyDown={(e) => { if (e.key === 'Enter') confirmImageInsert(); }}
+              />
+              <p className="text-[10px] text-on-surface-variant mt-1.5">Opcional. Deixe em branco para inserir sem crédito.</p>
+            </div>
+            <div className="flex gap-2 p-4 border-t border-outline-variant">
+              <button onClick={cancelImageInsert} className="flex-1 px-3 py-2 rounded-lg text-xs font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">
+                Cancelar
+              </button>
+              <button onClick={confirmImageInsert} className="flex-1 px-3 py-2 rounded-lg text-xs font-bold bg-primary text-white hover:bg-primary/90 transition-colors">
+                Inserir Imagem
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Link Modal */}
+      {linkModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setLinkModalOpen(false)} />
+          <div className="relative bg-surface-container-lowest rounded-lg shadow-xl w-full max-w-sm">
+            <div className="flex items-center justify-between p-4 border-b border-outline-variant">
+              <h3 className="font-headline text-sm font-bold text-on-surface">Inserir Link</h3>
+              <button onClick={() => setLinkModalOpen(false)} className="p-1 rounded hover:bg-surface-container-low text-on-surface-variant"><X size={16} /></button>
+            </div>
+            <div className="p-4">
+              <input
+                type="url"
+                value={linkValue}
+                onChange={(e) => setLinkValue(e.target.value)}
+                placeholder="https://exemplo.com"
+                className="input-field text-sm w-full"
+                autoFocus
+                onKeyDown={(e) => { if (e.key === 'Enter') confirmLinkInsert(); }}
+              />
+            </div>
+            <div className="flex gap-2 p-4 border-t border-outline-variant">
+              <button onClick={() => setLinkModalOpen(false)} className="flex-1 px-3 py-2 rounded-lg text-xs font-bold text-on-surface-variant hover:bg-surface-container-low transition-colors">
+                Cancelar
+              </button>
+              <button onClick={confirmLinkInsert} className="flex-1 px-3 py-2 rounded-lg text-xs font-bold bg-primary text-white hover:bg-primary/90 transition-colors">
+                Inserir Link
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
