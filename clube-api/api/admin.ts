@@ -365,6 +365,103 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
+    // ─── STANDINGS BULK REPLACE ─────────────────────────────────
+    const bulkMatch = url.match(/^\/classificacoes\/([^/]+)\/bulk$/);
+    if (bulkMatch && method === 'PUT') {
+      const competitionId = bulkMatch[1];
+      const rows = req.body;
+      if (!Array.isArray(rows) || rows.length === 0) {
+        return res.status(422).json({ error: 'O corpo da requisição deve ser um array não vazio de linhas da tabela.' });
+      }
+      if (rows.length > 64) {
+        return res.status(422).json({ error: `O array contém ${rows.length} linhas. O máximo permitido é 64.` });
+      }
+      const competition = await db.competition.findUnique({ where: { id: competitionId } });
+      if (!competition) {
+        return res.status(404).json({ error: `Competição com ID "${competitionId}" não encontrada.` });
+      }
+      // Valida posições duplicadas
+      if (competition.tableFormat === 'grouped') {
+        const groupPosMap: Record<string, number[]> = {};
+        for (const r of rows) {
+          const g = r.groupName || '_ungrouped';
+          if (!groupPosMap[g]) groupPosMap[g] = [];
+          groupPosMap[g].push(Number(r.position));
+        }
+        for (const [g, positions] of Object.entries(groupPosMap)) {
+          const dupes = positions.filter((p: number, i: number) => positions.indexOf(p) !== i);
+          if (dupes.length > 0) {
+            return res.status(422).json({ error: `Posições duplicadas no grupo "${g}": ${[...new Set(dupes)].join(', ')}.` });
+          }
+        }
+      } else {
+        const positions = rows.map((r: any) => Number(r.position));
+        const duplicates = positions.filter((p: number, i: number) => positions.indexOf(p) !== i);
+        if (duplicates.length > 0) {
+          return res.status(422).json({ error: `Posições duplicadas: ${[...new Set(duplicates)].join(', ')}.` });
+        }
+      }
+      // Verifica isOwnTeam — apenas um
+      const ownTeamCount = rows.filter((r: any) => Boolean(r.isOwnTeam)).length;
+      if (ownTeamCount > 1) {
+        return res.status(422).json({ error: `Apenas uma linha pode ter "isOwnTeam: true". Encontrado: ${ownTeamCount}.` });
+      }
+      // Limite de times por grupo (máx 10)
+      if (competition.tableFormat === 'grouped') {
+        const groupCounts: Record<string, number> = {};
+        for (const r of rows) {
+          const g = r.groupName || '_none';
+          groupCounts[g] = (groupCounts[g] || 0) + 1;
+        }
+        for (const [g, count] of Object.entries(groupCounts)) {
+          if (count > 10) {
+            return res.status(422).json({ error: `O grupo "${g}" tem ${count} times. O máximo é 10.` });
+          }
+        }
+      }
+      // Auto-cria adversários para times sem opponentId
+      const enrichedRows = await Promise.all(rows.map(async (r: any) => {
+        if (r.opponentId || !r.teamName?.trim()) return r;
+        const existing = await db.opponent.findFirst({ where: { name: r.teamName.trim() } });
+        if (existing) return { ...r, opponentId: existing.id, logoUrl: r.logoUrl || existing.logoUrl };
+        const newOpp = await db.opponent.create({ data: { name: r.teamName.trim(), logoUrl: r.logoUrl ?? null } });
+        return { ...r, opponentId: newOpp.id };
+      }));
+      const result = await db.$transaction(async (tx: any) => {
+        await tx.standingEntry.deleteMany({ where: { competitionId } });
+        return tx.standingEntry.createMany({
+          data: enrichedRows.map((r: any) => ({
+            competitionId,
+            position: Number(r.position),
+            teamName: String(r.teamName || '').trim(),
+            logoUrl: r.logoUrl ?? null,
+            teamId: r.teamId ?? null,
+            opponentId: r.opponentId ?? null,
+            points: r.points ?? 0,
+            played: r.played ?? 0,
+            won: r.won ?? 0,
+            drawn: r.drawn ?? 0,
+            lost: r.lost ?? 0,
+            goalsFor: r.goalsFor ?? 0,
+            goalsAgainst: r.goalsAgainst ?? 0,
+            isOwnTeam: Boolean(r.isOwnTeam),
+            form: r.form ?? null,
+            zone: r.zone ?? 'NONE',
+            groupName: r.groupName ?? null,
+          })),
+        });
+      });
+      return res.status(200).json({ message: `Tabela atualizada com ${result.count} linhas.`, count: result.count });
+    }
+
+    // ─── STANDINGS DELETE ───────────────────────────────────────
+    const standingDeleteMatch = url.match(/^\/classificacoes\/([^/]+)$/);
+    if (standingDeleteMatch && method === 'DELETE') {
+      const id = standingDeleteMatch[1];
+      await db.standingEntry.delete({ where: { id } });
+      return res.status(200).json({ message: 'Linha da tabela deletada com sucesso.' });
+    }
+
     // ─── SQUAD ─────────────────────────────────────────────────
     if (url === '/elenco' || url === '/elenco/') {
       if (method === 'GET') {

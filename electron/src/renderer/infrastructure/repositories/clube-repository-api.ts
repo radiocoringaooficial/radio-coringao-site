@@ -34,8 +34,8 @@ export class ApiClubeRepository implements ClubeRepository {
   async deleteMatch(id: string): Promise<void> { await this.http.delete(`/admin/partidas/${id}`); }
 
   // Standings
-  async getStandings(competitionId: string): Promise<StandingEntry[]> { return this.http.get(`/standings/${competitionId}`); }
-  async getStandingsByCategory(categorySlug: string): Promise<any> { return this.http.get(`/standings/category/${categorySlug}`); }
+  async getStandings(competitionId: string): Promise<StandingEntry[]> { return this.http.get(`/classificacoes/${competitionId}`); }
+  async getStandingsByCategory(categorySlug: string): Promise<any> { return this.http.get(`/classificacoes/category/${categorySlug}`); }
   async upsertStandings(competitionId: string, rows: Partial<StandingEntry>[]): Promise<void> { await this.http.post('/admin/classificacoes', { competitionId, rows }); }
   async bulkStandings(competitionId: string, rows: Partial<StandingEntry>[]): Promise<void> { await this.http.put(`/admin/classificacoes/${competitionId}/bulk`, rows); }
 
