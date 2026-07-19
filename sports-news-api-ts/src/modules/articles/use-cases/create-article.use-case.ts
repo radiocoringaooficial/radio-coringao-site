@@ -212,7 +212,7 @@ export class CreateArticleUseCase {
     if (canPublish && article.isFeatured && article.order > 0) {
       const displaced = await this.repo.findFeaturedByOrder(article.order, article.id);
       if (displaced) {
-        await this.repo.update(displaced.id, { isFeatured: false } as any);
+        await this.repo.update(displaced.id, { isFeatured: false, order: 0 } as any);
         this.log.info(
           { displacedId: displaced.id, order: article.order, title: (displaced as any).title },
           'Artigo deslocado automaticamente do destaque por substituição na posição',
