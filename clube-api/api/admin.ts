@@ -454,6 +454,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ message: `Tabela atualizada com ${result.count} linhas.`, count: result.count });
     }
 
+    // ─── STANDINGS GET BY COMPETITION ───────────────────────────
+    const standingGetMatch = url.match(/^\/classificacoes\/([^/]+)$/);
+    if (standingGetMatch && method === 'GET') {
+      const competitionId = standingGetMatch[1];
+      const standings = await db.standingEntry.findMany({
+        where: { competitionId },
+        orderBy: { position: 'asc' },
+      });
+      return res.status(200).json(standings);
+    }
+
     // ─── STANDINGS DELETE ───────────────────────────────────────
     const standingDeleteMatch = url.match(/^\/classificacoes\/([^/]+)$/);
     if (standingDeleteMatch && method === 'DELETE') {
@@ -669,6 +680,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       }
       return res.status(204).end();
+    }
+
+    // ─── MOVEMENTS ARCHIVE/UNARCHIVE ───────────────────────────
+    const movArchive = url.match(/^\/movimentacoes\/([^/]+)\/archive$/);
+    if (movArchive && method === 'PATCH') {
+      await db.playerMovement.update({ where: { id: movArchive[1] }, data: { isArchived: true } });
+      return res.status(200).json({ ok: true });
+    }
+    const movUnarchive = url.match(/^\/movimentacoes\/([^/]+)\/unarchive$/);
+    if (movUnarchive && method === 'PATCH') {
+      await db.playerMovement.update({ where: { id: movUnarchive[1] }, data: { isArchived: false } });
+      return res.status(200).json({ ok: true });
     }
 
     // ─── FINANCE ───────────────────────────────────────────────
