@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
 
@@ -67,6 +67,21 @@ ipcMain.on('window-maximize', () => {
 });
 ipcMain.on('window-close', () => mainWindow?.close());
 ipcMain.handle('get-app-version', () => app.getVersion());
+ipcMain.handle('show-dialog', async (_event, options: {
+  type: 'info' | 'warning' | 'error' | 'question';
+  title: string;
+  message: string;
+  buttons?: string[];
+}) => {
+  if (!mainWindow) return null;
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: options.type,
+    title: options.title,
+    message: options.message,
+    buttons: options.buttons ?? ['OK'],
+  });
+  return result;
+});
 
 app.whenReady().then(() => {
   // Define ícone do dock no macOS
