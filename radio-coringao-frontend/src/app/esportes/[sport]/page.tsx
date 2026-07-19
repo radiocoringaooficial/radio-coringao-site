@@ -195,7 +195,10 @@ export default async function SportPage({ params }: Props) {
             const res = await clubeClient
               .get<any>(`/partidas`, { params: { competitionId: c.id, limit: "50" } })
               .catch(() => ({ data: [] }));
-            const matches = Array.isArray(res) ? res : res?.data || [];
+            const rawMatches = Array.isArray(res) ? res : res?.data || [];
+            const matches = rawMatches.filter(
+              (m: any) => m.competition?.id === c.id && m.competition?.category?.slug === matchCategory
+            );
             return { id: c.id, name: c.name, tableFormat: c.tableFormat, matches };
           })
         );
