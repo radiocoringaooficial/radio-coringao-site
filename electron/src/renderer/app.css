@@ -138,3 +138,12 @@
 .tiptap-editor .ProseMirror code { @apply bg-surface-container px-1.5 py-0.5 rounded text-sm font-mono; }
 .tiptap-editor .ProseMirror pre { @apply bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm mb-2; }
 .tiptap-editor .ProseMirror a { @apply text-primary underline; }
+
+.tiptap-editor .editor-image-credit {
+  text-align: center;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--color-on-surface-variant, #666);
+  margin-top: 4px;
+  margin-bottom: 0;
+}

@@ -22,6 +22,45 @@ const CustomImage = Image.extend({
       },
     };
   },
+
+  addNodeView() {
+    return ({ node, HTMLAttributes }) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'editor-image-wrapper';
+      wrapper.style.cssText = 'margin: 0.5rem 0;';
+
+      const img = document.createElement('img');
+      Object.entries(HTMLAttributes).forEach(([key, val]) => {
+        if (val != null && val !== false) img.setAttribute(key, String(val));
+      });
+      img.style.cssText = 'max-width:100%;border-radius:8px;display:block;';
+      wrapper.appendChild(img);
+
+      const caption = document.createElement('p');
+      caption.className = 'editor-image-credit';
+      caption.style.cssText = node.attrs.credit ? 'display:block;' : 'display:none;';
+      caption.textContent = (node.attrs.credit as string) || '';
+      wrapper.appendChild(caption);
+
+      return {
+        dom: wrapper,
+        update: (updatedNode: any) => {
+          if (updatedNode.type.name !== 'image') return false;
+          const attrs = updatedNode.attrs;
+          if (img.getAttribute('src') !== attrs.src) img.setAttribute('src', attrs.src || '');
+          if (img.getAttribute('alt') !== (attrs.alt || '')) img.setAttribute('alt', attrs.alt || '');
+          const credit = (attrs.credit as string) || '';
+          if (credit) {
+            caption.textContent = credit;
+            caption.style.display = 'block';
+          } else {
+            caption.style.display = 'none';
+          }
+          return true;
+        },
+      };
+    };
+  },
 });
 
 interface RichTextEditorProps {
