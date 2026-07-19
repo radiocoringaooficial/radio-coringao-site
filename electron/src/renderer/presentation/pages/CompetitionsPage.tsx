@@ -326,11 +326,16 @@ export function CompetitionsPage() {
     setStandings(copy);
   };
 
-  const addStandingRow = (groupName?: string) => {
+  const addStandingRow = (groupName?: string, count: number = 1) => {
     const group = groupName || '';
     const sameGroup = standings.filter((s) => (s.groupName || '') === group);
-    if (sameGroup.length >= MAX_PER_GROUP) { toast(`Máximo de ${MAX_PER_GROUP} times por grupo.`, 'error'); return; }
-    setStandings([...standings, { teamName: '', points: 0, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, position: sameGroup.length + 1, isOwnTeam: false, form: null, groupName: group || null, logoUrl: null, teamId: null, opponentId: null }]);
+    if (sameGroup.length + count > MAX_PER_GROUP) { toast(`Máximo de ${MAX_PER_GROUP} times por grupo.`, 'error'); return; }
+    const newRows = Array.from({ length: count }, (_, i) => ({
+      teamName: '', points: 0, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0,
+      position: sameGroup.length + i + 1, isOwnTeam: false, form: null, groupName: group || null,
+      logoUrl: null, teamId: null, opponentId: null,
+    }));
+    setStandings([...standings, ...newRows]);
   };
 
   const removeStandingRow = (index: number) => { setStandings(standings.filter((_, i) => i !== index)); };
@@ -674,7 +679,7 @@ export function CompetitionsPage() {
           const manualWinner = pair.a.won === 1 ? 'a' : pair.b?.won === 1 ? 'b' : null;
           const classified = manualWinner || (isDecided ? (scoreA > scoreB ? 'a' : 'b') : null);
           return (
-            <div key={pair.a.id} className="border border-outline-variant/50 rounded-lg overflow-hidden">
+            <div key={`pair-${idx}`} className="border border-outline-variant/50 rounded-lg overflow-hidden">
               <div className="flex items-center gap-2 px-3 py-2 bg-surface-container-low/50">
                 <span className="text-[9px] font-bold text-on-surface-variant">Confronto {idx + 1}</span>
                 {classified && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-50 text-green-700">✓ Classificado</span>}
@@ -682,12 +687,13 @@ export function CompetitionsPage() {
               </div>
               <div className="divide-y divide-outline-variant/30">
                 {[pair.a, pair.b].filter(Boolean).map((entry, eIdx) => {
+                  const entryIdx = standings.indexOf(entry);
                   const isWinner = classified === (eIdx === 0 ? 'a' : 'b');
                   return (
-                    <div key={entry.id} className={`flex items-center gap-3 px-3 py-2 ${isWinner ? 'bg-green-50/50' : ''}`}>
+                    <div key={`entry-${entryIdx}`} className={`flex items-center gap-3 px-3 py-2 ${isWinner ? 'bg-green-50/50' : ''}`}>
                       <div className="flex-1 min-w-0">
                         <TeamSelectDropdown
-                          idx={standings.indexOf(entry)}
+                          idx={entryIdx}
                           s={entry}
                           team={team}
                           filteredOpponents={filteredOpponents}
@@ -710,7 +716,7 @@ export function CompetitionsPage() {
                         value={String(entry.goalsFor ?? '')}
                         onChange={(e) => {
                           const val = e.target.value.replace(/^0+(?=\d)/, '');
-                          updateStanding(standings.indexOf(entry), 'goalsFor', val === '' ? 0 : Number(val));
+                          updateStanding(entryIdx, 'goalsFor', val === '' ? 0 : Number(val));
                         }}
                         className="w-10 bg-transparent text-center text-xs font-bold text-on-surface py-1 px-0.5 outline-none border border-outline-variant/30 focus:border-primary rounded transition-colors"
                         placeholder="0"
@@ -719,14 +725,11 @@ export function CompetitionsPage() {
                         <button
                           onClick={() => {
                             const idxA = standings.indexOf(pair.a);
-                            const idxB = standings.indexOf(pair.b);
-                            if (eIdx === 0) {
-                              updateStanding(idxA, 'won', 1);
-                              if (idxB !== -1) updateStanding(idxB, 'won', 0);
-                            } else {
-                              updateStanding(idxB, 'won', 1);
-                              updateStanding(idxA, 'won', 0);
-                            }
+                            const idxB = pair.b ? standings.indexOf(pair.b) : -1;
+                            const copy = [...standings];
+                            if (idxA !== -1) copy[idxA] = { ...copy[idxA], won: eIdx === 0 ? 1 : 0 };
+                            if (idxB !== -1) copy[idxB] = { ...copy[idxB], won: eIdx === 0 ? 0 : 1 };
+                            setStandings(copy);
                           }}
                           className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors shrink-0"
                         >
@@ -895,7 +898,7 @@ export function CompetitionsPage() {
                                                 <span className="text-[10px] text-on-surface-variant">({Math.ceil(roundItems.length / 2)} confrontos)</span>
                                               </div>
                                               <div onClick={(e) => e.stopPropagation()}>
-                                                <button onClick={() => { addStandingRow(round!); addStandingRow(round!); }} disabled={roundItems.length >= MAX_PER_GROUP}
+                                                <button onClick={() => addStandingRow(round!, 2)} disabled={roundItems.length + 1 >= MAX_PER_GROUP}
                                                   className={`py-1 px-2 text-[9px] font-headline font-bold transition-all flex items-center justify-center gap-1 ${roundItems.length >= MAX_PER_GROUP ? 'text-on-surface-variant/30 cursor-not-allowed' : 'text-primary hover:bg-primary/5 border border-dashed border-primary/30 hover:border-primary/60 rounded-lg'}`}>
                                                   <Plus size={10} /> Confronto
                                                 </button>
