@@ -144,7 +144,7 @@ export function ArticleContent({ article, topStories, nextMatch, slug }: Article
             </div>
           </div>
 
-          <ArticleImage src={article.imageUrl} alt={article.imageAlt} credit="Foto: Rádio Coringão / Reprodução" />
+          <ArticleImage src={article.imageUrl} alt={article.imageAlt} credit={article.coverImageCredit || "Foto: Rádio Coringão / Reprodução"} />
 
           <div className="article-content mb-8" dangerouslySetInnerHTML={{ __html: article.content || "" }} />
         </motion.article>

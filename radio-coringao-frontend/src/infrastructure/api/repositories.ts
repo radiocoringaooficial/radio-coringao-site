@@ -29,6 +29,7 @@ function transformArticle(apiArticle: any): NewsArticle {
     authorPosition: apiArticle.authorCargo || apiArticle.author?.position || apiArticle.authorRole || '',
     imageUrl: apiArticle.coverImage || apiArticle.imageUrl || null,
     imageAlt: apiArticle.coverImageAlt || apiArticle.imageAlt || '',
+    coverImageCredit: apiArticle.coverImageCredit || '',
   };
 }
 

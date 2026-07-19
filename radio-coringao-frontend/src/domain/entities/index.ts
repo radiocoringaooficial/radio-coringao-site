@@ -11,6 +11,7 @@ export interface NewsArticle {
   authorNameSnapshot?: string;
   imageUrl: string;
   imageAlt: string;
+  coverImageCredit?: string;
   publishedAt: string;
   updatedAt?: string;
   slug: string;
