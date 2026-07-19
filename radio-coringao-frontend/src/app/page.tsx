@@ -8,6 +8,18 @@ import { LatestNews } from "@/presentation/components/news/LatestNews";
 import { ClassificationCarousel } from "@/presentation/components/classification/ClassificationCarousel";
 import { HighlightsSection } from "@/presentation/components/news/HighlightsSection";
 
+function buildTopRead(weekHighlights: any[], latestNews: any[], limit = 5) {
+  const base = weekHighlights.slice(0, limit);
+  if (base.length >= limit) return base;
+  const usedIds = new Set(base.map((a) => a.id));
+  const remaining = latestNews.filter((a) => !usedIds.has(a.id));
+  for (let i = remaining.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+  }
+  return [...base, ...remaining.slice(0, limit - base.length)];
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://radiocoringao-news.vercel.app/api";
 
 function mapArticle(article: any) {
@@ -82,7 +94,7 @@ export default async function Home() {
     category: m.categoryName || m.category || "",
   }));
 
-  const topRead = weekHighlights.length > 0 ? weekHighlights.slice(0, 5) : latestNews.slice(0, 5);
+  const topRead = buildTopRead(weekHighlights, latestNews);
 
   // Positions 4-12: cards adicionais (cada um no slot exato do seu order)
   const moreNews = Array.from({ length: 9 }, (_, i) => byPosition.get(i + 4)).filter(Boolean);
