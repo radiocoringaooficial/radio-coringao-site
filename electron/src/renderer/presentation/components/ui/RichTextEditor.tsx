@@ -8,6 +8,22 @@ import { useRef, useEffect, useState } from 'react';
 import { newsApi } from '@/infrastructure/api/client';
 import { alert } from '@/presentation/stores/dialog-store';
 
+const CustomImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      credit: {
+        default: null,
+        parseHTML: (element: HTMLElement) => element.getAttribute('data-credit'),
+        renderHTML: (attributes: Record<string, any>) => {
+          if (!attributes.credit) return {};
+          return { 'data-credit': attributes.credit };
+        },
+      },
+    };
+  },
+});
+
 interface RichTextEditorProps {
   content: string;
   onChange: (html: string) => void;
@@ -45,7 +61,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     extensions: [
       StarterKit,
       Highlight,
-      Image.configure({ inline: false, allowBase64: true }),
+      CustomImage.configure({ inline: false, allowBase64: true }),
       Placeholder.configure({ placeholder: placeholder || 'Escreva o conteúdo do artigo...' }),
     ],
     content,
@@ -85,13 +101,8 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
   };
 
   const confirmImageInsert = () => {
-    if (creditValue.trim()) {
-      editor.chain().focus().insertContent(
-        `<figure><img src="${pendingImageUrl}" alt="" /><figcaption>${creditValue.trim()}</figcaption></figure>`
-      ).run();
-    } else {
-      editor.chain().focus().setImage({ src: pendingImageUrl }).run();
-    }
+    const credit = creditValue.trim() || undefined;
+    editor.chain().focus().setImage({ src: pendingImageUrl, credit } as any).run();
     onChange(editor.getHTML());
     setCreditModalOpen(false);
     setPendingImageUrl('');

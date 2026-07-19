@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, Clock, ChevronLeft, ChevronRight } from "lucide-react";
@@ -46,6 +46,14 @@ function ArticleImage({ src, alt, credit }: { src: string; alt: string; credit: 
         {credit}
       </p>
     </figure>
+  );
+}
+
+function processContentCredit(html: string): string {
+  if (!html) return '';
+  return html.replace(
+    /<img([^>]*)data-credit="([^"]*)"([^>]*)>/gi,
+    '<img$1$3><span class="image-credit">$2</span>'
   );
 }
 
@@ -146,7 +154,7 @@ export function ArticleContent({ article, topStories, nextMatch, slug }: Article
 
           <ArticleImage src={article.imageUrl} alt={article.imageAlt} credit={article.coverImageCredit || "Foto: Rádio Coringão / Reprodução"} />
 
-          <div className="article-content mb-8" dangerouslySetInnerHTML={{ __html: article.content || "" }} />
+          <div className="article-content mb-8" dangerouslySetInnerHTML={{ __html: processContentCredit(article.content || "") }} />
         </motion.article>
 
         <motion.aside

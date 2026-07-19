@@ -266,6 +266,15 @@ body {
   margin-top: 0.5rem;
 }
 
+.article-content .image-credit {
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  font-style: italic;
+  color: #888;
+  margin-top: 0.5rem;
+}
+
 .article-content mark {
   background-color: #fef08a;
   padding: 0 2px;
