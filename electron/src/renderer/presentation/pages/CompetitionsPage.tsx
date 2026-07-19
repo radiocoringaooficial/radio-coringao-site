@@ -1020,40 +1020,58 @@ export function CompetitionsPage() {
                                   <span className="text-[10px] text-on-surface-variant">· {compMatches.length} partida{compMatches.length !== 1 ? 's' : ''}</span>
                                 </div>
                                 <div className="divide-y divide-outline-variant/30">
-                                  {compMatches.map((m: any) => {
-                                    const opp = m.opponent;
-                                    const st = m.status === 'FINISHED' ? 'Finalizado' : m.status === 'SCHEDULED' ? 'Agendado' : m.status;
-                                    const d = new Date(m.date);
-                                    return (
-                                      <div key={m.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-low/50 transition-colors">
-                                        <div className="flex items-center -space-x-2 shrink-0">
-                                          <div className="w-8 h-8 flex items-center justify-center z-10">
-                                            {(m.isHome ? team?.logoUrl : opp?.logoUrl) ? (
-                                              <img src={m.isHome ? team?.logoUrl : opp?.logoUrl} alt="" className="w-8 h-8 object-contain" />
-                                            ) : (
-                                              <Shield size={12} className="text-on-surface-variant/40" />
-                                            )}
+                                  {(() => {
+                                    const useScoreboardLayout = currentComp?.tableFormat === 'friendly' || currentComp?.tableFormat === 'phases';
+                                    return compMatches.map((m: any) => {
+                                      const opp = m.opponent;
+                                      const finished = m.status === 'FINISHED';
+                                      const st = finished ? 'Finalizado' : m.status === 'SCHEDULED' ? 'Agendado' : m.status;
+                                      const d = new Date(m.date);
+                                      const homeName = m.isHome ? 'Corinthians' : (opp?.name || '?');
+                                      const awayName = m.isHome ? (opp?.name || '?') : 'Corinthians';
+                                      const homeLogo = m.isHome ? team?.logoUrl : opp?.logoUrl;
+                                      const awayLogo = m.isHome ? opp?.logoUrl : team?.logoUrl;
+                                      if (useScoreboardLayout) {
+                                        return (
+                                          <div key={m.id} className="flex items-center gap-2 px-4 py-3 hover:bg-surface-container-low/50 transition-colors">
+                                            <div className="flex flex-col items-center gap-1 w-20 shrink-0">
+                                              {homeLogo ? <img src={homeLogo} alt="" className="w-9 h-9 object-contain" /> : <Shield size={20} className="text-on-surface-variant/40" />}
+                                              <span className="text-[10px] font-bold text-on-surface text-center leading-tight line-clamp-2">{homeName}</span>
+                                            </div>
+                                            <div className="flex-1 flex flex-col items-center gap-0.5 min-w-0">
+                                              {finished ? (
+                                                <span className="text-lg font-headline font-extrabold text-on-surface tabular-nums">{m.homeScore} x {m.awayScore}</span>
+                                              ) : (
+                                                <span className="text-xs font-bold text-on-surface-variant">VS</span>
+                                              )}
+                                              <span className="text-[10px] text-on-surface-variant whitespace-nowrap">{d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} · {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                              {!finished && <span className="badge bg-surface-container text-on-surface-variant text-[9px]">{st}</span>}
+                                            </div>
+                                            <div className="flex flex-col items-center gap-1 w-20 shrink-0">
+                                              {awayLogo ? <img src={awayLogo} alt="" className="w-9 h-9 object-contain" /> : <Shield size={20} className="text-on-surface-variant/40" />}
+                                              <span className="text-[10px] font-bold text-on-surface text-center leading-tight line-clamp-2">{awayName}</span>
+                                            </div>
                                           </div>
-                                          <div className="w-8 h-8 flex items-center justify-center">
-                                            {(m.isHome ? opp?.logoUrl : team?.logoUrl) ? (
-                                              <img src={m.isHome ? opp?.logoUrl : team?.logoUrl} alt="" className="w-8 h-8 object-contain" />
-                                            ) : (
-                                              <Shield size={12} className="text-on-surface-variant/40" />
-                                            )}
+                                        );
+                                      }
+                                      return (
+                                        <div key={m.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-container-low/50 transition-colors">
+                                          <div className="w-8 h-8 flex items-center justify-center shrink-0">
+                                            {opp?.logoUrl ? <img src={opp.logoUrl} alt="" className="w-8 h-8 object-contain" /> : <Shield size={12} className="text-on-surface-variant/40" />}
                                           </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-bold text-on-surface truncate">{homeName} vs {awayName}</p>
+                                            <p className="text-[10px] text-on-surface-variant">{d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                                          </div>
+                                          {finished ? (
+                                            <span className="text-sm font-headline font-bold text-on-surface">{m.homeScore} x {m.awayScore}</span>
+                                          ) : (
+                                            <span className="text-[10px] text-on-surface-variant">{st}</span>
+                                          )}
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                          <p className="text-xs font-bold text-on-surface truncate">{m.isHome ? 'Corinthians' : opp?.name || '?'} vs {m.isHome ? opp?.name || '?' : 'Corinthians'}</p>
-                                          <p className="text-[10px] text-on-surface-variant">{d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} {d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-                                        </div>
-                                        {m.status === 'FINISHED' ? (
-                                          <span className="text-sm font-headline font-bold text-on-surface">{m.homeScore} x {m.awayScore}</span>
-                                        ) : (
-                                          <span className="text-[10px] text-on-surface-variant">{st}</span>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
+                                      );
+                                    });
+                                  })()}
                                 </div>
                               </div>
                             </div>
