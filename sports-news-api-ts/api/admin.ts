@@ -27,6 +27,17 @@ async function uploadToCloudinary(buffer: Buffer, folder: string, mimeType: stri
 
 let prisma: any = null;
 
+async function assertCanArchive(db: any, id: string) {
+  const current = await db.article.findUnique({ where: { id }, select: { isFeatured: true, order: true, status: true } });
+  if (current?.isFeatured && (current.order || 0) > 0) {
+    return {
+      blocked: true,
+      response: { error: 'ARTICLE_FEATURED_CANNOT_ARCHIVE', message: `Este artigo está em destaque na posição ${current.order} da home. Publique outro artigo nessa mesma posição para liberar o arquivamento.` },
+    };
+  }
+  return { blocked: false };
+}
+
 async function getPrisma() {
   if (prisma) return prisma;
   const { PrismaClient } = await import('@prisma/client');
@@ -242,7 +253,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const skip = (page - 1) * limit;
 
         const where: any = {};
-        if (status) where.status = status;
+        if (status) {
+          where.status = status;
+        } else {
+          where.status = { not: 'ARCHIVED' };
+        }
         if (category) where.categoryId = category;
         if (q) where.OR = [{ title: { contains: q, mode: 'insensitive' } }, { content: { contains: q, mode: 'insensitive' } }];
 
@@ -325,6 +340,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (statusMatch && (method === 'PUT' || method === 'PATCH')) {
       const id = statusMatch[1];
       const { status } = req.body || {};
+      if (status === 'ARCHIVED') {
+        const archiveCheck = await assertCanArchive(db, id);
+        if (archiveCheck.blocked) return res.status(409).json(archiveCheck.response);
+      }
       await db.article.update({ where: { id }, data: { status, publishedAt: status === 'PUBLISHED' ? new Date() : undefined } });
       return res.status(200).json({ ok: true });
     }
@@ -338,7 +357,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const status = urlObj.searchParams.get('status');
         const skip = (page - 1) * limit;
         const where: any = {};
-        if (status) where.status = status;
+        if (status) {
+          where.status = status;
+        } else {
+          where.status = { not: 'ARCHIVED' };
+        }
         const [data, total] = await Promise.all([
           db.article.findMany({ where, skip, take: limit, orderBy: { createdAt: 'desc' }, include: { category: true, author: { select: { id: true, name: true } }, tags: { include: { tag: true } } } }),
           db.article.count({ where }),
@@ -399,6 +422,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (articleStatusMatch && (method === 'PUT' || method === 'PATCH')) {
       const id = articleStatusMatch[1];
       const { status } = req.body || {};
+      if (status === 'ARCHIVED') {
+        const archiveCheck = await assertCanArchive(db, id);
+        if (archiveCheck.blocked) return res.status(409).json(archiveCheck.response);
+      }
       await db.article.update({ where: { id }, data: { status, publishedAt: status === 'PUBLISHED' ? new Date() : undefined } });
       return res.status(200).json({ ok: true });
     }
@@ -407,6 +434,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const articleArchiveMatch = urlPath.match(/^\/articles\/([^/]+)\/archive$/);
     if (articleArchiveMatch && method === 'PATCH') {
       const id = articleArchiveMatch[1];
+      const archiveCheck = await assertCanArchive(db, id);
+      if (archiveCheck.blocked) return res.status(409).json(archiveCheck.response);
       await db.article.update({ where: { id }, data: { status: 'ARCHIVED' } });
       return res.status(200).json({ ok: true });
     }
