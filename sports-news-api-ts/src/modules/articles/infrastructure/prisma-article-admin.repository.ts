@@ -119,7 +119,12 @@ export class PrismaArticleAdminRepository implements IArticleAdminRepository {
   ): Promise<PaginatedResult<Article>> {
     const where: any = {};
     if (filter.authorId) where.authorId = filter.authorId;
-    if (filter.status) where.status = filter.status;
+    if (filter.status) {
+      where.status = filter.status;
+    } else {
+      // Por padrão, excluir artigos arquivados da listagem principal
+      where.status = { not: 'ARCHIVED' };
+    }
     if (filter.category) where.category = { slug: filter.category };
     if (filter.type) where.type = filter.type;
     if (filter.author) where.authorId = filter.author;

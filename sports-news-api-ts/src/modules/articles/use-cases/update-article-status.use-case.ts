@@ -1,7 +1,8 @@
 // src/modules/articles/use-cases/update-article-status.use-case.ts
 import type { IArticleAdminRepository } from '../repositories/article-admin.repository.interface';
 import type { ArticleStatus, Role } from '../../../shared/entities';
-import { NotFoundError, AppError, ForbiddenError } from '../../../shared/errors';
+import { NotFoundError, AppError, ForbiddenError, ConflictError } from '../../../shared/errors';
+import { ErrorCode } from '../../../shared/errors/error-codes';
 import { hasPermission } from '../../../shared/plugins/permissions.plugin';
 
 export class UpdateArticleStatusUseCase {
@@ -20,6 +21,18 @@ export class UpdateArticleStatusUseCase {
 
     const article = await this.repo.findById(id);
     if (!article) throw new NotFoundError('Artigo não encontrado.');
+
+    if (status === 'ARCHIVED') {
+      const isFeatured = Boolean((article as any).isFeatured);
+      const order = Number((article as any).order) || 0;
+      if (isFeatured && order > 0) {
+        throw new ConflictError(ErrorCode.ARTICLE_FEATURED_CANNOT_ARCHIVE, {
+          articleId: id,
+          order,
+          message: `Este artigo está em destaque na posição ${order} da home. Publique outro artigo nessa mesma posição para liberar o arquivamento.`,
+        });
+      }
+    }
 
     return this.repo.update(id, {
       status,

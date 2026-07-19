@@ -21,11 +21,15 @@ export class ArchiveArticleUseCase {
     const article = await this.repo.findById(id);
     if (!article) throw new NotFoundError('Artigo não encontrado.');
 
+    const isFeatured = Boolean((article as any).isFeatured);
+    const order = Number((article as any).order) || 0;
+    this.log.debug({ articleId: id, isFeatured, order }, 'Verificação de destaque antes de arquivar');
+
     if ((article as any).status === 'ARCHIVED') {
       return { message: 'Artigo já está arquivado.', article };
     }
 
-    if ((article as any).isFeatured && (article as any).order > 0) {
+    if (isFeatured && order > 0) {
       throw new ConflictError(ErrorCode.ARTICLE_FEATURED_CANNOT_ARCHIVE, {
         articleId: id,
         order: (article as any).order,
