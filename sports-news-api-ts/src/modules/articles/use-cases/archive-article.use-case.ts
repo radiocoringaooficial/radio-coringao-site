@@ -33,7 +33,7 @@ export class ArchiveArticleUseCase {
       throw new ConflictError(ErrorCode.ARTICLE_FEATURED_CANNOT_ARCHIVE, {
         articleId: id,
         order: (article as any).order,
-        message: `Este artigo está em destaque na posição ${(article as any).order} da home. Publique outro artigo nessa mesma posição para liberar o arquivamento.`,
+        message: `Não é possível arquivar este artigo porque ele está em destaque na página inicial (posição #${(article as any).order}). Escolha outro artigo para ocupar essa posição de destaque — assim que ele for publicado, este artigo perde o destaque automaticamente e você já pode arquivá-lo.`,
       });
     }
 

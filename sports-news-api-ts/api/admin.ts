@@ -32,7 +32,7 @@ async function assertCanArchive(db: any, id: string) {
   if (current?.isFeatured && (current.order || 0) > 0) {
     return {
       blocked: true,
-      response: { error: 'ARTICLE_FEATURED_CANNOT_ARCHIVE', message: `Este artigo está em destaque na posição ${current.order} da home. Publique outro artigo nessa mesma posição para liberar o arquivamento.` },
+      response: { error: 'ARTICLE_FEATURED_CANNOT_ARCHIVE', message: `Não é possível arquivar este artigo porque ele está em destaque na página inicial (posição #${current.order}). Escolha outro artigo para ocupar essa posição de destaque — assim que ele for publicado, este artigo perde o destaque automaticamente e você já pode arquivá-lo.` },
     };
   }
   return { blocked: false };
