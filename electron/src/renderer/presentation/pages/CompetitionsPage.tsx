@@ -10,6 +10,8 @@ import { confirm } from '@/presentation/stores/dialog-store';
 const GENDER_LABEL: Record<string, string> = { MALE: 'Masculino', FEMALE: 'Feminino', MIXED: 'Misto' };
 const GENDER_BADGE: Record<string, string> = { MALE: 'bg-blue-50 text-blue-600', FEMALE: 'bg-pink-50 text-pink-600', MIXED: 'bg-purple-50 text-purple-600' };
 const MAX_PER_GROUP = 10;
+const PHASE_OPTIONS = ['Em andamento', 'Fase de Grupos', 'Oitavas de Final', 'Quartas de Final', 'Semifinal', 'Final', 'Campeão', 'Não participa'];
+const PHASE_NAMES = ['Fase de Grupos', 'Oitavas de Final', 'Quartas de Final', 'Semifinal', 'Final'];
 
 interface TeamSelectDropdownProps {
   idx: number;
@@ -304,7 +306,7 @@ export function CompetitionsPage() {
       }
       setStandings(loaded);
       setInitialStandings(JSON.stringify(loaded));
-      const mData = matchesData?.data || (Array.isArray(matchesData) ? matchesData : []);
+      const mData = (matchesData?.data || (Array.isArray(matchesData) ? matchesData : [])).filter((m: any) => m.competitionId === id || m.competition?.id === id);
       setCompMatches(mData);
     }
     catch { setStandings([]); setInitialStandings('[]'); setCompMatches([]); }
@@ -782,7 +784,10 @@ export function CompetitionsPage() {
                                   /* Sistema de Fases - agrupa por rodada (groupName) */
                                   <div>
                                     {(() => {
-                                      const rounds = [...new Set(standings.filter((s) => s.groupName).map((s) => s.groupName))];
+                                      let rounds = [...new Set(standings.filter((s) => s.groupName).map((s) => s.groupName))];
+                                      if (rounds.length === 0 && currentComp?.status && PHASE_NAMES.includes(currentComp.status)) {
+                                        rounds = [currentComp.status];
+                                      }
                                       if (rounds.length === 0) {
                                         return <div className="px-4 py-6 text-center text-on-surface-variant text-xs">Nenhuma fase adicionada. Use "Adicionar Fase" para começar.</div>;
                                       }
@@ -815,14 +820,10 @@ export function CompetitionsPage() {
                                     <div className="px-4 py-3">
                                       {addingPhase ? (
                                         <div className="flex items-center gap-2">
-                                          <input value={newPhaseName} onChange={(e) => setNewPhaseName(e.target.value)} onKeyDown={(e) => {
-                                            if (e.key === 'Enter' && newPhaseName.trim()) {
-                                              addStandingRow(newPhaseName.trim());
-                                              setExpandedGroups(new Set([...expandedGroups, newPhaseName.trim()]));
-                                              setAddingPhase(false); setNewPhaseName('');
-                                            }
-                                            if (e.key === 'Escape') { setAddingPhase(false); setNewPhaseName(''); }
-                                          }} autoFocus placeholder="Ex: Oitavas de Final" className="input-field flex-1 text-xs" />
+                                          <select value={newPhaseName} onChange={(e) => setNewPhaseName(e.target.value)} className="input-field flex-1 text-xs">
+                                            <option value="">Selecione a fase...</option>
+                                            {PHASE_NAMES.filter((p) => !standings.some((s) => s.groupName === p)).map((p) => <option key={p} value={p}>{p}</option>)}
+                                          </select>
                                           <button onClick={() => {
                                             if (newPhaseName.trim()) {
                                               addStandingRow(newPhaseName.trim());
@@ -941,7 +942,7 @@ export function CompetitionsPage() {
             <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Temporada *</label><input value={form.season} onChange={(e) => setForm({ ...form, season: e.target.value })} className="input-field" placeholder="2026" /></div>
             <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Status</label>
               <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })} className="select-field">
-                {['Em andamento', 'Fase de Grupos', 'Oitavas de Final', 'Quartas de Final', 'Semifinal', 'Final', 'Campeão', 'Não participa'].map((s) => <option key={s} value={s}>{s}</option>)}
+                {PHASE_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
           </div>
