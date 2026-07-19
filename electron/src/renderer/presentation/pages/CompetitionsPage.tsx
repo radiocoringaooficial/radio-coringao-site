@@ -659,6 +659,96 @@ export function CompetitionsPage() {
     );
   };
 
+  const renderConfrontos = (items: any[]) => {
+    const pairs: { a: any; b: any | null }[] = [];
+    for (let i = 0; i < items.length; i += 2) {
+      pairs.push({ a: items[i], b: items[i + 1] || null });
+    }
+    return (
+      <div className="space-y-2 p-3">
+        {pairs.map((pair, idx) => {
+          const scoreA = pair.a.goalsFor ?? 0;
+          const scoreB = pair.b?.goalsFor ?? null;
+          const isDecided = pair.b && scoreB !== null && scoreA !== scoreB;
+          const isTie = pair.b && scoreB !== null && scoreA === scoreB;
+          const manualWinner = pair.a.won === 1 ? 'a' : pair.b?.won === 1 ? 'b' : null;
+          const classified = manualWinner || (isDecided ? (scoreA > scoreB ? 'a' : 'b') : null);
+          return (
+            <div key={pair.a.id} className="border border-outline-variant/50 rounded-lg overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-surface-container-low/50">
+                <span className="text-[9px] font-bold text-on-surface-variant">Confronto {idx + 1}</span>
+                {classified && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-50 text-green-700">✓ Classificado</span>}
+                {isTie && !manualWinner && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">Empate — defina o classificado</span>}
+              </div>
+              <div className="divide-y divide-outline-variant/30">
+                {[pair.a, pair.b].filter(Boolean).map((entry, eIdx) => {
+                  const isWinner = classified === (eIdx === 0 ? 'a' : 'b');
+                  return (
+                    <div key={entry.id} className={`flex items-center gap-3 px-3 py-2 ${isWinner ? 'bg-green-50/50' : ''}`}>
+                      <div className="flex-1 min-w-0">
+                        <TeamSelectDropdown
+                          idx={standings.indexOf(entry)}
+                          s={entry}
+                          team={team}
+                          filteredOpponents={filteredOpponents}
+                          allOpponents={opponents}
+                          standings={standings}
+                          setStandings={setStandings}
+                          currentCategoryId={currentComp?.categoryId ?? null}
+                          onOpponentCreated={(opp) => setOpponents((prev) => [...prev, opp])}
+                          openDropdown={openDropdown}
+                          setOpenDropdown={setOpenDropdown}
+                          dropdownPos={dropdownPos}
+                          setDropdownPos={setDropdownPos}
+                          selectTeam={selectTeam}
+                          selectOpponent={selectOpponent}
+                        />
+                      </div>
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={String(entry.goalsFor ?? '')}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/^0+(?=\d)/, '');
+                          updateStanding(standings.indexOf(entry), 'goalsFor', val === '' ? 0 : Number(val));
+                        }}
+                        className="w-10 bg-transparent text-center text-xs font-bold text-on-surface py-1 px-0.5 outline-none border border-outline-variant/30 focus:border-primary rounded transition-colors"
+                        placeholder="0"
+                      />
+                      {isTie && !manualWinner && (
+                        <button
+                          onClick={() => {
+                            const idxA = standings.indexOf(pair.a);
+                            const idxB = standings.indexOf(pair.b);
+                            if (eIdx === 0) {
+                              updateStanding(idxA, 'won', 1);
+                              if (idxB !== -1) updateStanding(idxB, 'won', 0);
+                            } else {
+                              updateStanding(idxB, 'won', 1);
+                              updateStanding(idxA, 'won', 0);
+                            }
+                          }}
+                          className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors shrink-0"
+                        >
+                          Classificar
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+                {!pair.b && (
+                  <div className="flex items-center gap-3 px-3 py-2 text-on-surface-variant/50">
+                    <span className="text-[10px] italic">Aguardando adversário</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   const renderTable = (items: any[], groupLabel?: string) => (
     <div>
       {groupLabel && (
@@ -802,15 +892,18 @@ export function CompetitionsPage() {
                                                 <ChevronRight size={14} className={`text-on-surface-variant transition-transform ${rExpanded ? 'rotate-90' : ''}`} />
                                                 <Trophy size={14} className="text-primary" />
                                                 <span className="font-headline text-xs font-bold text-primary uppercase tracking-wider">{round}</span>
-                                                <span className="text-[10px] text-on-surface-variant">({roundItems.length} confrontos)</span>
+                                                <span className="text-[10px] text-on-surface-variant">({Math.ceil(roundItems.length / 2)} confrontos)</span>
                                               </div>
                                               <div onClick={(e) => e.stopPropagation()}>
-                                                <AddRowButton groupName={round!} />
+                                                <button onClick={() => { addStandingRow(round!); addStandingRow(round!); }} disabled={roundItems.length >= MAX_PER_GROUP}
+                                                  className={`py-1 px-2 text-[9px] font-headline font-bold transition-all flex items-center justify-center gap-1 ${roundItems.length >= MAX_PER_GROUP ? 'text-on-surface-variant/30 cursor-not-allowed' : 'text-primary hover:bg-primary/5 border border-dashed border-primary/30 hover:border-primary/60 rounded-lg'}`}>
+                                                  <Plus size={10} /> Confronto
+                                                </button>
                                               </div>
                                             </button>
                                             {rExpanded && (
                                               <div className="fade-in">
-                                                {renderTable(roundItems)}
+                                                {renderConfrontos(roundItems)}
                                               </div>
                                             )}
                                           </div>
