@@ -83,7 +83,7 @@ interface StandingEntry {
 interface StandingsResponse {
   category: string;
   tables: {
-    competition: { id: string; name: string; season: string };
+    competition: { id: string; name: string; season: string; slug?: string; status?: string; isParticipating?: boolean };
     standings: StandingEntry[];
   }[];
 }
@@ -151,23 +151,32 @@ export default async function SportPage({ params }: Props) {
   const [nextMatch, recentResults, standingsResponse, newsResponse, movementsResponse, squadResponse] = await Promise.all([
     clubeClient.get<Match[]>(`/partidas/next`, { params: { category: matchCategory, limit: "1" } }).catch(() => []),
     clubeClient.get<Match[]>(`/partidas/recent`, { params: { category: matchCategory, limit: "5" } }).catch(() => []),
-    clubeClient.get<any[]>(`/classificacoes/category/${matchCategory}`)
-      .then(entries => {
-        if (!Array.isArray(entries)) return entries;
-        const byComp = new Map<string, any[]>();
-        for (const e of entries) {
-          const arr = byComp.get(e.competitionId) || [];
-          arr.push(e);
-          byComp.set(e.competitionId, arr);
-        }
-        return {
-          category: category.name,
-          tables: Array.from(byComp.entries()).map(([id, standings]) => ({
-            competition: { id, name: standings[0]?.groupName || category.name, season: "" },
+    Promise.all([
+      clubeClient.get<any[]>(`/classificacoes/category/${matchCategory}`).catch(() => []),
+      clubeClient.get<any[]>(`/competicoes`).catch(() => []),
+    ]).then(([entries, competitions]) => {
+      if (!Array.isArray(entries)) return entries;
+      const compMap = new Map<string, any>();
+      for (const c of competitions) {
+        compMap.set(c.id, c);
+      }
+      const byComp = new Map<string, any[]>();
+      for (const e of entries) {
+        const arr = byComp.get(e.competitionId) || [];
+        arr.push(e);
+        byComp.set(e.competitionId, arr);
+      }
+      return {
+        category: category.name,
+        tables: Array.from(byComp.entries()).map(([id, standings]) => {
+          const comp = compMap.get(id);
+          return {
+            competition: { id, name: comp?.name || standings[0]?.groupName || category.name, season: comp?.season || "" },
             standings,
-          })),
-        };
-      })
+          };
+        }),
+      };
+    })
       .catch(() => ({ category: category.name, tables: [] })),
     httpClient.get<NewsArticle[]>(`/noticias`, { params: { category: SPORT_TO_NEWS_CATEGORY[sport] || sport, limit: "6" } }).catch(() => []),
     clubeClient.get<any>(`/movimentacoes/recent`, { params: { limit: "20", category: matchCategory } }).catch(() => []),
