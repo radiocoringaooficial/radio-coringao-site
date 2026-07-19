@@ -785,8 +785,8 @@ export function CompetitionsPage() {
                                   <div>
                                     {(() => {
                                       let rounds = [...new Set(standings.filter((s) => s.groupName).map((s) => s.groupName))];
-                                      if (rounds.length === 0 && currentComp?.status && PHASE_NAMES.includes(currentComp.status)) {
-                                        rounds = [currentComp.status];
+                                      if (currentComp?.status && PHASE_NAMES.includes(currentComp.status) && !rounds.includes(currentComp.status)) {
+                                        rounds = [...rounds, currentComp.status];
                                       }
                                       if (rounds.length === 0) {
                                         return <div className="px-4 py-6 text-center text-on-surface-variant text-xs">Nenhuma fase adicionada. Use "Adicionar Fase" para começar.</div>;
@@ -822,7 +822,7 @@ export function CompetitionsPage() {
                                         <div className="flex items-center gap-2">
                                           <select value={newPhaseName} onChange={(e) => setNewPhaseName(e.target.value)} className="input-field flex-1 text-xs">
                                             <option value="">Selecione a fase...</option>
-                                            {PHASE_NAMES.filter((p) => !standings.some((s) => s.groupName === p)).map((p) => <option key={p} value={p}>{p}</option>)}
+                                            {PHASE_NAMES.filter((p) => !standings.some((s) => s.groupName === p) && p !== currentComp?.status).map((p) => <option key={p} value={p}>{p}</option>)}
                                           </select>
                                           <button onClick={() => {
                                             if (newPhaseName.trim()) {
