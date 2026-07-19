@@ -30,7 +30,7 @@ export function EditorialGrid({ heroArticle, sideArticles }: EditorialGridProps)
           <img
             src={heroArticle.imageUrl}
             alt={heroArticle.imageAlt}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="eager"
           />
         ) : (
@@ -63,7 +63,7 @@ export function EditorialGrid({ heroArticle, sideArticles }: EditorialGridProps)
             <img
               src={article.imageUrl}
               alt={article.imageAlt || article.title}
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"
             />
           ) : (

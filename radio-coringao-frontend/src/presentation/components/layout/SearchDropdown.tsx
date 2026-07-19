@@ -92,7 +92,7 @@ export function SearchDropdown({ query, visible, onClose }: SearchDropdownProps)
                 src={article.imageUrl}
                 alt={article.imageAlt}
                 loading="lazy"
-                className="h-full w-full object-cover"
+                className="block h-full w-full object-cover"
               />
             </div>
             <div className="min-w-0 flex-1">

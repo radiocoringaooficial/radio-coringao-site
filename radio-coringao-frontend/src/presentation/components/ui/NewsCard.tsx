@@ -29,7 +29,7 @@ export function NewsCard({ article, variant = "default" }: NewsCardProps) {
             src={article.imageUrl}
             alt={article.imageAlt}
             loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="block h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </div>
         <div className="flex flex-1 flex-col justify-center py-2 pr-2 sm:py-3 sm:pr-3">
@@ -58,7 +58,7 @@ export function NewsCard({ article, variant = "default" }: NewsCardProps) {
           src={article.imageUrl}
           alt={article.imageAlt}
           loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="block h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
       </div>
       <div className="flex flex-1 flex-col p-3 sm:p-4">

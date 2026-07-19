@@ -39,7 +39,7 @@ function ArticleImage({ src, alt, credit }: { src: string; alt: string; credit: 
           src={src}
           alt={alt}
           loading="lazy"
-          className="h-full w-full object-cover"
+          className="block h-full w-full object-cover"
         />
       </div>
       <p className="mt-2 text-center text-[10px] italic text-on-surface-variant sm:text-[11px]">
@@ -136,7 +136,7 @@ export function ArticleContent({ article, topStories, nextMatch, slug }: Article
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 overflow-hidden rounded-full bg-surface-container">
                 {article.authorAvatar ? (
-                  <img src={article.authorAvatar} alt={article.author} loading="lazy" className="h-full w-full object-cover" />
+                  <img src={article.authorAvatar} alt={article.author} loading="lazy" className="block h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-primary">
                     <span className="text-[12px] font-bold text-on-primary">
@@ -243,7 +243,7 @@ export function ArticleContent({ article, topStories, nextMatch, slug }: Article
                 <img
                   src={article.imageUrl}
                   alt={article.imageAlt}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />

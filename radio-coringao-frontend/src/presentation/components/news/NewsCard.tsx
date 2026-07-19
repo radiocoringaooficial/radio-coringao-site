@@ -16,7 +16,7 @@ export function NewsCard({ article, variant = "horizontal" }: NewsCardProps) {
           <img
             src={article.imageUrl}
             alt={article.imageAlt}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
         </div>
@@ -47,7 +47,7 @@ export function NewsCard({ article, variant = "horizontal" }: NewsCardProps) {
         <img
           src={article.imageUrl}
           alt={article.imageAlt}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
         />
       </div>

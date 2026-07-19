@@ -125,7 +125,7 @@ export default async function EventsPage() {
                     <img
                       src={event.heroImage}
                       alt={event.name}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="block h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
                 )}

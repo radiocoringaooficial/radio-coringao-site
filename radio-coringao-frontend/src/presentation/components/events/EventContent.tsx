@@ -41,7 +41,7 @@ function EditorialGrid({ items, heroImage }: { items: { id: string; title: strin
         <img
           src={hero.image || heroImage}
           alt={hero.title}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="eager"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -67,7 +67,7 @@ function EditorialGrid({ items, heroImage }: { items: { id: string; title: strin
           <img
             src={item.image || heroImage}
             alt={item.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -108,7 +108,7 @@ function EventCardsGrid({ items, heroImage }: { items: EventData["items"] extend
                 <img
                   src={item.image || heroImage}
                   alt={item.title}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="block h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
               <div className="flex flex-1 flex-col p-4">

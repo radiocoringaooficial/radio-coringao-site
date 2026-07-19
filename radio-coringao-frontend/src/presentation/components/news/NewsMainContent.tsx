@@ -83,7 +83,7 @@ function EditorialGrid({ articles }: { articles: NewsArticle[] }) {
         <img
           src={hero.imageUrl}
           alt={hero.imageAlt}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="eager"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -111,7 +111,7 @@ function EditorialGrid({ articles }: { articles: NewsArticle[] }) {
           <img
             src={article.imageUrl}
             alt={article.imageAlt || article.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />

@@ -24,7 +24,7 @@ export function HeroArticle({ article }: HeroArticleProps) {
           <ImageWithFallback
             src={article.imageUrl}
             alt={article.imageAlt}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         </div>
         <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -45,7 +45,7 @@ export function HeroArticle({ article }: HeroArticleProps) {
               <ImageWithFallback
                 src={article.authorAvatar}
                 alt={article.author}
-                className="h-full w-full object-cover"
+                className="block h-full w-full object-cover"
               />
             </div>
           )}
