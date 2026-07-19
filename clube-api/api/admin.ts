@@ -137,7 +137,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(categories);
       }
       if (method === 'POST') {
-        const cat = await db.category.create({ data: { name: req.body.name, slug: req.body.slug, gender: req.body.gender || 'MALE', modality: req.body.modality || 'FOOTBALL', order: req.body.order || 0 } });
+        let cat;
+        try {
+          cat = await db.category.create({ data: { name: req.body.name, slug: req.body.slug, gender: req.body.gender || 'MALE', modality: req.body.modality || 'FOOTBALL', order: req.body.order || 0 } });
+        } catch (err: any) {
+          if (err.code === 'P2002') {
+            return res.status(409).json({ error: 'CATEGORY_ALREADY_EXISTS', message: 'Já existe uma categoria com esses dados. Verifique o nome, slug e temporada.' });
+          }
+          throw err;
+        }
         return res.status(201).json(cat);
       }
     }
@@ -193,7 +201,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (file && file.buffer.length > 0) {
           logoUrl = await uploadToCloudinary(file.buffer, 'opponents', file.mimetype);
         }
-        const opp = await db.opponent.create({ data: { name: fields.name, shortName: fields.shortName, logoUrl, stadium: fields.stadium, city: fields.city, color: fields.color } });
+        let opp;
+        try {
+          opp = await db.opponent.create({ data: { name: fields.name, shortName: fields.shortName, logoUrl, stadium: fields.stadium, city: fields.city, color: fields.color } });
+        } catch (err: any) {
+          if (err.code === 'P2002' && err.meta?.target?.includes('name')) {
+            return res.status(409).json({ error: 'OPPONENT_NAME_TAKEN', message: 'Já existe um adversário cadastrado com esse nome. Verifique a lista ou use um nome diferente.' });
+          }
+          throw err;
+        }
 
         // Associate categories if provided (comma-separated string or array)
         let categoryIds: string[] = [];
@@ -852,7 +868,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(clubs);
       }
       if (method === 'POST') {
-        const club = await db.transferClub.create({ data: { name: req.body.name, logoUrl: req.body.logoUrl } });
+        let club;
+        try {
+          club = await db.transferClub.create({ data: { name: req.body.name, logoUrl: req.body.logoUrl } });
+        } catch (err: any) {
+          if (err.code === 'P2002' && err.meta?.target?.includes('name')) {
+            return res.status(409).json({ error: 'TRANSFER_CLUB_NAME_TAKEN', message: 'Já existe um clube de transferência com esse nome. Verifique a lista ou use um nome diferente.' });
+          }
+          throw err;
+        }
         return res.status(201).json(club);
       }
     }
