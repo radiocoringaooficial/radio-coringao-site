@@ -952,7 +952,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── SETTINGS LOGO ────────────────────────────────────────
-    if (urlPath === '/configuracoes/logo' && method === 'PUT') {
+    if (urlPath === '/configuracoes/logo' && (method === 'PUT' || method === 'PATCH')) {
       const { file } = await parseMultipart(req);
       if (!file || file.buffer.length === 0) {
         return res.status(400).json({ error: 'Nenhuma imagem enviada.' });
@@ -963,7 +963,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // ─── SETTINGS FAVICON ──────────────────────────────────────
-    if (urlPath === '/settings/favicon' && method === 'PUT') {
+    if (urlPath === '/settings/favicon' && (method === 'PUT' || method === 'PATCH')) {
       const { file } = await parseMultipart(req);
       if (!file || file.buffer.length === 0) {
         return res.status(400).json({ error: 'Nenhum favicon enviado.' });
