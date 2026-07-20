@@ -81,11 +81,20 @@ export async function newsPublicRoutes(app: FastifyInstance): Promise<void> {
     const viewCountMap = new Map(viewCounts.map((r: any) => [r.articleId, r._count.id]));
 
     const result = articles
-      .map((a: any) => ({ ...a, viewCount: viewCountMap.get(a.id) || 0 }))
-      .sort((a: any, b: any) => b.viewCount - a.viewCount || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-      .slice(0, 10);
+      .map((a: any) => ({ ...a, viewCount: viewCountMap.get(a.id) || 0 }));
 
-    return reply.send(result);
+    const articlesWithViews = result.filter((a: any) => a.viewCount > 0).length;
+    if (articlesWithViews >= 3) {
+      result.sort((a: any, b: any) => b.viewCount - a.viewCount || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    } else {
+      // Menos de 3 artigos com views reais — mantém aleatório
+      for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+      }
+    }
+
+    return reply.send(result.slice(0, 10));
   });
 
   // GET /news/highlights/month — destaques do mês (publicados nos últimos 30 dias, ordenados por views totais)
@@ -121,11 +130,20 @@ export async function newsPublicRoutes(app: FastifyInstance): Promise<void> {
     const viewCountMap = new Map(viewCounts.map((r: any) => [r.articleId, r._count.id]));
 
     const result = articles
-      .map((a: any) => ({ ...a, viewCount: viewCountMap.get(a.id) || 0 }))
-      .sort((a: any, b: any) => b.viewCount - a.viewCount || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-      .slice(0, 10);
+      .map((a: any) => ({ ...a, viewCount: viewCountMap.get(a.id) || 0 }));
 
-    return reply.send(result);
+    const articlesWithViews = result.filter((a: any) => a.viewCount > 0).length;
+    if (articlesWithViews >= 3) {
+      result.sort((a: any, b: any) => b.viewCount - a.viewCount || new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+    } else {
+      // Menos de 3 artigos com views reais — mantém aleatório
+      for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+      }
+    }
+
+    return reply.send(result.slice(0, 10));
   });
 
   // GET /news/search?q=... — busca por texto

@@ -117,8 +117,8 @@ export class PrismaArticlePublicRepository implements IArticlePublicRepository {
         LIMIT 100
       `;
       popularIds = top.map((r) => r.id);
-      if (popularIds.length === 0) {
-        // Sem views — artigos aleatórios
+      if (popularIds.length < 3) {
+        // Menos de 3 artigos com views reais — artigos aleatórios
         const random = await prisma.$queryRaw<{ id: string }[]>`
           SELECT id FROM articles WHERE status = 'PUBLISHED' ORDER BY RANDOM() LIMIT 100
         `;
@@ -188,11 +188,11 @@ export class PrismaArticlePublicRepository implements IArticlePublicRepository {
         LIMIT 100
       `;
       const popularIds = top.map((r) => r.id);
-      if (popularIds.length > 0) {
+      if (popularIds.length >= 3) {
         where.id = { in: popularIds };
         orderBy = { publishedAt: 'desc' as const };
       } else {
-        // Sem views — artigos aleatórios
+        // Menos de 3 artigos com views reais — artigos aleatórios
         const random = await prisma.$queryRaw<{ id: string }[]>`
           SELECT id FROM articles WHERE status = 'PUBLISHED' ORDER BY RANDOM() LIMIT 100
         `;

@@ -200,9 +200,10 @@ export class PrismaArticleAdminRepository implements IArticleAdminRepository {
         LIMIT 100
       `;
       const popularIds = top.map((r) => r.id);
-      if (popularIds.length > 0) {
+      if (popularIds.length >= 3) {
         where.id = { in: popularIds };
       } else {
+        // Menos de 3 artigos com views reais — artigos aleatórios
         const random = await prisma.$queryRaw<{ id: string }[]>`
           SELECT id FROM articles WHERE status = 'PUBLISHED' ORDER BY RANDOM() LIMIT 100
         `;
