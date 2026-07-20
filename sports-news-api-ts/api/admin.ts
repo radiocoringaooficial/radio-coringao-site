@@ -962,6 +962,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ logoUrl });
     }
 
+    // ─── SETTINGS FAVICON ──────────────────────────────────────
+    if (urlPath === '/settings/favicon' && method === 'PUT') {
+      const { file } = await parseMultipart(req);
+      if (!file || file.buffer.length === 0) {
+        return res.status(400).json({ error: 'Nenhum favicon enviado.' });
+      }
+      const faviconUrl = await uploadToCloudinary(file.buffer, 'settings', file.mimetype);
+      await db.siteSettings.update({ where: { id: 'main' }, data: { faviconUrl } });
+      return res.status(200).json({ faviconUrl });
+    }
+
     // ─── CONTENT IMAGE UPLOAD ─────────────────────────────────
     if (urlPath === '/articles/content-image' && method === 'POST') {
       try {
