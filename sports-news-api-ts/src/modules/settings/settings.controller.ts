@@ -17,4 +17,9 @@ export class SettingsController {
     if (!request.uploadedFile) return reply.code(400).send({ error: 'Nenhuma imagem enviada.' });
     return reply.send(await this.settingsService.updateLogo(request.uploadedFile.path));
   };
+
+  updateFavicon = async (request: FastifyRequest, reply: FastifyReply) => {
+    if (!request.uploadedFile) return reply.code(400).send({ error: 'Nenhum favicon enviado.' });
+    return reply.send(await this.settingsService.updateFavicon(request.uploadedFile.path));
+  };
 }

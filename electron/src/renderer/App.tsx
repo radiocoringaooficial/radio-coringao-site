@@ -15,6 +15,7 @@ import { SponsorsPage } from './presentation/pages/SponsorsPage';
 import { EventsPage } from './presentation/pages/EventsPage';
 import { UsersPage } from './presentation/pages/UsersPage';
 import { SettingsPage } from './presentation/pages/SettingsPage';
+import { SeoPage } from './presentation/pages/SeoPage';
 import { FooterLinksPage } from './presentation/pages/FooterLinksPage';
 import { TeamPage } from './presentation/pages/TeamPage';
 import { ClubeCategoriesPage } from './presentation/pages/ClubeCategoriesPage';
@@ -69,6 +70,7 @@ export default function App() {
                   <Route path="/eventos" element={<EventsPage />} />
                   <Route path="/usuarios" element={<UsersPage />} />
                   <Route path="/configuracoes" element={<SettingsPage />} />
+                  <Route path="/seo" element={<SeoPage />} />
                   <Route path="/links-rodape" element={<FooterLinksPage />} />
                   <Route path="/equipe" element={<TeamPage />} />
                   <Route path="/categorias-modalidades" element={<ClubeCategoriesPage />} />

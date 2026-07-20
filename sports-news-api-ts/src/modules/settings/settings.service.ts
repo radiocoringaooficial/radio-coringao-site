@@ -21,4 +21,10 @@ export class SettingsService {
     if (existing?.logoUrl) await deleteImage(existing.logoUrl);
     return this.repo.upsert({ logoUrl });
   }
+
+  async updateFavicon(faviconUrl: string) {
+    const existing = await this.repo.get();
+    if (existing?.faviconUrl) await deleteImage(existing.faviconUrl);
+    return this.repo.upsert({ faviconUrl });
+  }
 }
