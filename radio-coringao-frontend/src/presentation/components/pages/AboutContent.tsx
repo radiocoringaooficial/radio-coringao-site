@@ -16,6 +16,9 @@ export function AboutContent() {
 
         <div className="space-y-8">
           <section className="rounded-lg border border-outline-variant bg-surface-container-lowest p-6">
+            <h2 className="mb-4 font-headline-md text-headline-md text-primary">
+              Nossa História
+            </h2>
             <p className="mb-4 font-body-md leading-relaxed text-on-surface-variant">
               A Rádio Coringão nasceu em 2009, fruto da paixão de quatro torcedores pelo Sport Club Corinthians Paulista.
               Entre eles, estava Ginaldo de Vasconcelos Filho, que permanece no projeto até hoje. A ideia surgiu com um
