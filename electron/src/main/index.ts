@@ -1,6 +1,7 @@
 import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
+import { autoUpdater } from 'electron-updater';
 
 app.commandLine.appendSwitch('in-process-gpu');
 app.commandLine.appendSwitch('disable-gpu-sandbox');
@@ -89,7 +90,62 @@ app.whenReady().then(() => {
     app.dock?.setIcon(getIconPath());
   }
   createWindow();
+  setupAutoUpdater();
 });
+
+function setupAutoUpdater() {
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+
+  // Suporte a repo privado via GH_TOKEN (injetado no build via definePlugin)
+  if (process.env.GH_TOKEN) {
+    autoUpdater.requestHeaders = {
+      Authorization: `token ${process.env.GH_TOKEN}`,
+    };
+  }
+
+  autoUpdater.on('checking-for-update', () => {
+    console.log('[AutoUpdate] Verificando atualizações...');
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    console.log('[AutoUpdate] Atualização disponível:', info?.version);
+    if (mainWindow) {
+      mainWindow.webContents.send('update-status', 'update-available');
+    }
+  });
+
+  autoUpdater.on('update-not-available', (info) => {
+    console.log('[AutoUpdate] Nenhuma atualização disponível. Versão atual:', info?.version);
+  });
+
+  autoUpdater.on('update-downloaded', async (info) => {
+    console.log('[AutoUpdate] Atualização baixada:', info?.version);
+    const result = await dialog.showMessageBox(mainWindow!, {
+      type: 'info',
+      title: 'Atualização disponível',
+      message: `Uma nova versão (${info?.version}) foi baixada. Deseja reiniciar agora para aplicar a atualização?`,
+      buttons: ['Reiniciar agora', 'Depois'],
+      defaultId: 0,
+      cancelId: 1,
+    });
+    if (result.response === 0) {
+      autoUpdater.quitAndInstall();
+    }
+  });
+
+  autoUpdater.on('error', (err) => {
+    console.error('[AutoUpdate] Erro:', err.message);
+  });
+
+  // Verifica atualizações 5 segundos depois de abrir
+  setTimeout(() => {
+    console.log('[AutoUpdate] Iniciando verificação...');
+    autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+      console.error('[AutoUpdate] Falha na verificação:', err?.message);
+    });
+  }, 5000);
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

@@ -2,6 +2,11 @@
   "appId": "com.radiocoringao.admin",
   "productName": "Radio Coringao Admin",
   "executableName": "Radio Coringao Admin",
+  "publish": {
+    "provider": "github",
+    "owner": "radiocoringaooficial",
+    "repo": "radio-coringao-site"
+  },
   "mac": {
     "target": ["dmg", "zip"],
     "category": "public.app-category.news",
