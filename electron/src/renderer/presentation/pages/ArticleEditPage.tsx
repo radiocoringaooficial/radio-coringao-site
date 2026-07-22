@@ -200,6 +200,7 @@ export function ArticleEditPage() {
     ? form.title.trim().length > 0
     : (initialForm !== null && (JSON.stringify(form) !== JSON.stringify(initialForm) || coverImage !== null));
 
+  // ImageUpload já aplica compressão via compressImage() — aqui só guardamos o resultado
   const handleCoverChange = (file: File) => {
     setCoverImage(file);
     const reader = new FileReader();

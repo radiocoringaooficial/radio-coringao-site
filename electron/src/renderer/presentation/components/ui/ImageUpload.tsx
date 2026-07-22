@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { compressImage } from '@/presentation/utils/image-compression';
 
 interface ImageUploadProps {
   currentImage?: string;
@@ -14,10 +15,17 @@ export function ImageUpload({ currentImage, onUpload, onRemove, label = 'Imagem'
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     if (!file.type.startsWith('image/')) return;
-    setPreview(URL.createObjectURL(file));
-    onUpload(file);
+    try {
+      const compressed = await compressImage(file);
+      setPreview(URL.createObjectURL(compressed));
+      onUpload(compressed);
+    } catch {
+      // Fallback: usa o arquivo original se a compressão falhar
+      setPreview(URL.createObjectURL(file));
+      onUpload(file);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

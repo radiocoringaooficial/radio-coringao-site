@@ -8,6 +8,7 @@ import { Bold, Italic, Strikethrough, Highlighter, List, ListOrdered, Quote, Ima
 import { useRef, useEffect, useState } from 'react';
 import { newsApi } from '@/infrastructure/api/client';
 import { alert } from '@/presentation/stores/dialog-store';
+import { compressImage } from '@/presentation/utils/image-compression';
 
 const CustomImage = Image.extend({
   addAttributes() {
@@ -140,11 +141,13 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 
     setUploading(true);
     try {
+      // Comprime antes de gerar base64 — evita payload > 4.5MB no Vercel
+      const compressed = await compressImage(file);
       const reader = new FileReader();
       const base64 = await new Promise<string>((resolve, reject) => {
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = reject;
-        reader.readAsDataURL(file);
+        reader.readAsDataURL(compressed);
       });
 
       const data = await newsApi.post('/admin/articles/content-image', { image: base64 });

@@ -53,7 +53,7 @@ export async function buildApp() {
   const app = Fastify({
     logger: false,
     trustProxy: true,
-    bodyLimit: 2 * 1024 * 1024,
+    bodyLimit: 12 * 1024 * 1024, // 12MB — suporta upload de imagem via multipart
   });
 
   // ─── Security ─────────────────────────────────────────────

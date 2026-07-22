@@ -31,7 +31,7 @@ export async function buildApp() {
       }),
     },
     trustProxy: true,
-    bodyLimit: 2 * 1024 * 1024, // 2MB max request body
+    bodyLimit: 12 * 1024 * 1024, // 12MB — suporta upload de imagem via multipart
   });
 
   // ── Plugins globais ────────────────────────────────────────────────────────
