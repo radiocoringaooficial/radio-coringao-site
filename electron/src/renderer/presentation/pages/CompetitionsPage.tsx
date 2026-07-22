@@ -268,6 +268,7 @@ export function CompetitionsPage() {
 
   const handleSave = async () => {
     if (!form.name.trim()) { toast('Nome é obrigatório.', 'error'); return; }
+    if (!form.categoryId) { toast('Selecione uma categoria.', 'error'); return; }
     setSaving(true);
     try {
       const data = { ...form, isParticipating: form.isParticipating === 'true' };

@@ -232,6 +232,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             : String(fields.categoryIds).split(',').map((s: string) => s.trim()).filter(Boolean);
         }
         if (categoryIds.length > 0) {
+          // Validar se todos os IDs existem antes de inserir
+          const validCats = await db.category.findMany({ where: { id: { in: categoryIds } }, select: { id: true } });
+          const validIds = new Set(validCats.map((c) => c.id));
+          const invalidIds = categoryIds.filter((id) => !validIds.has(id));
+          if (invalidIds.length > 0) {
+            return res.status(400).json({ error: 'Categorias inválidas ou inexistentes.', invalidIds });
+          }
           await db.opponentCategory.createMany({
             data: categoryIds.map((cid) => ({ opponentId: opp.id, categoryId: cid })),
           });
@@ -276,6 +283,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Handle category updates separately (replace all)
       if (categoryIds !== undefined) {
+        if (categoryIds.length > 0) {
+          // Validar se todos os IDs existem antes de substituir
+          const validCats = await db.category.findMany({ where: { id: { in: categoryIds } }, select: { id: true } });
+          const validIds = new Set(validCats.map((c) => c.id));
+          const invalidIds = categoryIds.filter((id) => !validIds.has(id));
+          if (invalidIds.length > 0) {
+            return res.status(400).json({ error: 'Categorias inválidas ou inexistentes.', invalidIds });
+          }
+        }
         await db.opponentCategory.deleteMany({ where: { opponentId: opp.id } });
         if (categoryIds.length > 0) {
           await db.opponentCategory.createMany({
