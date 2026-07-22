@@ -269,6 +269,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       if (method === 'POST') {
         const { fields, file } = await parseMultipart(req);
+
+        // Validação: categoryId obrigatório e deve existir no banco
+        if (!fields.categoryId || fields.categoryId.trim() === '') {
+          return res.status(400).json({ error: 'Categoria é obrigatória.' });
+        }
+        const catExists = await db.category.findUnique({ where: { id: fields.categoryId }, select: { id: true } });
+        if (!catExists) {
+          return res.status(400).json({ error: 'Categoria inválida ou inexistente.', categoryId: fields.categoryId });
+        }
+
         let coverImageUrl = fields.coverImage || undefined;
         if (file && file.buffer.length > 0) {
           coverImageUrl = await uploadToCloudinary(file.buffer, 'articles', file.mimetype);
@@ -296,6 +306,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       if (method === 'PUT' || method === 'PATCH') {
         const { fields, file } = await parseMultipart(req);
+
+        // Validação: se categoryId está sendo alterado, verificar se existe
+        if (fields.categoryId !== undefined && fields.categoryId !== '') {
+          const catExists = await db.category.findUnique({ where: { id: fields.categoryId }, select: { id: true } });
+          if (!catExists) {
+            return res.status(400).json({ error: 'Categoria inválida ou inexistente.', categoryId: fields.categoryId });
+          }
+        }
+
         let coverImageUrl = fields.coverImage || undefined;
         if (file && file.buffer.length > 0) {
           coverImageUrl = await uploadToCloudinary(file.buffer, 'articles', file.mimetype);
@@ -318,7 +337,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (fields.type !== undefined) updateData.type = fields.type;
         if (fields.isFeatured !== undefined) updateData.isFeatured = fields.isFeatured === 'true';
         if (fields.isBreaking !== undefined) updateData.isBreaking = fields.isBreaking === 'true';
-        if (fields.categoryId !== undefined) updateData.categoryId = fields.categoryId;
+        if (fields.categoryId !== undefined && fields.categoryId !== '') updateData.categoryId = fields.categoryId;
         if (coverImageUrl !== undefined) updateData.coverImage = coverImageUrl;
         if (fields.status === 'PUBLISHED') updateData.publishedAt = new Date();
         if (fields.scheduledAt !== undefined) updateData.scheduledAt = fields.scheduledAt || null;
@@ -379,6 +398,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       if (method === 'PUT' || method === 'PATCH') {
         const { fields, file } = await parseMultipart(req);
+
+        // Validação: se categoryId está sendo alterado, verificar se existe
+        if (fields.categoryId !== undefined && fields.categoryId !== '') {
+          const catExists = await db.category.findUnique({ where: { id: fields.categoryId }, select: { id: true } });
+          if (!catExists) {
+            return res.status(400).json({ error: 'Categoria inválida ou inexistente.', categoryId: fields.categoryId });
+          }
+        }
+
         let coverImageUrl = fields.coverImage || undefined;
         if (file && file.buffer.length > 0) {
           coverImageUrl = await uploadToCloudinary(file.buffer, 'articles', file.mimetype);
@@ -401,7 +429,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (fields.type !== undefined) updateData.type = fields.type;
         if (fields.isFeatured !== undefined) updateData.isFeatured = fields.isFeatured === 'true';
         if (fields.isBreaking !== undefined) updateData.isBreaking = fields.isBreaking === 'true';
-        if (fields.categoryId !== undefined) updateData.categoryId = fields.categoryId;
+        if (fields.categoryId !== undefined && fields.categoryId !== '') updateData.categoryId = fields.categoryId;
         if (coverImageUrl !== undefined) updateData.coverImage = coverImageUrl;
         if (fields.status === 'PUBLISHED') updateData.publishedAt = new Date();
         if (fields.scheduledAt !== undefined) updateData.scheduledAt = fields.scheduledAt || null;

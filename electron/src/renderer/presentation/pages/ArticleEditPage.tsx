@@ -210,6 +210,10 @@ export function ArticleEditPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.categoryId) {
+      toast('Selecione uma categoria antes de salvar.', 'error');
+      return;
+    }
     if (form.status === 'PUBLISHED' && !coverImage && !coverPreview) {
       toast('Imagem de capa é obrigatória para publicar.', 'error');
       return;
