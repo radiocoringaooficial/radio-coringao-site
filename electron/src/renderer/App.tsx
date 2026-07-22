@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './presentation/stores/auth-store';
 import { AdminLayout } from './presentation/components/layout/AdminLayout';
 import { LoginPage } from './presentation/components/layout/LoginPage';
@@ -50,7 +50,7 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <HashRouter>
         <ToastContainer />
         <Dialog />
         <Routes>
@@ -90,7 +90,7 @@ export default function App() {
             </PrivateRoute>
           } />
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </ErrorBoundary>
   );
 }
