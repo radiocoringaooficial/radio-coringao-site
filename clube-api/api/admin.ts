@@ -167,6 +167,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(200).json(competitions);
       }
       if (method === 'POST') {
+        if (!req.body.categoryId || req.body.categoryId.trim() === '') {
+          return res.status(400).json({ error: 'Categoria é obrigatória.' });
+        }
+        const catExists = await db.category.findUnique({ where: { id: req.body.categoryId }, select: { id: true } });
+        if (!catExists) {
+          return res.status(400).json({ error: 'Categoria inválida ou inexistente.', categoryId: req.body.categoryId });
+        }
         const comp = await db.competition.create({ data: { name: req.body.name, season: req.body.season, categoryId: req.body.categoryId, slug: req.body.slug, status: req.body.status, tableFormat: req.body.tableFormat || 'single' } });
         return res.status(201).json(comp);
       }
@@ -174,6 +181,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const compMatch = url.match(/^\/competicoes\/([^/]+)$/);
     if (compMatch && method === 'PATCH') {
+      if (req.body.categoryId !== undefined && req.body.categoryId !== '') {
+        const catExists = await db.category.findUnique({ where: { id: req.body.categoryId }, select: { id: true } });
+        if (!catExists) {
+          return res.status(400).json({ error: 'Categoria inválida ou inexistente.', categoryId: req.body.categoryId });
+        }
+      }
       const comp = await db.competition.update({ where: { id: compMatch[1] }, data: req.body });
       return res.status(200).json(comp);
     }
@@ -522,6 +535,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           }
         }
 
+        if (!fields.categoryId || fields.categoryId.trim() === '') {
+          return res.status(400).json({ error: 'Categoria é obrigatória.' });
+        }
+        const catExistsSquad = await db.category.findUnique({ where: { id: fields.categoryId }, select: { id: true } });
+        if (!catExistsSquad) {
+          return res.status(400).json({ error: 'Categoria inválida ou inexistente.', categoryId: fields.categoryId });
+        }
+
         try {
           const member = await db.squadMember.create({ data: { categoryId: fields.categoryId, name: fields.name, position: fields.position, shirtNumber: finalShirtNumber, photoUrl } });
           return res.status(201).json(member);
@@ -537,6 +558,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const squadMatch = url.match(/^\/elenco\/([^/]+)$/);
     if (squadMatch && method === 'PATCH') {
       const { fields, file } = await parseMultipart(req);
+
+      if (fields.categoryId !== undefined && fields.categoryId !== '') {
+        const catExistsSquad = await db.category.findUnique({ where: { id: fields.categoryId }, select: { id: true } });
+        if (!catExistsSquad) {
+          return res.status(400).json({ error: 'Categoria inválida ou inexistente.', categoryId: fields.categoryId });
+        }
+      }
+
       let photoUrl = fields.photoUrl || undefined;
       if (file && file.buffer.length > 0) {
         photoUrl = await uploadToCloudinary(file.buffer, 'squad', file.mimetype);
