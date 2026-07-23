@@ -43,12 +43,43 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const urlObj = new URL(url, 'http://localhost');
       const categoryParam = urlObj.searchParams.get('category');
       const limitParam = parseInt(urlObj.searchParams.get('limit') || '20');
+      const sortParam = urlObj.searchParams.get('sort') || 'recent';
       const where: any = { status: 'PUBLISHED' };
       if (categoryParam) where.category = { slug: categoryParam };
+
+      let orderBy: any;
+      switch (sortParam) {
+        case 'oldest':  orderBy = [{ isPinned: 'desc' as const }, { publishedAt: 'asc' as const }]; break;
+        case 'popular': orderBy = [{ isPinned: 'desc' as const }, { publishedAt: 'desc' as const }]; break;
+        case 'az':      orderBy = [{ isPinned: 'desc' as const }, { title: 'asc' as const }]; break;
+        case 'za':      orderBy = [{ isPinned: 'desc' as const }, { title: 'desc' as const }]; break;
+        default:        orderBy = [{ isPinned: 'desc' as const }, { publishedAt: 'desc' as const }]; break;
+      }
+
+      // For 'popular', get article IDs sorted by unique view count first
+      if (sortParam === 'popular') {
+        const since = new Date();
+        since.setDate(since.getDate() - 30);
+        try {
+          const top = await db.$queryRawUnsafe(`
+            SELECT av."articleId" as id
+            FROM article_views av
+            INNER JOIN articles a ON a.id = av."articleId"
+            WHERE a.status = 'PUBLISHED'
+            GROUP BY av."articleId"
+            ORDER BY COUNT(DISTINCT av."ipHash") DESC
+            LIMIT ${limitParam}
+          `);
+          if (top.length >= 3) {
+            where.id = { in: top.map((r: any) => r.id) };
+          }
+        } catch {}
+      }
+
       const articles = await db.article.findMany({
         where,
         take: limitParam,
-        orderBy: { publishedAt: 'desc' },
+        orderBy,
         include: { category: true, author: { select: { id: true, name: true, email: true, role: true, avatar: true, bio: true, position: true } } },
       });
       return res.status(200).json(articles);
