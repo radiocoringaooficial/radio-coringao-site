@@ -247,9 +247,7 @@ export function NewsMainContent({
   }
 
   const editorialForTab = activeTab === "ultimas" ? editorial : articles.slice(0, EDITORIAL_COUNT);
-  const gridArticles = activeTab === "ultimas"
-    ? articles.slice(EDITORIAL_COUNT)
-    : articles;
+  const gridArticles = articles;
   const usePagination = gridArticles.length > PAGINATION_THRESHOLD || totalPages > 1;
 
   const tabs: { id: Tab; label: string }[] = [
