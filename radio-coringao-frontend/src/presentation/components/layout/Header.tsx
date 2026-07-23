@@ -29,6 +29,7 @@ const CLUBE_API = "https://radiocoringao-clube.vercel.app/api";
 const NEWS_API = "https://radiocoringao-news.vercel.app/api";
 const CORINTHIANS_LOGO = "https://res.cloudinary.com/def661xyl/image/upload/v1782685173/club-corinthians/logos/ulkyawaln1damxiqbpep.png";
 
+// Sport categories for the clube-api match data (sportKey → clube-api category)
 const SPORT_CATEGORIES: Record<string, string> = {
   futebol: "principal",
   "futebol-feminino": "feminino",
@@ -38,15 +39,7 @@ const SPORT_CATEGORIES: Record<string, string> = {
   "sub-17": "sub-17",
 };
 
-const SPORT_NEWS_SLUG: Record<string, string> = {
-  futebol: "futebol",
-  "futebol-feminino": "futebol-feminino",
-  basquete: "basquete",
-  futsal: "futsal",
-  "sub-20": "futebol-sub-20",
-  "sub-17": "futebol-sub-20",
-};
-
+// Maps menu child URLs → sport key for match data (clube-api)
 const URL_TO_SPORT_KEY: Record<string, string> = {
   "/esportes/futebol": "futebol",
   "/esportes/futebol-feminino": "futebol-feminino",
@@ -60,16 +53,9 @@ const URL_TO_TRANSFERS_KEY: Record<string, string> = {
   "/transferencias": "transferencias",
 };
 
-const URL_TO_NEWS_KEY: Record<string, string> = {
-  "/noticias": "ultimas",
-  "/noticias/category/futebol": "futebol",
-  "/noticias/category/basquete": "basquete",
-  "/noticias/category/futsal": "futsal",
-  "/noticias/category/eventos": "eventos",
-  "/noticias/category/politica": "politica",
-  "/noticias/category/neo-quimica-arena": "neo-quimica-arena",
-  "/noticias/category/fiel-torcedor": "fiel-torcedor",
-};
+// URL_TO_NEWS_KEY is built dynamically from /categorias in useEffect.
+// It maps menu child URLs → category slug for fetching news articles.
+// Built once after categories are fetched from the API.
 
 function formatMatch(r: any, isHome: boolean) {
   if (!r) return null;
@@ -116,12 +102,15 @@ function buildNavItems(data: Record<string, any>): NavItem[] {
   const menuItems = data.menu || [];
   if (menuItems.length === 0) return [];
 
+  // Dynamic URL→newsKey mapping built from /categorias + menu structure
+  const newsKeyMap: Record<string, string> = data.__newsKeyMap || {};
+
   return menuItems.map((item: any) => {
     const slug = item.url?.replace(/^\//, "") || "";
     const children = (item.children || []).map((child: any) => {
       const childUrl = child.url || "";
       const sportKey = URL_TO_SPORT_KEY[childUrl];
-      const newsKey = URL_TO_NEWS_KEY[childUrl];
+      const newsKey = newsKeyMap[childUrl];
 
       const sub: SubItem = {
         label: child.label,
@@ -173,38 +162,65 @@ export function Header() {
   const [navData, setNavData] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    // Fetch menu FIRST so it shows immediately, then enrich in background
-    fetchJson(`${NEWS_API}/menu`)
-      .then((menuRaw) => {
-        const menu = menuRaw
-          .filter((m: any) => !m.parentId && m.isActive !== false)
-          .sort((a: any, b: any) => a.order - b.order)
-          .map((m: any) => ({
-            label: m.label,
-            url: m.url,
-            children: (m.children || [])
-              .filter((c: any) => c.isActive !== false)
-              .sort((a: any, b: any) => a.order - b.order)
-              .map((c: any) => ({ label: c.label, url: c.url })),
-          }));
-        setNavData((prev) => ({ ...prev, menu }));
-      })
-      .catch(() => {});
-  }, []);
-
-  // Background: fetch sport data, standings, extras (non-blocking)
-  useEffect(() => {
     (async () => {
       const d: Record<string, any> = {};
 
+      // ── 1. Fetch menu + categories in parallel ──
+      const [menuRaw, catRes] = await Promise.all([
+        fetchJson(`${NEWS_API}/menu`).catch(() => []),
+        fetchJson(`${NEWS_API}/categorias`).catch(() => []),
+      ]);
+
+      const menu = (Array.isArray(menuRaw) ? menuRaw : [])
+        .filter((m: any) => !m.parentId && m.isActive !== false)
+        .sort((a: any, b: any) => a.order - b.order)
+        .map((m: any) => ({
+          label: m.label,
+          url: m.url,
+          children: (m.children || [])
+            .filter((c: any) => c.isActive !== false)
+            .sort((a: any, b: any) => a.order - b.order)
+            .map((c: any) => ({ label: c.label, url: c.url })),
+        }));
+      d.menu = menu;
+
+      // Build set of valid category slugs from DB
+      const validCategorySlugs = new Set<string>();
+      const cats = Array.isArray(catRes) ? catRes : [];
+      for (const cat of cats) {
+        if (cat.slug) validCategorySlugs.add(cat.slug);
+        if (cat.children) {
+          for (const child of cat.children) {
+            if (child.slug) validCategorySlugs.add(child.slug);
+          }
+        }
+      }
+
+      // Build URL_TO_NEWS_KEY dynamically from menu child URLs + valid category slugs
+      const newsKeyMap: Record<string, string> = {};
+      for (const item of menu) {
+        for (const child of item.children || []) {
+          const childUrl = child.url || "";
+          const catMatch = childUrl.match(/^\/noticias\/category\/(.+)$/);
+          if (catMatch) {
+            const slug = catMatch[1];
+            if (validCategorySlugs.has(slug)) {
+              newsKeyMap[childUrl] = slug;
+            }
+          } else if (childUrl === "/noticias") {
+            newsKeyMap["/noticias"] = "__all__";
+          }
+        }
+      }
+
+      // ── 2. Fetch sport match data + news ──
       const sportEntries = Object.entries(SPORT_CATEGORIES);
       const sportResults = await Promise.all(
         sportEntries.map(async ([sport, matchCat]) => {
-          const newsSlug = SPORT_NEWS_SLUG[sport] || sport;
           const [recent, next, news] = await Promise.all([
             fetchJson(`${CLUBE_API}/partidas/recent?category=${matchCat}&limit=1`),
             fetchJson(`${CLUBE_API}/partidas/next?category=${matchCat}&limit=1`),
-            fetchJson(`${NEWS_API}/noticias?category=${newsSlug}&limit=3`),
+            fetchJson(`${NEWS_API}/noticias?category=${sport}&limit=3`),
           ]);
           return { sport, recent: recent[0] || null, next: next[0] || null, news };
         })
@@ -218,6 +234,7 @@ export function Header() {
         };
       }
 
+      // ── 3. Fetch standings ──
       const COMPETITION_MAP: Record<string, string> = {
         "Brasileirão Série A": "brasileirao-serie-a",
         "Libertadores": "libertadores",
@@ -248,19 +265,25 @@ export function Header() {
         }
       } catch {}
 
-      const [ultimas, politica, eventos, neoArena, fielTorcedor, transfers] = await Promise.all([
-        fetchJson(`${NEWS_API}/noticias?limit=6`),
-        fetchJson(`${NEWS_API}/noticias?category=politica&limit=3`),
-        fetchJson(`${NEWS_API}/noticias?category=eventos&limit=3`),
-        fetchJson(`${NEWS_API}/noticias?category=neo-quimica-arena&limit=3`),
-        fetchJson(`${NEWS_API}/noticias?category=fiel-torcedor&limit=3`),
-        fetchJson(`${CLUBE_API}/movimentacoes/recent?limit=5&category=principal`),
-      ]);
-      d.ultimas = mapArticles(ultimas);
-      d.politica = mapArticles(politica);
-      d.eventos = mapArticles(eventos);
-      d["neo-quimica-arena"] = mapArticles(neoArena);
-      d["fiel-torcedor"] = mapArticles(fielTorcedor);
+      // ── 4. Fetch news articles dynamically based on menu structure ──
+      const allLatest = await fetchJson(`${NEWS_API}/noticias?limit=6`);
+      d.__all__ = mapArticles(allLatest);
+
+      const categorySlugsToFetch = [...new Set(Object.values(newsKeyMap).filter((k: string) => k !== "__all__"))];
+      const categoryResults = await Promise.all(
+        categorySlugsToFetch.map(async (slug: string) => {
+          const articles = await fetchJson(`${NEWS_API}/noticias?category=${slug}&limit=3`);
+          return { slug, articles };
+        })
+      );
+      for (const { slug, articles } of categoryResults) {
+        d[slug] = mapArticles(articles);
+      }
+
+      d.__newsKeyMap = newsKeyMap;
+
+      // ── 5. Fetch transfers ──
+      const transfers = await fetchJson(`${CLUBE_API}/movimentacoes/recent?limit=5&category=principal`);
       const transferArr = Array.isArray(transfers) ? transfers : [];
       d.transferencias = transferArr.map((m: any) => ({
         type: m.type,
@@ -272,7 +295,7 @@ export function Header() {
         id: m.id,
       }));
 
-      setNavData((prev) => ({ ...prev, ...d }));
+      setNavData(d);
     })();
   }, []);
 
