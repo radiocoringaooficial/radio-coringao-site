@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { clubeApi, CLUBE } from '@/infrastructure/api/client';
 import { Plus, Pencil, Trash2, Shield, ArrowDownLeft, ArrowUpRight, RotateCcw, TrendingUp, TrendingDown, ChevronDown, ChevronLeft, ChevronRight, DollarSign, Loader2, Archive, ArchiveRestore, Search, X } from 'lucide-react';
 import { Modal } from '@/presentation/components/ui/Modal';
+import { getSeasonYears } from '@/shared/utils/seasons';
 import { CardGridSkeleton, Skeleton } from '@/presentation/components/ui/Skeleton';
 import { useToastStore } from '@/presentation/stores/toast-store';
 import { confirm } from '@/presentation/stores/dialog-store';
@@ -815,7 +816,7 @@ export function MovementsPage() {
             </div>
             <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Temporada</label>
               <select value={selectedSeason} onChange={(e) => setSelectedSeason(e.target.value)} className="select-field">
-                {[2027, 2026, 2025, 2024, 2023].map((y) => <option key={y} value={String(y)}>{y}</option>)}
+                {getSeasonYears(1, 3).map((y) => <option key={y} value={String(y)}>{y}</option>)}
               </select>
             </div>
           </div>

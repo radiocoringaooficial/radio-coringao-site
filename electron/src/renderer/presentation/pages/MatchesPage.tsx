@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { clubeApi } from '@/infrastructure/api/client';
 import { Plus, Pencil, Trash2, ChevronDown, ChevronRight, ChevronLeft, Save, MapPin, Trophy, Clock, X, Shield, Loader2, Archive, ArchiveRestore } from 'lucide-react';
 import { Modal } from '@/presentation/components/ui/Modal';
+import { getSeasonYears } from '@/shared/utils/seasons';
 import { CardGridSkeleton, Skeleton } from '@/presentation/components/ui/Skeleton';
 import { useToastStore } from '@/presentation/stores/toast-store';
 import { confirm } from '@/presentation/stores/dialog-store';
@@ -581,7 +582,7 @@ export function MatchesPage() {
           )}
           <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Temporada</label>
             <select value={form.season} onChange={(e) => setForm({ ...form, season: e.target.value })} className="select-field">
-              {[2028, 2027, 2026, 2025, 2024, 2023].map(y => <option key={y} value={y}>{y}</option>)}
+              {getSeasonYears(2, 3).map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
           {form.status === 'FINISHED' && (

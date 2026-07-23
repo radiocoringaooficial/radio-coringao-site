@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/presentation/stores/auth-store';
 import { useUIStore } from '@/presentation/stores/ui-store';
 import {
@@ -59,6 +60,11 @@ export function Sidebar() {
   const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
+  const [version, setVersion] = useState('');
+
+  useEffect(() => {
+    (window as any).electronAPI?.getAppVersion?.().then((v: string) => setVersion(v)).catch(() => {});
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -141,6 +147,9 @@ export function Sidebar() {
           <LogOut size={16} />
           {!collapsed && <span>Sair</span>}
         </button>
+        {version && !collapsed && (
+          <p className="text-[10px] text-white/30 text-center mt-2 font-body">v{version}</p>
+        )}
       </div>
     </aside>
   );
