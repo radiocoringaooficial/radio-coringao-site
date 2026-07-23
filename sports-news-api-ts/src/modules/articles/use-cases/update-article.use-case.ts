@@ -11,6 +11,7 @@ import {
   hasPermission,
   CAN_PUBLISH_ROLES,
 } from '../../../shared/plugins/permissions.plugin';
+import { revalidateFrontend } from '../../../shared/services/revalidate-frontend';
 
 export interface UpdateArticleInput {
   title?: string;
@@ -271,6 +272,12 @@ export class UpdateArticleUseCase {
       { articleId: id, userId, userRole, changedFields: Object.keys(updateData) },
       'Artigo atualizado',
     );
+
+    // Trigger on-demand revalidation when article is published or status changes
+    if (updateData.status === 'PUBLISHED') {
+      const categorySlug = (article as any).category?.slug;
+      revalidateFrontend(categorySlug).catch(() => {});
+    }
 
     return article;
   }

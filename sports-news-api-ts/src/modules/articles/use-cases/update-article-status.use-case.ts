@@ -4,6 +4,7 @@ import type { ArticleStatus, Role } from '../../../shared/entities';
 import { NotFoundError, AppError, ForbiddenError, ConflictError } from '../../../shared/errors';
 import { ErrorCode } from '../../../shared/errors/error-codes';
 import { hasPermission } from '../../../shared/plugins/permissions.plugin';
+import { revalidateFrontend } from '../../../shared/services/revalidate-frontend';
 
 export class UpdateArticleStatusUseCase {
   constructor(private readonly repo: IArticleAdminRepository) {}
@@ -34,9 +35,17 @@ export class UpdateArticleStatusUseCase {
       }
     }
 
-    return this.repo.update(id, {
+    const updated = await this.repo.update(id, {
       status,
       publishedAt: status === 'PUBLISHED' ? new Date() : undefined,
     });
+
+    // Trigger on-demand revalidation when article is published
+    if (status === 'PUBLISHED') {
+      const categorySlug = (updated as any).category?.slug;
+      revalidateFrontend(categorySlug).catch(() => {});
+    }
+
+    return updated;
   }
 }

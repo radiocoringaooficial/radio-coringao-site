@@ -47,3 +47,4 @@ backups/
 *.dump
 *.pptx
 .vercel
+.env*

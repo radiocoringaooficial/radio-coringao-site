@@ -10,6 +10,7 @@ import {
   hasPermission,
   CAN_PUBLISH_ROLES,
 } from '../../../shared/plugins/permissions.plugin';
+import { revalidateFrontend } from '../../../shared/services/revalidate-frontend';
 
 export interface CreateArticleInput {
   title: string;
@@ -207,6 +208,12 @@ export class CreateArticleUseCase {
       { articleId: article.id, slug, status: finalStatus, userId, userRole },
       'Artigo criado',
     );
+
+    // Trigger on-demand revalidation so the frontend shows the new article immediately
+    if (finalStatus === 'PUBLISHED') {
+      const categorySlug = (article as any).category?.slug;
+      revalidateFrontend(categorySlug).catch(() => {});
+    }
 
     // ── Deslocamento automático de artigo em destaque ──
     if (canPublish && article.isFeatured && article.order > 0) {

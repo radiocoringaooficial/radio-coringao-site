@@ -114,3 +114,4 @@ tsconfig.tsbuildinfo
 *.key
 *.cert
 .vercel
+.env*
