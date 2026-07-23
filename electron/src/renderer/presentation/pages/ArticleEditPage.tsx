@@ -63,8 +63,13 @@ function CategoryDropdown({ value, onChange, categories }: { value: string; onCh
       const target = e.target as HTMLElement;
       if (!target.closest('[data-cat-dropdown]')) setOpen(false);
     };
+    const closeOnScroll = () => setOpen(false);
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    window.addEventListener('scroll', closeOnScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      window.removeEventListener('scroll', closeOnScroll, true);
+    };
   }, [open]);
 
   return (
