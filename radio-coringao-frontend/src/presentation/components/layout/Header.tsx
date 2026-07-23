@@ -472,7 +472,7 @@ export function Header() {
                       {/* ─── Articles ─── */}
                       {hasArticles && activeSubItem.articles && (
                         <div>
-                          {isSportItem && <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-2">Últimas Notícias</p>}
+                          {hasArticles && <p className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant mb-2">Últimas Notícias</p>}
                           {activeSubItem.articles.length > 3 ? (
                             <div className="space-y-3">
                               <div className="grid grid-cols-3 gap-3">
