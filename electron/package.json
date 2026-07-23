@@ -1,6 +1,6 @@
 {
   "name": "radio-coringao-admin",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "description": "Painel Administrativo - Rádio Coringão",
   "main": "dist-electron/main/index.js",
