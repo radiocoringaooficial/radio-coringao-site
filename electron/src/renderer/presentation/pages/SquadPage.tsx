@@ -9,7 +9,12 @@ import { confirm } from '@/presentation/stores/dialog-store';
 
 const GENDER_LABEL: Record<string, string> = { MALE: 'Masculino', FEMALE: 'Feminino', MIXED: 'Misto' };
 const GENDER_BADGE: Record<string, string> = { MALE: 'bg-blue-50 text-blue-600', FEMALE: 'bg-pink-50 text-pink-600', MIXED: 'bg-purple-50 text-purple-600' };
-const POSITION_OPTIONS = ['Goleiro', 'Zagueiro', 'Lateral', 'Volante', 'Meia', 'Atacante', 'Centroavante', 'Ponta', 'Armador', 'Ala', 'Pivô', 'Ala-Pivô', 'Fixo'];
+const POSITIONS_BY_MODALITY: Record<string, string[]> = {
+  'Futebol': ['Goleiro', 'Zagueiro', 'Lateral', 'Volante', 'Meia', 'Atacante', 'Centroavante', 'Ponta'],
+  'Basquete': ['Armador', 'Ala', 'Ala-Armador', 'Ala-Pivô', 'Pivô'],
+  'Futsal': ['Goleiro', 'Fixo', 'Ala', 'Pivô'],
+};
+const DEFAULT_POSITIONS = ['Goleiro', 'Zagueiro', 'Lateral', 'Volante', 'Meia', 'Atacante'];
 
 export function SquadPage() {
   const [items, setItems] = useState<any[]>([]);
@@ -331,12 +336,14 @@ export function SquadPage() {
             <select value={selectedModality} onChange={(e) => {
               const modId = e.target.value;
               setSelectedModality(modId);
-              // If selected modality has no children, set categoryId directly
               const mod = categories.find((c: any) => c.id === modId);
+              // Limpar posição se a modalidade mudou
+              const newPositions = mod ? (POSITIONS_BY_MODALITY[mod.name] || DEFAULT_POSITIONS) : [];
+              const newPosition = newPositions.includes(form.position) ? form.position : '';
               if (mod && (!mod.children || mod.children.length === 0)) {
-                setForm({ ...form, categoryId: mod.id });
+                setForm({ ...form, categoryId: mod.id, position: newPosition });
               } else {
-                setForm({ ...form, categoryId: '' });
+                setForm({ ...form, categoryId: '', position: newPosition });
               }
             }} className="select-field w-full">
               <option value="">Selecione a modalidade...</option>
@@ -368,9 +375,9 @@ export function SquadPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Posição</label>
-              <select value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} className="select-field">
-                <option value="">Selecione...</option>
-                {POSITION_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+              <select value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value })} className="select-field" disabled={!selectedModality}>
+                <option value="">{selectedModality ? 'Selecione...' : 'Selecione a modalidade primeiro'}</option>
+                {(selectedModality ? (() => { const mod = categories.find((c: any) => c.id === selectedModality); return mod ? (POSITIONS_BY_MODALITY[mod.name] || DEFAULT_POSITIONS) : []; })() : []).map((p) => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
             <div><label className="block font-headline text-label-sm font-bold text-on-surface mb-1.5">Nº Camisa</label>
