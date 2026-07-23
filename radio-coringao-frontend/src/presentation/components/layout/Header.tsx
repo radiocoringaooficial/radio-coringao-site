@@ -36,7 +36,6 @@ const SPORT_CATEGORIES: Record<string, string> = {
   basquete: "basquete",
   futsal: "futsal",
   "sub-20": "sub-20",
-  "sub-17": "sub-17",
 };
 
 // Maps menu child URLs → sport key for match data (clube-api)
@@ -44,7 +43,6 @@ const URL_TO_SPORT_KEY: Record<string, string> = {
   "/esportes/futebol": "futebol",
   "/esportes/futebol-feminino": "futebol-feminino",
   "/esportes/sub-20": "sub-20",
-  "/esportes/sub-17": "sub-17",
   "/esportes/basquete": "basquete",
   "/esportes/futsal": "futsal",
 };
@@ -127,9 +125,12 @@ function buildNavItems(data: Record<string, any>): NavItem[] {
       } else if (URL_TO_TRANSFERS_KEY[childUrl] && data.transferencias) {
         sub.description = "Últimas movimentações do Corinthians";
         sub.transfers = data.transferencias;
-      } else if (newsKey && data[newsKey]) {
-        sub.description = `${child.label}`;
-        sub.articles = Array.isArray(data[newsKey]) ? data[newsKey] : data[newsKey]?.articles || [];
+      } else if (newsKey) {
+        const newsData = data[`news_${newsKey}`] || data[newsKey];
+        if (newsData) {
+          sub.description = `${child.label}`;
+          sub.articles = Array.isArray(newsData) ? newsData : newsData?.articles || [];
+        }
       }
 
       return sub;
@@ -277,7 +278,8 @@ export function Header() {
         })
       );
       for (const { slug, articles } of categoryResults) {
-        d[slug] = mapArticles(articles);
+        // Use "news_" prefix to avoid overwriting sport data stored under d[slug]
+        d[`news_${slug}`] = mapArticles(articles);
       }
 
       d.__newsKeyMap = newsKeyMap;
