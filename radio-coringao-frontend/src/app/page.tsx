@@ -131,7 +131,7 @@ export default async function Home() {
               <Link
                 key={article.id}
                 href={`/noticias/${article.slug}`}
-                className="group relative block min-h-50 overflow-hidden rounded-sm sm:min-h-60"
+                className="group relative block h-50 overflow-hidden rounded-sm sm:h-60"
               >
                 <img
                   src={article.imageUrl}
