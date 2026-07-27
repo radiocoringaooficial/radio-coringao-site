@@ -39,6 +39,13 @@ tmp/
 temp/
 backups/
 
+# Local media assets (not part of the project)
+imagens-times/
+
+# mimocode local state
+.mimocode/.cron-lock
+.mimocode/
+
 # Large binaries
 *.exe
 *.exe.zip
