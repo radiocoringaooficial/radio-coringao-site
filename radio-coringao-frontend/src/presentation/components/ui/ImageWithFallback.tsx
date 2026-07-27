@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ImageWithFallbackProps {
   src?: string;
   alt: string;
   className?: string;
 }
+
+const LOAD_TIMEOUT_MS = 10_000;
 
 export function ImageWithFallback({
   src,
@@ -15,6 +17,12 @@ export function ImageWithFallback({
 }: ImageWithFallbackProps) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (!src || loaded) return;
+    const timer = setTimeout(() => setError(true), LOAD_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [src, loaded]);
 
   if (!src || error) {
     return (
@@ -29,18 +37,13 @@ export function ImageWithFallback({
   }
 
   return (
-    <>
-      {!loaded && (
-        <div className={`animate-pulse bg-surface-container ${className}`} />
-      )}
-      <img
-        src={src}
-        alt={alt}
-        className={`${className} ${loaded ? "block" : "hidden"}`}
-        onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
-        loading="lazy"
-      />
-    </>
+    <img
+      src={src}
+      alt={alt}
+      className={`${className} block`}
+      onLoad={() => setLoaded(true)}
+      onError={() => setError(true)}
+      loading="lazy"
+    />
   );
 }
