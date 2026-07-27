@@ -14,6 +14,19 @@ export function EditorialGrid({ heroArticle, sideArticles }: EditorialGridProps)
   if (!heroArticle) return null;
   const rightArticles = sideArticles.slice(0, 2);
 
+  const heroClassName = [
+    "group",
+    "relative",
+    "block",
+    "aspect-4/3",
+    "min-h-80",
+    "overflow-hidden",
+    "rounded-sm",
+    "lg:aspect-auto",
+    "lg:min-h-125",
+    rightArticles.length === 2 ? "lg:row-span-2" : "lg:row-span-1",
+  ].join(" ");
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -25,7 +38,7 @@ export function EditorialGrid({ heroArticle, sideArticles }: EditorialGridProps)
       {/* Hero card - left */}
       <Link
         href={`/noticias/${heroArticle.slug}`}
-        className="group relative block aspect-4/3 min-h-80 overflow-hidden rounded-sm lg:row-span-2 lg:aspect-auto lg:min-h-125"
+        className={heroClassName}
       >
         {heroArticle.imageUrl ? (
           <ImageWithFallback
