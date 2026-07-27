@@ -57,7 +57,7 @@ export function EditorialGrid({ heroArticle, sideArticles }: EditorialGridProps)
         <Link
           key={article.id}
           href={`/noticias/${article.slug}`}
-          className="group relative block min-h-50 overflow-hidden rounded-sm"
+          className="group relative block h-50 overflow-hidden rounded-sm"
         >
           {article.imageUrl ? (
             <ImageWithFallback

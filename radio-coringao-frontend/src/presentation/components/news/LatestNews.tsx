@@ -43,7 +43,7 @@ export function LatestNews({ articles }: LatestNewsProps) {
             >
               <a
                 href={`/noticias/${article.slug}`}
-                className="group relative block min-h-[200px] overflow-hidden rounded-sm"
+                className="group relative block h-[200px] overflow-hidden rounded-sm"
               >
                 <ImageWithFallback
                   src={article.imageUrl || undefined}
