@@ -41,7 +41,7 @@ export function NextMatchCard(props: NextMatchCardProps) {
   const color = competitionColors[cardIndex % competitionColors.length];
 
   return (
-    <div className="relative flex min-h-[320px] flex-col overflow-hidden rounded-md text-white">
+    <div className="relative flex min-h-[320px] w-full flex-col overflow-hidden rounded-md text-white">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#111] via-[#1a1a1a] to-[#222]" />
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIvPjwvc3ZnPg==')] opacity-60" />
