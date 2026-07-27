@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { NewsArticle } from "@/domain/entities";
-import { ImageWithFallback } from "@/presentation/components/ui/ImageWithFallback";
 
 interface EditorialGridProps {
   heroArticle: NewsArticle;
@@ -14,42 +13,30 @@ export function EditorialGrid({ heroArticle, sideArticles }: EditorialGridProps)
   if (!heroArticle) return null;
   const rightArticles = sideArticles.slice(0, 2);
 
-  const heroClassName = [
-    "group",
-    "relative",
-    "block",
-    "aspect-4/3",
-    "min-h-80",
-    "overflow-hidden",
-    "rounded-sm",
-    "lg:aspect-auto",
-    "lg:min-h-125",
-    rightArticles.length === 2 ? "lg:row-span-2" : "lg:row-span-1",
-  ].join(" ");
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="grid grid-cols-1 gap-1.25 lg:grid-cols-[55%_45%]"
+      className="grid grid-cols-1 gap-[5px] lg:grid-cols-[55%_45%]"
       style={{ gridTemplateRows: rightArticles.length === 2 ? "auto auto" : "auto" }}
     >
       {/* Hero card - left */}
       <Link
         href={`/noticias/${heroArticle.slug}`}
-        className={heroClassName}
+        className="group relative block aspect-[4/3] min-h-[320px] overflow-hidden rounded-sm lg:row-span-2 lg:aspect-auto lg:min-h-[500px]"
       >
         {heroArticle.imageUrl ? (
-          <ImageWithFallback
+          <img
             src={heroArticle.imageUrl}
             alt={heroArticle.imageAlt}
             className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="eager"
           />
         ) : (
           <div className="h-full w-full bg-surface-container" />
         )}
-        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
         <div className="absolute bottom-0 left-0 w-full p-4 md:p-6">
           <span className="mb-2 inline-block bg-white/20 px-2 py-1 font-label-sm text-label-sm text-white backdrop-blur-sm">
             {heroArticle.category}
@@ -70,18 +57,19 @@ export function EditorialGrid({ heroArticle, sideArticles }: EditorialGridProps)
         <Link
           key={article.id}
           href={`/noticias/${article.slug}`}
-          className="group relative block h-50 overflow-hidden rounded-sm"
+          className="group relative block min-h-[200px] overflow-hidden rounded-sm"
         >
           {article.imageUrl ? (
-            <ImageWithFallback
+            <img
               src={article.imageUrl}
               alt={article.imageAlt || article.title}
               className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
             />
           ) : (
             <div className="h-full w-full bg-surface-container" />
           )}
-          <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           <div className="absolute bottom-0 left-0 w-full p-3 md:p-4">
             <span className="mb-1 inline-block bg-white/20 px-2 py-0.5 font-label-sm text-label-sm text-white backdrop-blur-sm">
               {article.category}

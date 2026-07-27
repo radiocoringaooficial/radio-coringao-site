@@ -94,7 +94,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body-md text-body-md flex min-h-screen flex-col overflow-x-hidden bg-surface text-on-surface antialiased">
+      <body className="font-body-md text-body-md flex min-h-screen flex-col bg-surface text-on-surface antialiased">
         <Header />
         <main className="w-full flex-grow">{children}</main>
         <Footer />

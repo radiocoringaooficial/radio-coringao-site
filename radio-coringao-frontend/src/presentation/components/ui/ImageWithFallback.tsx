@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 interface ImageWithFallbackProps {
-  src?: string;
+  src: string;
   alt: string;
   className?: string;
 }
@@ -16,7 +16,7 @@ export function ImageWithFallback({
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 
-  if (!src || error) {
+  if (error) {
     return (
       <div
         className={`flex items-center justify-center bg-surface-container ${className}`}
