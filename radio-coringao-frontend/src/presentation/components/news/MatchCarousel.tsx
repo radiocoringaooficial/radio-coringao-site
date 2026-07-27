@@ -47,7 +47,7 @@ export function MatchCarousel({ matches }: MatchCarouselProps) {
     <div className="relative">
       <div
         ref={scrollRef}
-        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth"
         style={{ scrollbarWidth: "none" }}
       >
         {matches.map((match: any, i) => (

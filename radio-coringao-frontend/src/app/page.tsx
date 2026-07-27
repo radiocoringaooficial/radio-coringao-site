@@ -126,12 +126,12 @@ export default async function Home() {
           {heroArticle && <EditorialGrid heroArticle={heroArticle} sideArticles={sideArticles} />}
 
           {/* Cards adicionais antes de Últimas Notícias */}
-          <div className="grid grid-cols-2 gap-1.25 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-[5px] sm:grid-cols-3">
             {moreNews.map((article, index) => (
               <Link
                 key={article.id}
                 href={`/noticias/${article.slug}`}
-                className="group relative block h-50 overflow-hidden rounded-sm sm:h-60"
+                className="group relative block min-h-[200px] overflow-hidden rounded-sm sm:min-h-[240px]"
               >
                 <img
                   src={article.imageUrl}
@@ -139,7 +139,7 @@ export default async function Home() {
                   className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 w-full p-3">
                   <span className="mb-1 inline-block bg-white/20 px-2 py-0.5 font-label-sm text-label-sm text-white backdrop-blur-sm">
                     {article.category}

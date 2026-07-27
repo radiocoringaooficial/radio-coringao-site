@@ -41,14 +41,14 @@ export function NextMatchCard(props: NextMatchCardProps) {
   const color = competitionColors[cardIndex % competitionColors.length];
 
   return (
-    <div className="relative flex min-h-[320px] w-full flex-col overflow-hidden rounded-md text-white">
+    <div className="relative flex min-h-[320px] flex-col overflow-hidden rounded-md text-white">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#111] via-[#1a1a1a] to-[#222]" />
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIvPjwvc3ZnPg==')] opacity-60" />
       {/* Top accent */}
       <div className="relative z-10 h-0.5 w-full bg-white/20" />
 
-       <div className="relative z-10 flex flex-1 flex-col gap-4 p-5">
+      <div className="relative z-10 flex flex-1 flex-col justify-between p-5">
         {/* Header */}
         <div className="flex flex-col items-center gap-2">
           {/* Linha 1: linhas decorativas + competição */}
@@ -83,32 +83,32 @@ export function NextMatchCard(props: NextMatchCardProps) {
           </div>
         </div>
 
-         {/* Info + CTA */}
-         <div className="mt-auto">
-           <div className="mb-4 flex items-center gap-2 rounded-md bg-white/5 px-3 py-2 font-body-md text-body-md text-white/60">
-             <span className="material-symbols-outlined text-[16px]">
-               calendar_today
-             </span>
-             <span>{date}, {time}</span>
-             <span className="text-white/20">|</span>
-             <span>{venue}</span>
-           </div>
-           {round && (
-             <div className="mb-3 flex justify-center">
-               <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold text-white/80 uppercase tracking-wider">{round}</span>
-             </div>
-           )}
-           {ticketUrl && (
-             <Link
-               href={ticketUrl}
-               target="_blank"
-               rel="noopener noreferrer"
-               className="block w-full rounded-md border border-white/20 bg-white/10 py-3 text-center font-label-sm text-label-sm uppercase font-bold text-white transition-all duration-200 hover:bg-white hover:text-primary"
-             >
-               Ingressos
-             </Link>
-           )}
-         </div>
+        {/* Info + CTA */}
+        <div>
+          <div className="mb-4 flex items-center gap-2 rounded-md bg-white/5 px-3 py-2 font-body-md text-body-md text-white/60">
+            <span className="material-symbols-outlined text-[16px]">
+              calendar_today
+            </span>
+            <span>{date}, {time}</span>
+            <span className="text-white/20">|</span>
+            <span>{venue}</span>
+          </div>
+          {round && (
+            <div className="mb-3 flex justify-center">
+              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold text-white/80 uppercase tracking-wider">{round}</span>
+            </div>
+          )}
+          {ticketUrl && (
+            <Link
+              href={ticketUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full rounded-md border border-white/20 bg-white/10 py-3 text-center font-label-sm text-label-sm uppercase font-bold text-white transition-all duration-200 hover:bg-white hover:text-primary"
+            >
+              Ingressos
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Dots */}

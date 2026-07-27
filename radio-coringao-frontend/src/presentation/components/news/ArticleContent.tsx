@@ -238,7 +238,7 @@ export function ArticleContent({ article, topStories, nextMatch, slug }: Article
             >
               <Link
                 href={`/noticias/${article.slug}`}
-                className="group relative block h-[180px] overflow-hidden rounded-sm"
+                className="group relative block min-h-[180px] overflow-hidden rounded-sm"
               >
                 <img
                   src={article.imageUrl}

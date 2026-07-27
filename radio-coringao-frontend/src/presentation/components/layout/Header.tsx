@@ -338,7 +338,7 @@ export function Header() {
       <div className="relative mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 md:px-6">
         <div className="flex items-center">
           <Link href="/" onClick={closeMobileMenu}>
-            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWKBx2Dj0ezWpowT-GAX-hfEtbPH1X8D66r6ZhSLqsnt_vyY9yjCXHRwWeFxRmm8iGUbnQ06Lrl3Iv3kldrJXnAqiDKrM156wrrnKwh-UQj-KUl3XzGntd1-5kJXKa4Mhk5d15JWrCZHxOW_EM3rX4JfLvSaaD_LZj-FbVIetGcH6EHT--LOJohLMFKAvbl2tMAQYti3oZVyVMiPBFhI0JDL5TLkQNr8ASfBxTghUckcBEch0Bpoh12A7Lj9UgLzl-xdga3p4BtBg" alt="Rádio Coringão" className="h-8 w-auto max-w-[140px] object-contain" />
+            <img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWKBx2Dj0ezWpowT-GAX-hfEtbPH1X8D66r6ZhSLqsnt_vyY9yjCXHRwWeFxRmm8iGUbnQ06Lrl3Iv3kldrJXnAqiDKrM156wrrnKwh-UQj-KUl3XzGntd1-5kJXKa4Mhk5d15JWrCZHxOW_EM3rX4JfLvSaaD_LZj-FbVIetGcH6EHT--LOJohLMFKAvbl2tMAQYti3oZVyVMiPBFhI0JDL5TLkQNr8ASfBxTghUckcBEch0Bpoh12A7Lj9UgLzl-xdga3p4BtBg" alt="Rádio Coringão" className="h-8 object-contain" />
           </Link>
         </div>
 
@@ -352,14 +352,14 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="relative flex min-w-0 items-center gap-2 md:gap-4">
+        <div className="relative flex items-center gap-4">
           <div className="relative">
             <AnimatePresence>
               {searchOpen && (
                 <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: "auto", opacity: 1 }} exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="flex items-center overflow-hidden">
                   <input type="text" placeholder="Pesquisar..." autoFocus value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => { if (e.key === "Escape") { setSearchOpen(false); setSearchQuery(""); } if (e.key === "Enter" && searchQuery.length >= 1) window.location.href = `/busca?q=${encodeURIComponent(searchQuery)}`; }}
-                    className="w-36 rounded-lg border border-outline-variant bg-surface py-2 pl-3 pr-8 text-sm text-on-surface focus:border-secondary focus:outline-none md:w-48" />
+                    className="w-48 rounded-lg border border-outline-variant bg-surface py-2 pl-3 pr-8 text-sm text-on-surface focus:border-secondary focus:outline-none" />
                   <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }} className="absolute right-2 top-1/2 -translate-y-1/2"><X size={14} className="text-on-surface-variant" /></button>
                 </motion.div>
               )}
