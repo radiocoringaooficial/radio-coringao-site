@@ -78,7 +78,7 @@ function EditorialGrid({ articles }: { articles: NewsArticle[] }) {
     >
       <Link
         href={`/noticias/${hero.slug}`}
-        className="group relative block min-h-[320px] overflow-hidden rounded-sm lg:row-span-2 lg:min-h-[500px]"
+        className="group relative block h-[320px] overflow-hidden rounded-sm lg:row-span-2 lg:h-[500px]"
       >
         <img
           src={hero.imageUrl}
@@ -106,7 +106,7 @@ function EditorialGrid({ articles }: { articles: NewsArticle[] }) {
         <Link
           key={article.id}
           href={`/noticias/${article.slug}`}
-          className="group relative block min-h-[200px] overflow-hidden rounded-sm"
+          className="group relative block h-[200px] overflow-hidden rounded-sm"
         >
           <img
             src={article.imageUrl}
