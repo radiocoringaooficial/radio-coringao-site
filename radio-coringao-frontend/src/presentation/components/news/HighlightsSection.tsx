@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { NewsArticle } from "@/domain/entities";
+import { ImageWithFallback } from "@/presentation/components/ui/ImageWithFallback";
 
 interface HighlightsProps {
   monthHighlights: NewsArticle[];
@@ -18,7 +19,7 @@ function HighlightCard({ article, large = false }: { article: NewsArticle; large
     ? "h-[280px] sm:h-[320px]"
     : large === "md" || large === true
     ? "h-[260px]"
-    : "h-[180px] min-w-[240px]";
+    : "h-[180px] w-[260px] sm:w-[300px]";
 
   const textClasses = large === "xl"
     ? "text-[18px] sm:text-[20px]"
@@ -41,13 +42,12 @@ function HighlightCard({ article, large = false }: { article: NewsArticle; large
       href={`/noticias/${article.slug}`}
       className={`group relative block overflow-hidden rounded-sm ${sizeClasses}`}
     >
-      <img
+      <ImageWithFallback
         src={article.imageUrl || undefined}
         alt={article.imageAlt || article.title}
         className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        loading="lazy"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
       <div className={`absolute bottom-0 left-0 w-full ${paddingClasses}`}>
         <span className="mb-1 inline-block bg-white/20 px-2 py-0.5 font-label-sm text-label-sm text-white backdrop-blur-sm">
           {article.category}
@@ -133,7 +133,7 @@ function HighlightCarousel({ title, articles, autoPlayInterval = 0, viewMoreLink
       {useCarousel ? (
         <div
           ref={scrollRef}
-          className="flex snap-x snap-mandatory gap-[5px] overflow-x-auto scroll-smooth"
+          className="flex snap-x snap-mandatory gap-1.25 overflow-x-auto scroll-smooth"
           style={{ scrollbarWidth: "none" }}
         >
           {displayArticles.map((article, i) => (
@@ -143,14 +143,14 @@ function HighlightCarousel({ title, articles, autoPlayInterval = 0, viewMoreLink
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.3, delay: i * 0.05 }}
-              className="snap-start"
+              className="shrink-0 snap-start"
             >
               <HighlightCard article={article} />
             </motion.div>
           ))}
         </div>
       ) : (
-        <div className={`grid grid-cols-1 gap-[5px] ${
+        <div className={`grid grid-cols-1 gap-1.25 ${
           displayArticles.length === 1 ? "" :
           displayArticles.length === 2 ? "sm:grid-cols-2" :
           displayArticles.length === 3 ? "sm:grid-cols-3" :

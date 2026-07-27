@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { NewsArticle } from "@/domain/entities";
 import { EditorialGrid } from "@/presentation/components/news/EditorialGrid";
+import { ImageWithFallback } from "@/presentation/components/ui/ImageWithFallback";
 
 interface LatestNewsProps {
   articles: NewsArticle[];
@@ -44,11 +45,10 @@ export function LatestNews({ articles }: LatestNewsProps) {
                 href={`/noticias/${article.slug}`}
                 className="group relative block min-h-[200px] overflow-hidden rounded-sm"
               >
-                <img
+                <ImageWithFallback
                   src={article.imageUrl || undefined}
                   alt={article.imageAlt || article.title}
                   className="block h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 w-full p-3">
