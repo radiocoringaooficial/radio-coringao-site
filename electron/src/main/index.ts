@@ -3,17 +3,16 @@ import path from 'path';
 import fs from 'fs';
 import { autoUpdater } from 'electron-updater';
 
-app.commandLine.appendSwitch('in-process-gpu');
-app.commandLine.appendSwitch('disable-gpu-sandbox');
-app.commandLine.appendSwitch('no-sandbox');
-app.commandLine.appendSwitch('disable-software-rasterizer');
+// O processo GPU crasha no macOS (especialmente Apple Silicon) e arrasta o
+// renderer junto, fechando a janela. Desabilitar a aceleração de HW evita o
+// crash sem impactar o dev (frontend é React + CSS, não usa WebGL).
 app.disableHardwareAcceleration();
+app.commandLine.appendSwitch('disable-gpu');
+app.commandLine.appendSwitch('disable-software-rasterizer');
 
 let mainWindow: BrowserWindow | null = null;
 
 function getIconPath(): string {
-  // In dev: __dirname = dist-electron/main, build/ is at ../../
-  // In production: electron-builder handles icon separately
   const buildPath = path.join(__dirname, '../../build/icon.png');
   if (fs.existsSync(buildPath)) return buildPath;
   return path.join(__dirname, 'icon.png');
@@ -43,10 +42,28 @@ function createWindow() {
   });
 
   if (process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL).catch((err) => {
+      console.error('[Main] Falha ao carregar URL dev, retry em 1s:', err?.message);
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL!);
+        }
+      }, 1000);
+    });
   } else {
     mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'));
   }
+
+  mainWindow.webContents.on('did-fail-load', (_e, errorCode, errorDescription, validatedURL) => {
+    console.error('[Main] did-fail-load:', errorCode, errorDescription, validatedURL);
+    if (process.env.VITE_DEV_SERVER_URL && errorCode !== -3) {
+      setTimeout(() => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL!);
+        }
+      }, 1000);
+    }
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
