@@ -38,7 +38,7 @@ export function JobsContent() {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-[20px] text-secondary">email</span>
-                <span className="font-body-md text-primary font-bold">radioncoringaocontato@gmail.com</span>
+                <span className="font-body-md text-primary font-bold">contato@radiocoringao.com.br</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="material-symbols-outlined text-[20px] text-secondary">phone</span>
